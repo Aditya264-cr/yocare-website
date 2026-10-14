@@ -269,3 +269,93 @@
     animation: none !important;
   }
 }
+
+
+/* Keep the sphere circular during rotation: animate its surface, not the
+   whole circle in rotateY (which makes it look like a flat coin). */
+.hero-art .orb {
+  border-radius: 50%;
+  overflow: hidden;
+  transform: none;
+  background:
+    radial-gradient(ellipse at 28% 24%,
+      #a8c9a5 0%,
+      #6f9b76 18%,
+      #3d6c4b 42%,
+      #244a36 68%,
+      #0b2015 100%);
+  box-shadow:
+    inset 9px 5px 16px rgba(221, 241, 214, .16),
+    inset -19px -12px 28px rgba(0, 0, 0, .72),
+    0 20px 65px rgba(70, 122, 81, .2);
+  animation: planet-surface-light 10s ease-in-out infinite;
+}
+
+/* Moving curved longitude-like shading suggests a rotating planetary surface,
+   while the radial shading keeps the object round instead of flattening edge-on. */
+.hero-art .orb::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(6, 24, 13, .24) 12%,
+      rgba(187, 219, 177, .12) 22%,
+      transparent 34%,
+      rgba(6, 24, 13, .18) 48%,
+      transparent 60%
+    ),
+    radial-gradient(ellipse at 32% 28%,
+      rgba(231, 246, 221, .26) 0%,
+      rgba(177, 214, 168, .08) 30%,
+      transparent 57%);
+  background-size: 220% 100%, 100% 100%;
+  background-position: 0% 50%, center;
+  mix-blend-mode: screen;
+  animation: planet-surface-turn 8s linear infinite;
+}
+
+/* Permanent dark limb and bright limb preserve spherical volume throughout. */
+.hero-art .orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 30% 26%,
+      transparent 0%,
+      transparent 38%,
+      rgba(2, 14, 7, .22) 68%,
+      rgba(1, 9, 4, .78) 100%);
+  box-shadow: inset 4px 2px 9px rgba(220, 240, 211, .13);
+}
+
+@keyframes planet-surface-turn {
+  from { background-position: 0% 50%, center; }
+  to   { background-position: 220% 50%, center; }
+}
+@keyframes planet-surface-light {
+  0%, 100% {
+    filter: brightness(1);
+    box-shadow: inset 9px 5px 16px rgba(221, 241, 214, .16),
+      inset -19px -12px 28px rgba(0, 0, 0, .72),
+      0 20px 65px rgba(70, 122, 81, .2);
+  }
+  50% {
+    filter: brightness(1.04);
+    box-shadow: inset 9px 5px 16px rgba(221, 241, 214, .2),
+      inset -19px -12px 28px rgba(0, 0, 0, .72),
+      0 22px 72px rgba(86, 145, 96, .26);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-art .orb,
+  .hero-art .orb::before {
+    animation: none !important;
+  }
+}
