@@ -1,4 +1,5 @@
-document.getElementById("year").textContent = new Date().getFullYear();
+const yearElement = document.getElementById("year");
+if (yearElement) yearElement.textContent = new Date().getFullYear();
 
 /* Gentle, one-time scroll reveals for the Yocare story. */
 (() => {

@@ -643,3 +643,58 @@ h1, h2 { text-wrap: balance; }
     opacity: 1 !important; transform: none !important; transition: none !important;
   }
 }
+
+
+/* Phase 4 — accessibility, mobile navigation, and rendering polish. */
+html { scroll-padding-top: 112px; }
+main[id], section[id] { scroll-margin-top: 112px; }
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--night);
+  background: var(--cream);
+  font-weight: 700;
+  transform: translateY(-160%);
+  transition: transform .18s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+.hero-art { contain: layout paint; }
+@media (max-width: 800px) {
+  .nav {
+    height: auto;
+    min-height: 70px;
+    padding: 12px 5vw 10px;
+    flex-wrap: wrap;
+    column-gap: 12px;
+    row-gap: 10px;
+  }
+  .nav .brand { order: 1; }
+  .nav-cta { order: 2; margin-left: auto; }
+  .nav nav {
+    order: 3;
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 0 3px;
+    font-size: .76rem;
+  }
+  .nav nav a { white-space: nowrap; }
+  .nav nav a::after { bottom: -3px; }
+  .hero { min-height: auto; }
+  html { scroll-padding-top: 118px; }
+  main[id], section[id] { scroll-margin-top: 118px; }
+}
+@media (max-width: 360px) {
+  .nav nav { gap: 8px; font-size: .69rem; }
+  .nav .brand { font-size: 1.2rem; }
+  .nav .brand img { width: 26px; height: 26px; }
+  .nav-cta { padding: 8px 10px; font-size: .73rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skip-link { transition: none; }
+}
