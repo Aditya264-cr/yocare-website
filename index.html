@@ -1,111 +1,68 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#d7e9e7">
-  <meta name="description" content="Yocare is a gentle space to reflect, understand your energy, and build a life that feels like your own.">
-  <meta property="og:title" content="Yocare — Find your quiet place">
-  <meta property="og:description" content="A little space between who you are and everything the world asks you to be.">
-  <title>Yocare — Find your quiet place</title>
-  <link rel="icon" href="assets/yocare-mark.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f5f7">
+<meta name="description" content="Yocare — a thoughtful space to check in, notice your patterns, and make room for yourself.">
+<meta property="og:title" content="Yocare — Feel more like you"><meta property="og:description" content="A more human way to understand how you're doing.">
+<title>Yocare — Feel more like you</title>
+<link rel="icon" href="assets/yocare-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to content</a>
-  <div class="page-atmosphere" aria-hidden="true"><div class="sky-glow"></div><div class="distant-hills"></div><div class="near-hills"></div><div class="meadow"></div><div class="meadow-path"></div><div class="grass-grain"></div><div class="sun-dust"></div></div>
-  <div class="scroll-progress" aria-hidden="true"><span id="progress-bar"></span></div>
-  <header class="nav" id="top">
-    <a class="brand" href="#top" aria-label="Yocare home"><span class="brand-flower" aria-hidden="true"><i></i><b></b></span><span>yo<span>care</span></span></a>
-    <nav aria-label="Main navigation"><a href="#philosophy">Our philosophy</a><a href="#ritual">The ritual</a><a href="#principles">What matters</a></nav>
-    <a class="nav-cta" href="#early-access">Find your quiet place <span aria-hidden="true">↗</span></a>
-  </header>
-
-  <main id="main-content" tabindex="-1">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="eyebrow"><span class="eyebrow-sparkle">✳</span> A softer place to land</p>
-        <h1 id="hero-title">Come back to<br><em>yourself.</em></h1>
-        <p class="hero-lede">A little space between who you are and everything the world asks you to be. Pause, reflect, and find your own rhythm again.</p>
-        <div class="hero-actions"><a class="button button-primary" href="#early-access">Enter Yocare <span aria-hidden="true">↗</span></a><a class="text-link" href="#philosophy">Wander a little <span aria-hidden="true">↓</span></a></div>
-        <div class="hero-whisper"><span class="whisper-rule"></span><span>There is no rush here.<br>Only room to become.</span></div>
-      </div>
-
-      <div class="dream-scene" aria-label="A sunlit meadow with three floating glass previews of the Yocare reflection experience">
-        <div class="scene-sun"></div><div class="scene-sunbeam"></div><div class="scene-cloud cloud-a"></div><div class="scene-cloud cloud-b"></div>
-        <div class="scene-bloom bloom-a"></div><div class="scene-bloom bloom-b"></div><div class="scene-bloom bloom-c"></div>
-        <div class="floating-seed seed-a">✳</div><div class="floating-seed seed-b">✧</div><div class="floating-seed seed-c">·</div>
-        <article class="glass-phone phone-left" aria-label="Yocare reflection journal preview">
-          <div class="phone-top"><span class="phone-back">←</span><span class="phone-app">Reflect</span><span class="phone-pill">Edit</span></div>
-          <div class="phone-date">TODAY, 7:15 AM <span>☼</span></div>
-          <h2>Stillness in<br>morning light</h2>
-          <div class="phone-photo photo-meadow"><span class="photo-sun"></span><span class="photo-grass"></span><span class="photo-cloth"></span></div>
-          <p class="phone-quote">“Nature does not hurry, yet everything is accomplished.”</p>
-          <p class="phone-body">A quiet moment before the day begins. Letting the light in, and letting the noise settle.</p>
-          <div class="phone-bottom"><span>♡</span><span>↗</span><span>•••</span></div>
-        </article>
-        <article class="glass-phone phone-centre" aria-label="Yocare mood and reflection overview preview">
-          <div class="phone-top"><span class="phone-menu">☰</span><span class="phone-app">Your inner weather</span><span class="phone-user">○</span></div>
-          <div class="phone-centre-intro">A softer way<br>to <em>check in.</em></div>
-          <p class="mood-label">WHAT'S HERE TODAY?</p>
-          <div class="mood-row"><span><i>☼</i>Calm</span><span><i>✿</i>Grateful</span><span><i>☁</i>Thoughtful</span><span><i>♧</i>Balanced</span></div>
-          <div class="phone-divider"></div>
-          <div class="journal-entry"><span class="entry-date">THIS MORNING · 7:15</span><strong>The quiet between things</strong><p>Today I gave myself a little more time. The world could wait for a moment.</p></div>
-          <div class="journal-entry journal-entry-muted"><span class="entry-date">YESTERDAY · 9:42 PM</span><strong>A day that felt like enough</strong><p>Small moments, softly noticed.</p></div>
-          <div class="phone-dock"><span>⌂</span><span>＋</span><span>☷</span><span>◉</span></div>
-        </article>
-        <article class="glass-phone phone-right" aria-label="Yocare journal entry preview">
-          <div class="phone-top"><span class="phone-back">←</span><span class="phone-app">Reflect</span><span class="phone-done">Done</span></div>
-          <div class="entry-date entry-date-top">TODAY · A MOMENT FOR ME</div>
-          <h2>Morning<br>stillness</h2>
-          <div class="mood-chips"><span>+ Add a feeling</span><span>Calm</span></div>
-          <p class="right-copy">I woke a little earlier and let the morning arrive slowly. For once, I didn't need to be anywhere else.</p>
-          <div class="phone-photo photo-person"><span class="person-sun"></span><span class="person-shape"></span><span class="person-ground"></span></div>
-          <p class="right-copy right-copy-small">Somewhere in that quiet, everything felt a little lighter.</p>
-          <div class="phone-dock right-dock"><span>☷</span><span>▧</span><span>♬</span><span>⌑</span></div>
-        </article>
-        <div class="scene-caption caption-left"><span class="caption-dot"></span> A WORLD THAT MEETS YOU GENTLY</div>
-        <div class="scene-caption caption-right">01 / A MOMENT TO ARRIVE</div>
-      </div>
-      <div class="hero-footer"><span>WELLBEING, WITHOUT THE PERFORMANCE</span><a href="#philosophy">TAKE A DEEPER BREATH <span aria-hidden="true">↓</span></a></div>
-    </section>
-
-    <section class="philosophy section-shell" id="philosophy">
-      <div class="section-meta"><span>01 / THE PHILOSOPHY</span><span>LET LIFE BE A LITTLE MORE HUMAN</span></div>
-      <div class="philosophy-layout"><div><p class="eyebrow">A note from Yocare</p><h2>You don't need<br>to earn your <em>rest.</em></h2></div><div class="philosophy-copy"><p>Life can become a long list of things to finish, improve, and keep up with. Even the things that are meant to help us can start to feel like another measure of whether we're doing enough.</p><p>Yocare imagines something gentler: a private little clearing in the middle of a busy life. A place to notice how you're doing, understand what supports you, and choose your next step without turning yourself into a project.</p><div class="signature"><span class="signature-flower">✳</span><span>Care is not another task to complete.<br><strong>It's a way to come home to yourself.</strong></span></div></div></div>
-      <div class="quiet-banner"><div class="quiet-sun"></div><div class="quiet-ripple ripple-one"></div><div class="quiet-ripple ripple-two"></div><div class="quiet-ripple ripple-three"></div><p>Let the day meet you<br><em>where you are.</em></p><span>A SMALL REMINDER TO CARRY WITH YOU</span></div>
-    </section>
-
-    <section class="ritual section-shell" id="ritual">
-      <div class="section-meta"><span>02 / THE RITUAL</span><span>SMALL MOMENTS, SOFTER DAYS</span></div>
-      <div class="ritual-heading"><h2>A gentle practice<br>for <em>being here.</em></h2><p>Not a routine to perfect. Just a small, kind loop that helps you listen to yourself and respond with care.</p></div>
-      <div class="ritual-grid">
-        <article class="ritual-card"><div class="ritual-art ritual-art-one"><span class="breath-halo halo-one"></span><span class="breath-halo halo-two"></span><span class="breath-sun">01</span></div><div class="ritual-meta"><span>NOTICE</span><span>01 / 03</span></div><h3>Arrive as you are.</h3><p>A small check-in with your energy, your mood, or whatever is asking for your attention today.</p><span class="ritual-foot">A MOMENT TO NOTICE</span></article>
-        <article class="ritual-card"><div class="ritual-art ritual-art-two"><span class="pattern-stem stem-one"></span><span class="pattern-stem stem-two"></span><span class="pattern-stem stem-three"></span><span class="pattern-stem stem-four"></span><span class="pattern-sun"></span></div><div class="ritual-meta"><span>UNDERSTAND</span><span>02 / 03</span></div><h3>Find your own patterns.</h3><p>Notice the little things that seem to replenish you, and the moments that could use more care.</p><span class="ritual-foot">CLARITY OVER SCORES</span></article>
-        <article class="ritual-card"><div class="ritual-art ritual-art-three"><span class="leaf-orbit"></span><span class="sprout-stem"></span><span class="sprout-leaf leaf-a"></span><span class="sprout-leaf leaf-b"></span><span class="sprout-glow"></span></div><div class="ritual-meta"><span>GROW</span><span>03 / 03</span></div><h3>Choose one kind shift.</h3><p>Make a realistic change that respects the day you're having, not the day you think you should have.</p><span class="ritual-foot">PROGRESS WITHOUT GUILT</span></article>
-      </div>
-      <p class="ritual-note">Yocare is an early-stage concept, not a medical service. Your experience will always be more than a metric.</p>
-    </section>
-
-    <section class="interlude"><div class="interlude-light"></div><div class="interlude-orbit"></div><p class="interlude-quote">You are allowed to grow<br>at the speed of <em>being human.</em></p><span>YOU DON'T HAVE TO RUSH TO BLOOM</span></section>
-
-    <section class="principles section-shell" id="principles">
-      <div class="section-meta"><span>03 / WHAT MATTERS</span><span>THE THINGS WE WANT TO KEEP CLOSE</span></div>
-      <div class="principles-heading"><h2>Gentleness is not<br>the opposite of <em>growth.</em></h2><p>These are the principles we want to keep returning to as Yocare takes shape.</p></div>
-      <div class="principle-list">
-        <article><span class="principle-index">01</span><span class="principle-glyph">♡</span><div><h3>Human before metrics</h3><p>Your lived experience matters more than a score, streak, or perfect-looking dashboard.</p></div><span class="principle-aside">PEOPLE, NOT PERFORMANCE</span></article>
-        <article><span class="principle-index">02</span><span class="principle-glyph">☼</span><div><h3>Room for real life</h3><p>Energy changes. Routines change. Care should be allowed to change with you.</p></div><span class="principle-aside">FLEXIBILITY OVER GUILT</span></article>
-        <article><span class="principle-index">03</span><span class="principle-glyph">❋</span><div><h3>Privacy is part of care</h3><p>Personal reflections deserve thoughtful handling and clear explanations as the product develops.</p></div><span class="principle-aside">TRUST BY DESIGN</span></article>
-      </div>
-    </section>
-
-    <section class="early-access" id="early-access"><div class="access-meadow"><div class="access-sun"></div><div class="access-hill"></div><div class="access-grass"></div><div class="access-orbit"></div></div><div class="access-content"><p class="eyebrow"><span class="eyebrow-sparkle">✳</span> A new little beginning</p><h2>There's room<br>for <em>you here.</em></h2><p>Yocare is in early development. If this feels like a place you have been looking for, we'd love to hear from you as it grows.</p><a class="button button-primary" href="mailto:hello@yocare.online?subject=Yocare%20early%20access%20interest">Find your way in <span aria-hidden="true">↗</span></a><span class="access-note">JUST A HELLO. NO PRESSURE, EVER.</span></div></section>
-  </main>
-
-  <footer class="footer"><a class="brand" href="#top" aria-label="Yocare home"><span class="brand-flower" aria-hidden="true"><i></i><b></b></span><span>yo<span>care</span></span></a><p>Make space to feel well.</p><div class="footer-links"><a href="mailto:hello@yocare.online?subject=Yocare%20enquiry">Contact</a><a href="#top">Back to the beginning ↑</a></div><small>© <span id="year"></span> Yocare. An early-stage project; not a medical service.</small></footer>
-  <script src="script.js"></script>
-</body>
-</html>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="ambient-canvas" aria-hidden="true"><div class="color-cloud cloud-lilac"></div><div class="color-cloud cloud-blue"></div><div class="color-cloud cloud-peach"></div><div class="canvas-grain"></div></div>
+<div class="scroll-progress" aria-hidden="true"><span id="progress-bar"></span></div>
+<header class="nav" id="top">
+<a class="brand" href="#top" aria-label="Yocare home"><span class="brand-mark"><i></i><b></b><em></em></span><span>yocare<span class="brand-period">.</span></span></a>
+<nav aria-label="Main navigation"><a href="#philosophy">Why Yocare</a><a href="#ritual">The experience</a><a href="#principles">Our values</a></nav>
+<a class="nav-cta" href="#early-access">Get early access <span>↗</span></a>
+</header>
+<main id="main-content" tabindex="-1">
+<section class="hero" aria-labelledby="hero-title">
+<div class="hero-copy"><div class="availability"><span></span> A new kind of wellbeing space</div>
+<h1 id="hero-title">A little more<br>space to be <span class="gradient-type">you.</span></h1>
+<p class="hero-lede">Your life isn't a dashboard. Yocare is a thoughtful, beautifully simple space to check in with yourself, notice what matters, and find your own rhythm.</p>
+<div class="hero-actions"><a class="button button-dark" href="#early-access">Discover Yocare <span>↗</span></a><a class="text-link" href="#philosophy"><span class="play-icon">↓</span> Take a look around</a></div>
+<div class="hero-social-proof"><div class="mini-avatars"><i>✳</i><i>◌</i><i>✦</i></div><span>Made for real life, not perfect routines.</span></div>
+</div>
+<div class="art-stage" aria-label="An artistic floating sculpture of iridescent glass forms surrounding the Yocare app interface">
+<div class="art-wash wash-one"></div><div class="art-wash wash-two"></div><div class="art-wash wash-three"></div>
+<div class="sculpture sculpture-orb"><div class="orb-highlight"></div><div class="orb-shadow"></div></div><div class="sculpture sculpture-ribbon"><span></span></div><div class="sculpture sculpture-petal petal-one"></div><div class="sculpture sculpture-petal petal-two"></div><div class="sculpture sculpture-pearl"></div>
+<div class="art-label label-top"><span class="label-line"></span><span>YOUR INNER WORLD<br><b>IN FULL COLOUR</b></span></div>
+<div class="app-window">
+<div class="app-topbar"><span class="app-brand-mini"><span class="tiny-mark">✳</span> yocare</span><span class="app-date">MONDAY, 9:41</span><span class="profile-dot">A</span></div>
+<div class="app-greeting"><span>GOOD MORNING, ALEX</span><h2>How are you<br><em>really</em> feeling?</h2><p>No right answers. Just you.</p></div>
+<div class="feeling-options"><div class="feeling selected"><span class="feeling-face face-sun">☼</span><b>Good</b></div><div class="feeling"><span class="feeling-face face-cloud">☁</span><b>Okay</b></div><div class="feeling"><span class="feeling-face face-moon">☾</span><b>Low</b></div><div class="feeling"><span class="feeling-face face-spark">✳</span><b>Unsure</b></div></div>
+<div class="app-note"><span class="note-icon">✎</span><span><b>A thought to keep</b><small>What would make today feel a little lighter?</small></span><span class="note-arrow">↗</span></div>
+<div class="app-bottom"><span class="active">◉<small>Today</small></span><span>▤<small>Reflect</small></span><span>⌁<small>Patterns</small></span><span>○<small>You</small></span></div>
+</div>
+<div class="floating-chip chip-left"><span class="chip-icon purple">✦</span><span><b>Small steps count.</b><small>Especially the quiet ones.</small></span></div>
+<div class="floating-chip chip-right"><span class="chip-icon orange">↗</span><span><b>Your pace.</b><small>Your kind of progress.</small></span></div>
+<div class="art-label label-bottom"><span>01 / 04</span><span class="label-line"></span><span>PAUSE · NOTICE · GROW</span></div>
+</div>
+<div class="hero-bottom"><span>DESIGNED FOR YOUR HUMAN SIDE</span><a href="#philosophy">SCROLL TO EXPLORE <span>↓</span></a></div>
+</section>
+<section class="philosophy section-shell" id="philosophy">
+<div class="section-kicker"><span>01 — THE WHY</span><span>LESS PRESSURE. MORE PRESENCE.</span></div>
+<div class="philosophy-layout"><div><p class="eyebrow">A different point of view</p><h2>You are a person.<br>Not a <span class="gradient-type">project.</span></h2></div><div class="philosophy-copy"><p>Wellbeing can start to feel like one more thing to get right. Track more. Do more. Be better. Even the tools meant to help can leave us feeling like we're falling behind.</p><p>Yocare is a softer alternative: a space to notice how you're doing without judging it, understand the patterns that make you feel more like yourself, and choose a next step that fits your real life.</p><div class="manifesto"><span class="manifesto-icon">✳</span><span>Not another version of you to chase.<br><b>A little more room to be the you that's here.</b></span></div></div></div>
+<div class="statement-card"><div class="statement-art"><div class="statement-ring ring-a"></div><div class="statement-ring ring-b"></div><div class="statement-sphere"></div><span class="statement-star star-a">✳</span><span class="statement-star star-b">✦</span></div><div class="statement-copy"><span>AN IDEA WORTH KEEPING</span><h3>Progress can feel<br>like <em>peace.</em></h3><p>Not every good change needs to be loud. Sometimes it begins with noticing one small thing, and being kind enough to listen.</p></div><span class="statement-index">Y / 01</span></div>
+</section>
+<section class="ritual section-shell" id="ritual"><div class="section-kicker"><span>02 — THE EXPERIENCE</span><span>A SIMPLE LOOP, BUILT AROUND YOU</span></div><div class="section-heading"><h2>Less keeping up.<br><span class="gradient-type">More tuning in.</span></h2><p>Three gentle moves. No streaks to protect, no perfect version of yourself required.</p></div>
+<div class="ritual-grid">
+<article class="ritual-card"><div class="ritual-visual visual-checkin"><div class="visual-orbit"></div><span class="visual-symbol">☼</span><span class="visual-label">01</span></div><div class="card-meta"><span>CHECK IN</span><span>01 / 03</span></div><h3>Name what’s here.</h3><p>Pause for a moment and notice your mood, your energy, or whatever is taking up space today.</p><a href="#early-access" class="card-link" aria-label="Learn about checking in">A moment for you <span>↗</span></a></article>
+<article class="ritual-card"><div class="ritual-visual visual-pattern"><div class="pattern-glow"></div><span class="pattern-line line-a"></span><span class="pattern-line line-b"></span><span class="pattern-line line-c"></span><span class="pattern-point point-a"></span><span class="pattern-point point-b"></span><span class="visual-label">02</span></div><div class="card-meta"><span>MAKE SENSE</span><span>02 / 03</span></div><h3>Connect the dots.</h3><p>See what tends to restore you and what leaves you feeling stretched. Patterns, not grades.</p><a href="#early-access" class="card-link" aria-label="Learn about noticing patterns">Clarity over scores <span>↗</span></a></article>
+<article class="ritual-card"><div class="ritual-visual visual-grow"><div class="grow-sun"></div><span class="grow-stem"></span><span class="grow-leaf leaf-left"></span><span class="grow-leaf leaf-right"></span><span class="visual-label">03</span></div><div class="card-meta"><span>GROW GENTLY</span><span>03 / 03</span></div><h3>Choose a kind next step.</h3><p>Try one small shift that fits the day you're having, rather than the day you think you should have.</p><a href="#early-access" class="card-link" aria-label="Learn about gentle growth">At your own pace <span>↗</span></a></article>
+</div><p class="disclaimer">Yocare is an early-stage concept, not a medical service. You are more than any measure of your wellbeing.</p>
+</section>
+<section class="interlude"><div class="interlude-art"><div class="interlude-core"></div><div class="interlude-loop loop-a"></div><div class="interlude-loop loop-b"></div><div class="interlude-loop loop-c"></div><span class="interlude-star">✳</span></div><p class="interlude-quote">Your life. Your rhythm.<br><span class="gradient-type">No need to rush.</span></p><span>LET YOURSELF BE A WORK IN PROGRESS</span></section>
+<section class="principles section-shell" id="principles"><div class="section-kicker"><span>03 — WHAT MATTERS</span><span>THE PRINCIPLES BEHIND THE PRODUCT</span></div><div class="section-heading"><h2>Good design should<br>feel like <span class="gradient-type">care.</span></h2><p>We want every part of Yocare to make it easier to be honest with yourself, not harder to be human.</p></div>
+<div class="principle-list"><article><span class="principle-number">01</span><span class="principle-icon icon-lilac">♡</span><div><h3>Human, before numbers.</h3><p>Your feelings are not a score to improve or a streak to maintain.</p></div><span class="principle-note">FEELING OVER OPTIMISING</span><span class="principle-arrow">↗</span></article><article><span class="principle-number">02</span><span class="principle-icon icon-peach">☼</span><div><h3>Space for real life.</h3><p>Some days are full. Some are quiet. Care can meet you in either.</p></div><span class="principle-note">FLEXIBILITY OVER GUILT</span><span class="principle-arrow">↗</span></article><article><span class="principle-number">03</span><span class="principle-icon icon-mint">⌑</span><div><h3>Privacy is part of care.</h3><p>Personal reflections deserve thoughtful handling and clear choices.</p></div><span class="principle-note">TRUST BY DESIGN</span><span class="principle-arrow">↗</span></article></div>
+</section>
+<section class="early-access" id="early-access"><div class="access-art"><div class="access-disc disc-one"></div><div class="access-disc disc-two"></div><div class="access-star">✳</div><div class="access-haze"></div></div><div class="access-content"><p class="eyebrow"><span class="eyebrow-dot"></span> THE BEGINNING OF SOMETHING GENTLER</p><h2>Make a little<br>room for <span class="gradient-type">you.</span></h2><p>Yocare is taking shape. If this feels like the kind of space you’ve been missing, come say hello and be part of what comes next.</p><a class="button button-dark" href="mailto:hello@yocare.online?subject=Yocare%20early%20access%20interest">Join the early list <span>↗</span></a><span class="access-note">NO PRESSURE. JUST A HELLO.</span></div></section>
+</main>
+<footer class="footer"><a class="brand" href="#top" aria-label="Yocare home"><span class="brand-mark"><i></i><b></b><em></em></span><span>yocare<span class="brand-period">.</span></span></a><p>Make space to feel well.</p><div class="footer-links"><a href="mailto:hello@yocare.online?subject=Yocare%20enquiry">Contact</a><a href="#top">Back to top ↑</a></div><small>© <span id="year"></span> Yocare. An early-stage project; not a medical service.</small></footer>
+<script src="script.js"></script>
+</body></html>
