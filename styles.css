@@ -108,3 +108,89 @@
     will-change: auto;
   }
 }
+
+
+/* Yocare hero: expanding ambient waves and planet-like sphere rotation.
+   Overrides the original static/rotating halo styles without changing layout. */
+.hero-art .halo {
+  animation: yocare-wave 7s ease-out infinite;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+.hero-art .halo-one {
+  animation-delay: 0s;
+}
+.hero-art .halo-two {
+  animation-delay: -3.5s;
+}
+
+/* A slow axial spin with a slight horizontal squeeze gives the sphere
+   a planet-like rotation while keeping its existing colors and size. */
+.hero-art .orb {
+  transform-origin: center;
+  animation: yocare-planet-spin 12s linear infinite;
+  will-change: transform, filter;
+}
+.hero-art .orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(8, 27, 17, .48) 0%,
+    rgba(168, 205, 166, .03) 24%,
+    rgba(219, 239, 213, .32) 48%,
+    rgba(101, 151, 111, .08) 67%,
+    rgba(5, 20, 12, .4) 100%
+  );
+  mix-blend-mode: screen;
+  animation: yocare-planet-sheen 12s linear infinite;
+}
+@keyframes yocare-wave {
+  0% {
+    transform: scale(.72);
+    opacity: 0;
+  }
+  12% {
+    opacity: .48;
+  }
+  68% {
+    opacity: .18;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+@keyframes yocare-planet-spin {
+  0% {
+    transform: perspective(500px) rotateY(0deg) scaleX(1);
+  }
+  25% {
+    transform: perspective(500px) rotateY(90deg) scaleX(.94);
+  }
+  50% {
+    transform: perspective(500px) rotateY(180deg) scaleX(1);
+  }
+  75% {
+    transform: perspective(500px) rotateY(270deg) scaleX(.94);
+  }
+  100% {
+    transform: perspective(500px) rotateY(360deg) scaleX(1);
+  }
+}
+@keyframes yocare-planet-sheen {
+  from { transform: rotate(0deg); opacity: .75; }
+  50% { opacity: .35; }
+  to { transform: rotate(360deg); opacity: .75; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-art .halo,
+  .hero-art .orb,
+  .hero-art .orb::before {
+    animation: none !important;
+    will-change: auto;
+  }
+}
