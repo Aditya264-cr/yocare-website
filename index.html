@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
   <header class="nav">
     <a class="brand" href="#top" aria-label="Yocare home"><img src="assets/yocare-mark.svg" alt=""><span>yocare</span></a>
     <nav aria-label="Main navigation">
@@ -25,7 +26,7 @@
     <a class="nav-cta" href="#early-access">Early access <span aria-hidden="true">↗</span></a>
   </header>
 
-  <main id="top">
+  <main id="top" tabindex="-1">
     <section class="hero section">
       <div class="hero-copy">
         <p class="eyebrow"><span class="pulse"></span> A more human kind of performance</p>
@@ -37,7 +38,7 @@
         </div>
         <p class="microcopy">Early-stage project · Built around your wellbeing, not your streaks</p>
       </div>
-      <div class="hero-art" aria-label="Abstract botanical artwork">
+      <div class="hero-art" role="img" aria-label="Abstract botanical artwork">
         <div class="halo halo-one"></div><div class="halo halo-two"></div>
         <div class="orb"></div>
         <div class="leaf leaf-one"></div><div class="leaf leaf-two"></div><div class="leaf leaf-three"></div>
