@@ -54,3 +54,57 @@
     will-change: auto;
   }
 }
+
+
+/* Planet-like orb motion and expanding, fading ripple waves. */
+.hero-art .orb {
+  position: absolute;
+  isolation: isolate;
+  overflow: visible;
+  animation: planet-drift 22s ease-in-out infinite, orb-light 24s ease-in-out infinite;
+}
+.hero-art .orb::before {
+  content: "";
+  position: absolute;
+  inset: 3%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(112deg, transparent 25%, rgba(220, 244, 218, .16) 43%, rgba(220, 244, 218, .025) 58%, transparent 72%);
+  mix-blend-mode: screen;
+  transform-origin: center;
+  animation: planet-sheen 16s linear infinite;
+}
+.hero-art .orb::after {
+  content: "";
+  position: absolute;
+  inset: -2%;
+  border: 1px solid rgba(169, 208, 174, .34);
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 0 12px rgba(169, 208, 174, .12), 0 0 0 24px rgba(169, 208, 174, .065);
+  animation: orb-ripple 5.8s ease-out infinite;
+}
+@keyframes planet-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  25% { transform: translate3d(3px, -4px, 0) scale(1.008); }
+  50% { transform: translate3d(0, -7px, 0) scale(1.015); }
+  75% { transform: translate3d(-3px, -3px, 0) scale(1.006); }
+}
+@keyframes planet-sheen {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes orb-ripple {
+  0% { transform: scale(.92); opacity: 0; }
+  12% { opacity: .72; }
+  75% { opacity: .18; }
+  100% { transform: scale(2.25); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-art .orb,
+  .hero-art .orb::before,
+  .hero-art .orb::after {
+    animation: none !important;
+    will-change: auto;
+  }
+}
