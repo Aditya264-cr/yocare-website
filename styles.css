@@ -359,3 +359,101 @@
     animation: none !important;
   }
 }
+
+
+/* Phase 1 — calm, dimensional hero atmosphere. These final overrides unify
+   earlier experiments without changing the page structure or content. */
+.hero-art .halo {
+  border-color: rgba(175, 208, 177, .22);
+  border-style: solid;
+  animation: yocare-ambient-wave 8s cubic-bezier(.16,.55,.35,1) infinite;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+.hero-art .halo-one { animation-delay: 0s; }
+.hero-art .halo-two {
+  border-style: solid;
+  animation-delay: -4s;
+}
+.hero-art .orb {
+  border-radius: 50%;
+  overflow: hidden;
+  transform: translate3d(0,0,0);
+  background:
+    radial-gradient(ellipse at 29% 24%, #b5d0ad 0%, #83ab83 16%,
+      #507e5b 36%, #2c573d 59%, #10291b 82%, #07170e 100%);
+  box-shadow:
+    inset 8px 5px 17px rgba(225,242,216,.18),
+    inset -22px -17px 31px rgba(0,0,0,.72),
+    0 18px 72px rgba(91,143,99,.2);
+  animation: yocare-orb-breathe 11s ease-in-out infinite;
+  will-change: filter, box-shadow;
+}
+.hero-art .orb::before {
+  content: "";
+  position: absolute;
+  inset: -4%;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(100deg,
+      transparent 0%, rgba(4,22,12,.15) 13%,
+      rgba(195,224,184,.15) 24%, transparent 36%,
+      rgba(4,22,12,.12) 49%, transparent 62%),
+    radial-gradient(ellipse at 30% 25%, rgba(230,245,220,.24), transparent 52%);
+  background-size: 230% 100%, 100% 100%;
+  background-position: 0% 50%, center;
+  mix-blend-mode: screen;
+  animation: yocare-surface-drift 18s linear infinite;
+}
+.hero-art .orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 31% 27%,
+    transparent 0%, transparent 40%, rgba(2,14,7,.18) 67%, rgba(1,9,4,.7) 100%);
+  box-shadow: inset 4px 2px 10px rgba(220,240,211,.12);
+}
+.hero-art .leaf-one,
+.hero-art .leaf-two,
+.hero-art .leaf-three {
+  will-change: transform;
+  filter: drop-shadow(0 10px 16px rgba(0,0,0,.12));
+}
+.hero-art .leaf-one { animation: leaf-float-one 10s ease-in-out infinite; }
+.hero-art .leaf-two { animation: leaf-float-two 12s ease-in-out infinite; }
+.hero-art .leaf-three { animation: leaf-float-three 11s ease-in-out infinite; }
+
+@keyframes yocare-ambient-wave {
+  0% { transform: scale(.68); opacity: 0; }
+  14% { opacity: .42; }
+  68% { opacity: .16; }
+  100% { transform: scale(1.32); opacity: 0; }
+}
+@keyframes yocare-orb-breathe {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.045); }
+}
+@keyframes yocare-surface-drift {
+  from { background-position: 0% 50%, center; }
+  to { background-position: 230% 50%, center; }
+}
+@media (max-width: 800px) {
+  .hero-art .halo-one { width: 94%; }
+  .hero-art .halo-two { width: 70%; }
+  .hero-art .orb { width: 46%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-art .halo,
+  .hero-art .orb,
+  .hero-art .orb::before,
+  .hero-art .orb::after,
+  .hero-art .leaf-one,
+  .hero-art .leaf-two,
+  .hero-art .leaf-three {
+    animation: none !important;
+    will-change: auto;
+  }
+}
