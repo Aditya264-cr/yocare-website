@@ -78,7 +78,7 @@
       let px=p.x,py=p.y;
       if(pointer.active && dist<120 && dist>0){const push=(120-dist)/120*10;px+=dx/dist*push;py+=dy/dist*push;}
       const twinkle=night ? .38+(.62*(.5+.5*Math.sin(now*.0012+p.phase*3))) : evening ? .25+.7*(.5+.5*Math.sin(now*.001+p.phase*2)) : p.alpha;
-      const alpha=(night?.72:evening?.52:warm?.28:.21)*twinkle;
+      const alpha=(night ? .72 : evening ? .52 : warm ? .28 : .21)*twinkle;
       ctx.beginPath();ctx.arc(px,py,night?p.r*1.2:p.r,0,Math.PI*2);
       ctx.fillStyle=night?"rgba(255,250,226,"+alpha+")":evening?"rgba(231,247,212,"+alpha+")":targetPeriod==="morning"?"rgba(219,184,102,"+alpha+")":"rgba(255,255,255,"+alpha+")";
       if(evening || night){ctx.shadowBlur=evening?7:3;ctx.shadowColor=evening?"#c8e8a6":"#f8f4d9";}
