@@ -18,3 +18,5 @@
 @media(hover:hover) and (pointer:fine){body, a,button{cursor:none}.cursor-ring,.cursor-dot{display:flex}.cursor-dot{display:block}.cursor-ring span{display:none}.cursor-ring,.cursor-dot{opacity:1}.sound-toggle, input{cursor:auto}}
 @media(hover:none),(pointer:coarse){.cursor-ring,.cursor-dot{display:none!important}.world-card:hover,.science-card:hover{transform:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.reveal{opacity:1;transform:none}.portal-brand span,.portal-tagline,.portal-description,.portal-actions{opacity:1;transform:none;animation:none}.aura-wrap{animation:none}}
+
+.tap-ripple{position:fixed;z-index:9998;width:10px;height:10px;border:1px solid rgba(75,139,95,.55);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);animation:tap-ripple-out .6s ease-out forwards}@keyframes tap-ripple-out{to{width:90px;height:90px;opacity:0;border-width:1px}}
