@@ -104,3 +104,7 @@
  .intro .metrics-strip{background:#f4f4f0ed;backdrop-filter:none}
 }
 @media(prefers-reduced-motion:reduce){.intro-organic-art img{animation:none}}
+
+/* Organic background image removed at the user's request */
+.intro-organic-art{display:none!important}
+.intro{min-height:0}
