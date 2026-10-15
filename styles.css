@@ -41,3 +41,16 @@
 @media(max-width:900px){.intro-organic-art{right:-15%;width:82%;opacity:.54}.intro-grid{grid-template-columns:1fr;gap:22px;min-height:0;padding:52px 0 40px}.intro-body{max-width:540px;margin-left:auto;padding:18px 0 18px 20px;background:linear-gradient(90deg,#f5f5f1ed,#f5f5f1b8)}.intro .metrics-strip{background:#f5f5f1ed}}
 @media(max-width:720px){.intro-organic-art{top:25%;right:-38%;width:125%;height:45%;opacity:.28}.intro-organic-art::after{background:linear-gradient(90deg,#f5f5f1 0%,#f5f5f1b5 28%,transparent 90%),linear-gradient(0deg,#f5f5f1 0%,transparent 50%,#f5f5f1aa 100%)}.intro-grid{padding:45px 0 32px}.intro-body{margin-left:0;padding:15px 0 10px 16px}.intro .metrics-strip{backdrop-filter:none}}
 @media(prefers-reduced-motion:reduce){.intro-organic-art img{animation:none}}
+
+
+/* Hero orbital rings: slow, intersecting spaceship-style motion */
+.hero-visual .visual-orbit{transform-origin:center;will-change:transform;animation:orbit-drift-a 22s linear infinite}
+.hero-visual .orbit-b{animation-name:orbit-drift-b;animation-duration:29s}
+.hero-visual .orbit-c{animation-name:orbit-drift-c;animation-duration:36s}
+.hero-visual .visual-orbit::before{content:"";position:absolute;left:50%;top:0;width:7px;height:7px;border-radius:50%;background:#f5ffe9;border:1px solid #76a978;box-shadow:0 0 0 4px #91bd8a26,0 0 15px #83b67d9c;transform:translate(-50%,-50%)}
+.hero-visual .orbit-b::before{width:6px;height:6px;background:#d9eabf;box-shadow:0 0 0 4px #91bd8a20,0 0 12px #83b67d75}
+.hero-visual .orbit-c::before{width:5px;height:5px;background:#fff;box-shadow:0 0 0 3px #91bd8a20,0 0 10px #83b67d75}
+@keyframes orbit-drift-a{from{transform:translate(-50%,-50%) rotate(-30deg)}to{transform:translate(-50%,-50%) rotate(330deg)}}
+@keyframes orbit-drift-b{from{transform:translate(-50%,-50%) rotate(42deg)}to{transform:translate(-50%,-50%) rotate(-318deg)}}
+@keyframes orbit-drift-c{from{transform:translate(-50%,-50%) rotate(64deg)}to{transform:translate(-50%,-50%) rotate(424deg)}}
+@media(prefers-reduced-motion:reduce){.hero-visual .visual-orbit{animation:none}.hero-visual .visual-orbit::before{display:none}}
