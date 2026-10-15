@@ -54,3 +54,25 @@
 @keyframes orbit-drift-b{from{transform:translate(-50%,-50%) rotate(42deg)}to{transform:translate(-50%,-50%) rotate(-318deg)}}
 @keyframes orbit-drift-c{from{transform:translate(-50%,-50%) rotate(64deg)}to{transform:translate(-50%,-50%) rotate(424deg)}}
 @media(prefers-reduced-motion:reduce){.hero-visual .visual-orbit{animation:none}.hero-visual .visual-orbit::before{display:none}}
+
+
+/* Make the hero rings read as a moving orbital system, not just rotating outlines */
+.hero-visual{perspective:900px}
+.hero-visual .visual-orbit{border-radius:50%;transform-style:preserve-3d;backface-visibility:visible}
+.hero-visual .orbit-a{animation:ship-orbit-a 18s linear infinite}
+.hero-visual .orbit-b{animation:ship-orbit-b 25s linear infinite}
+.hero-visual .orbit-c{animation:ship-orbit-c 32s linear infinite}
+.hero-visual .visual-orbit::before{top:50%;left:0}
+@keyframes ship-orbit-a{
+  from{transform:translate(-50%,-50%) rotateX(62deg) rotateZ(0deg)}
+  to{transform:translate(-50%,-50%) rotateX(62deg) rotateZ(360deg)}
+}
+@keyframes ship-orbit-b{
+  from{transform:translate(-50%,-50%) rotateX(70deg) rotateY(16deg) rotateZ(0deg)}
+  to{transform:translate(-50%,-50%) rotateX(70deg) rotateY(16deg) rotateZ(-360deg)}
+}
+@keyframes ship-orbit-c{
+  from{transform:translate(-50%,-50%) rotateX(57deg) rotateY(-22deg) rotateZ(0deg)}
+  to{transform:translate(-50%,-50%) rotateX(57deg) rotateY(-22deg) rotateZ(360deg)}
+}
+@media(prefers-reduced-motion:reduce){.hero-visual .visual-orbit{animation:none}}
