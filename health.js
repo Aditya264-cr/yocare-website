@@ -173,11 +173,13 @@
     if(/\b(feel|afraid|anxious|panic|angry|terrified|worried|scared|heart|stress)\b/.test(text))return "AFFECT_HEURISTIC";
     return "WYSIATI";
   };
+  let heuristicManuallySelected=false;
   const updateHeuristic=()=>{
     const value=byId("first-thought").value+" "+byId("trigger-text").value;
     const suggestion=classifyThought(value);
-    byId("heuristic").value=suggestion;
-    byId("heuristic-hint").textContent="Suggested pattern: "+HEURISTICS[suggestion]+". This is a simple text cue, not an assessment; you can choose another label.";
+    if(!heuristicManuallySelected)byId("heuristic").value=suggestion;
+    const chosen=heuristicManuallySelected?byId("heuristic").value:suggestion;
+    byId("heuristic-hint").textContent=(heuristicManuallySelected?"Selected pattern: ":"Suggested pattern: ")+HEURISTICS[chosen]+". This is a simple text cue, not an assessment.";
   };
   const savePendingLog=async(status,intervention=null)=>{
     if(!pendingLog)return;
@@ -189,7 +191,7 @@
       });
       pendingLog=null;
       byId("reframe-card").hidden=true;byId("reset-card").hidden=true;
-      byId("impulse-form").reset();byId("severity-value").textContent="4";
+      byId("impulse-form").reset();heuristicManuallySelected=false;byId("severity-value").textContent="4";
       byId("heuristic-hint").textContent="A pattern suggestion can help name a thought; it is not a diagnosis.";
       byId("state-label").textContent=status==="RESOLVED"?"Reflection saved":"Quick log saved";
       byId("state-detail").textContent=status==="BYPASSED_DUE_TO_DEPLETION"?"You chose a pause instead of a longer exercise.":"Your entries are encrypted on this device.";
@@ -210,6 +212,7 @@
     const output=outputId&&byId(outputId);
     if(output){output.textContent=input.value;input.addEventListener("input",()=>output.textContent=input.value);}
   });
+  byId("heuristic").addEventListener("change",()=>{heuristicManuallySelected=true;updateHeuristic();});
   byId("first-thought").addEventListener("input",updateHeuristic);
   byId("trigger-text").addEventListener("input",updateHeuristic);
   byId("severity").addEventListener("input",event=>byId("severity-value").textContent=event.target.value);
