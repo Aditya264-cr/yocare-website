@@ -191,3 +191,16 @@
 @media(prefers-reduced-motion:reduce){
  .health-ring,.graphic-education .edu-node,.research-edges,.research-points circle{animation:none!important}
 }
+
+
+/* Keep statement-section geometry behind the message */
+.statement{isolation:isolate;overflow:hidden}
+.statement-pattern{z-index:-1;right:3%;top:50%;width:min(32vw,380px);height:min(32vw,380px);transform:translateY(-50%);opacity:.2;pointer-events:none}
+.statement-pattern span{border-color:#b8d1ac24}
+.statement-pattern span:nth-child(3){border-color:#b8d1ac1c}
+.statement-pattern span:nth-child(4){border-color:#b8d1ac28}
+.statement-pattern span:nth-child(5){background:#a9c99a;box-shadow:0 0 28px #a9c99a55}
+.statement h2{color:#fff}
+.statement-inner>p:not(.eyebrow){color:#d5dfd4}
+@media(max-width:900px){.statement-pattern{right:-110px;width:300px;height:300px;opacity:.16}}
+@media(max-width:720px){.statement-pattern{right:-130px;width:270px;height:270px;opacity:.13}}
