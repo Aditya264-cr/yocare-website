@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f4f7f3">
+<meta name="description" content="A private, evidence-aware space to notice automatic thoughts, reflect with care, and reconstruct your day.">
+<title>Yocare Health — A moment to understand</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="health.css">
+</head>
+<body class="health-page">
+<a class="skip-link" href="#health-main">Skip to content</a>
+<header class="health-header">
+  <a class="brand" href="index.html" aria-label="Yocare home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>yocare</span></a>
+  <nav aria-label="Health navigation"><a href="index.html#platform">Platform</a><a href="#privacy">Privacy</a><button class="text-button" id="lock-button" type="button" hidden>Lock</button></nav>
+</header>
+<main id="health-main">
+  <section class="health-hero">
+    <div class="health-hero-copy">
+      <p class="eyebrow"><span class="eyebrow-dot"></span> YOCARE HEALTH / PILLAR 01</p>
+      <h1>A moment to notice.<br><span>A little space to choose.</span></h1>
+      <p>Understand your quick reactions, make room for a second perspective, and remember your day as more than its hardest moment.</p>
+      <div class="health-principles"><span>Private by design</span><span>Evidence-aware</span><span>Made for short, intentional use</span></div>
+    </div>
+    <div class="mind-orbit" aria-hidden="true"><div class="mind-orbit-ring orbit-one"></div><div class="mind-orbit-ring orbit-two"></div><div class="mind-orbit-ring orbit-three"></div><div class="mind-orbit-core"><span>notice</span><i></i></div><span class="orbit-point point-one"></span><span class="orbit-point point-two"></span></div>
+  </section>
+  <section class="vault-section" id="privacy" aria-labelledby="vault-title">
+    <div class="vault-card" id="vault-card">
+      <div class="vault-mark" aria-hidden="true">✳</div>
+      <div class="vault-copy">
+        <p class="section-label">YOUR PRIVATE SPACE</p>
+        <h2 id="vault-title">Your reflections stay on this device.</h2>
+        <p id="vault-description">Create a private vault with a passphrase. Your entries are encrypted in this browser and are never sent to Yocare.</p>
+        <form id="vault-form">
+          <label for="vault-passphrase" id="passphrase-label">Create a passphrase</label>
+          <input id="vault-passphrase" type="password" autocomplete="new-password" minlength="12" required placeholder="At least 12 characters">
+          <label for="vault-confirm" id="confirm-label">Confirm passphrase</label>
+          <input id="vault-confirm" type="password" autocomplete="new-password" minlength="12" required placeholder="Enter it again">
+          <button class="button button-dark" id="vault-submit" type="submit">Create private vault <span>↗</span></button>
+        </form>
+        <p class="vault-note" id="vault-note" role="status">Your passphrase is not stored. If you forget it, this vault cannot be recovered.</p>
+        <p class="form-message" id="vault-message" role="alert"></p>
+      </div>
+    </div>
+  </section>
+  <div class="health-workspace" id="health-workspace" hidden>
+    <section class="dashboard-intro">
+      <div><p class="section-label">A GENTLE CHECK-IN</p><h2>What would help right now?</h2><p>Choose one small action. There is no streak to maintain and nothing you need to finish.</p></div>
+      <div class="state-card"><span class="state-orb" id="state-orb"></span><div><span class="section-label">TODAY'S PACE</span><strong id="state-label">Ready to reflect</strong><small id="state-detail">Your check-in is private to this device.</small></div></div>
+    </section>
+    <div class="health-grid">
+      <section class="tool-card impulse-card" aria-labelledby="impulse-title">
+        <div class="tool-heading"><span class="tool-number">01</span><div><p class="section-label">SYSTEM 1 / QUICK LOG</p><h2 id="impulse-title">Catch the first thought</h2></div></div>
+        <p class="tool-intro">Capture the moment without deciding whether the thought is true. This should take less than a minute.</p>
+        <form id="impulse-form" class="stack-form">
+          <label for="trigger-text">What happened?</label>
+          <textarea id="trigger-text" rows="2" maxlength="500" placeholder="A short message arrived and I thought…" required></textarea>
+          <label for="body-sensation">What did you notice in your body? <span class="optional">Optional</span></label>
+          <input id="body-sensation" maxlength="180" placeholder="Racing heart, tight shoulders…">
+          <label for="first-thought">What was your first assumption?</label>
+          <textarea id="first-thought" rows="2" maxlength="500" placeholder="The quick story my mind told me was…" required></textarea>
+          <div class="form-row">
+            <label for="severity">How intense does it feel? <strong><span id="severity-value">4</span>/10</strong>
+              <input id="severity" type="range" min="1" max="10" value="4">
+            </label>
+            <label for="heuristic">Possible thinking pattern
+              <select id="heuristic">
+                <option value="WYSIATI">WYSIATI · limited information</option>
+                <option value="AFFECT_HEURISTIC">Affect heuristic · feeling as evidence</option>
+                <option value="AVAILABILITY_CASCADE">Availability · vivid recent example</option>
+                <option value="ANCHORING">Anchoring · first number or detail</option>
+              </select>
+            </label>
+          </div>
+          <p class="helper" id="heuristic-hint">A pattern suggestion can help name a thought; it is not a diagnosis.</p>
+          <button class="button button-dark" type="submit">Continue gently <span>→</span></button>
+        </form>
+      </section>
+      <section class="tool-card checkin-card" aria-labelledby="checkin-title">
+        <div class="tool-heading"><span class="tool-number">02</span><div><p class="section-label">EXPERIENCING SELF / MOMENT</p><h2 id="checkin-title">How is this moment?</h2></div></div>
+        <p class="tool-intro">Rate what you notice right now. A small snapshot is enough.</p>
+        <form id="checkin-form" class="stack-form">
+          <label>Calm <strong><span id="calm-value">3</span>/6</strong><input name="calm" type="range" min="0" max="6" value="3"></label>
+          <label>Anxiety <strong><span id="anxiety-value">3</span>/6</strong><input name="anxiety" type="range" min="0" max="6" value="3"></label>
+          <label>Focus <strong><span id="focus-value">3</span>/6</strong><input name="focus" type="range" min="0" max="6" value="3"></label>
+          <button class="button button-outline" type="submit">Save this moment <span>↗</span></button>
+        </form>
+        <p class="helper" id="checkin-message" role="status"></p>
+        <div class="mini-history"><span class="section-label">RECENT MOMENTS</span><ul id="checkin-list" class="entry-list"></ul></div>
+      </section>
+      <section class="tool-card reframe-card" id="reframe-card" aria-labelledby="reframe-title" hidden>
+        <div class="tool-heading"><span class="tool-number">03</span><div><p class="section-label">SYSTEM 2 / A SECOND LOOK</p><h2 id="reframe-title">Test the first story</h2></div></div>
+        <p class="reframe-prompt" id="reframe-prompt">Your first impression may have filled in missing details. Let's look for more than one possibility.</p>
+        <form id="reframe-form" class="stack-form">
+          <label for="alternative-one">What is one other explanation?</label>
+          <textarea id="alternative-one" rows="2" maxlength="400" required placeholder="A possibility that doesn't assume the worst…"></textarea>
+          <label for="alternative-two">What is another explanation?</label>
+          <textarea id="alternative-two" rows="2" maxlength="400" required placeholder="One more explanation that fits the facts…"></textarea>
+          <label for="evidence-now">How much is this feeling based on today's evidence? <strong><span id="evidence-value">3</span>/6</strong><input id="evidence-now" type="range" min="0" max="6" value="3"></label>
+          <label for="reframed-view">What feels like a fairer way to hold this?</label>
+          <textarea id="reframed-view" rows="2" maxlength="400" required placeholder="I don't know the outcome yet. What I know is…"></textarea>
+          <button class="button button-dark" type="submit">Save my reflection <span>↗</span></button>
+          <button class="text-button" id="defer-reframe" type="button">I'd rather pause and save the quick log</button>
+        </form>
+      </section>
+      <section class="tool-card reset-card" id="reset-card" hidden aria-labelledby="reset-title">
+        <div class="tool-heading"><span class="tool-number">↗</span><div><p class="section-label">REST & RESET</p><h2 id="reset-title">You can come back to this later.</h2></div></div>
+        <p class="tool-intro" id="reset-reason">When stress or fatigue is high, a simpler next step may be kinder than more analysis.</p>
+        <div class="reset-breath" id="reset-breath" aria-hidden="true"><span></span></div>
+        <p class="breath-instruction" id="breath-instruction">Let your shoulders soften. Take one comfortable breath.</p>
+        <div class="reset-actions"><button class="button button-outline" id="start-reset" type="button">Start a 40-second reset</button><button class="text-button" id="save-quick-log" type="button">Save the quick log and pause</button></div>
+      </section>
+      <section class="tool-card drm-card" aria-labelledby="drm-title">
+        <div class="tool-heading"><span class="tool-number">04</span><div><p class="section-label">REMEMBERING SELF / DAY RECONSTRUCTION</p><h2 id="drm-title">Remember the whole day</h2></div></div>
+        <p class="tool-intro">Rebuild your day from a few scenes. Duration gives each part of the day a fairer place in the picture.</p>
+        <form id="episode-form" class="stack-form">
+          <label for="activity-name">Scene or activity</label><input id="activity-name" maxlength="120" required placeholder="Morning commute, lunch with a friend…">
+          <div class="form-row time-row"><label for="episode-start">Start time<input id="episode-start" type="time" required></label><label for="episode-end">End time<input id="episode-end" type="time" required></label></div>
+          <div class="affect-grid">
+            <label>Happiness <strong><span id="happiness-value">3</span>/6</strong><input name="happiness" type="range" min="0" max="6" value="3"></label>
+            <label>Stress <strong><span id="stress-value">3</span>/6</strong><input name="stress" type="range" min="0" max="6" value="3"></label>
+            <label>Calm <strong><span id="episode-calm-value">3</span>/6</strong><input name="episodeCalm" type="range" min="0" max="6" value="3"></label>
+          </div>
+          <label for="day-rating">At the end of the day, how would you rate it overall? <strong><span id="day-rating-value">3</span>/6</strong><input id="day-rating" type="range" min="0" max="6" value="3"></label>
+          <button class="button button-outline" type="submit">Add this scene <span>↗</span></button>
+        </form>
+        <div class="day-summary" id="day-summary"></div>
+        <div class="episode-history"><span class="section-label">TODAY'S SCENES</span><ul id="episode-list" class="entry-list"></ul></div>
+      </section>
+    </div>
+    <section class="privacy-footer">
+      <div><p class="section-label">A NOTE ABOUT THIS TOOL</p><h2>Reflection, not diagnosis.</h2><p>Thinking-pattern labels are prompts for curiosity, not clinical assessments. The duration-weighted measures are personal reflection aids, not validated health scores or treatment advice. Yocare Health is not a medical service.</p></div>
+      <div class="privacy-actions"><span class="privacy-lock" aria-hidden="true">◈</span><p>Encrypted on this device. No account, analytics, notifications, or server storage.</p><button class="text-button danger-button" id="delete-vault" type="button">Delete this local vault</button></div>
+    </section>
+  </div>
+</main>
+<footer class="health-footer"><a href="index.html">← Back to Yocare</a><span>YOCARE / YOUR CARE, ALWAYS</span></footer>
+<script src="health.js"></script>
+</body>
+</html>
