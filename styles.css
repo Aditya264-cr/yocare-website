@@ -135,3 +135,14 @@
 }
 @media(max-width:720px){.hero-visual{transform:none;transition:none}}
 @media(prefers-reduced-motion:reduce){.hero-visual{transform:none;transition:none}.hero-visual .visual-orbit{animation:none}.hero-visual .visual-orbit::before{display:none}}
+
+/* Orbital rings from the supplied prototype */
+.hero-visual{perspective:1200px;transform-style:preserve-3d}
+.orbital-rings{position:absolute;inset:0;z-index:1;pointer-events:none;transform-style:preserve-3d;overflow:visible}
+.orbital-rings .ring{position:absolute;left:50%;top:48%;width:var(--size);height:var(--size);margin:0;border-radius:50%;transform-style:preserve-3d;pointer-events:none;box-shadow:inset 0 0 14px #ffffff14;opacity:.8;will-change:transform,opacity,filter}
+.orbital-rings .ring::before{content:"";position:absolute;inset:0;border-radius:50%;border:var(--stroke-width,1px) solid var(--stroke);box-shadow:0 0 10px #ffffff12;opacity:var(--alpha,.65);transform:translateZ(var(--z,0px))}
+.orbital-rings .ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:1px dashed #ffffff20;opacity:calc(var(--alpha,.65) * .42)}
+.hero-visual .visual-core{z-index:3;transform:translateZ(35px);transform-style:preserve-3d}
+.hero-visual .visual-label,.hero-visual .visual-node,.hero-visual .visual-caption{z-index:4}
+@media(max-width:720px){.orbital-rings .ring{top:48%}.hero-visual .visual-core{transform:none}}
+@media(prefers-reduced-motion:reduce){.orbital-rings .ring{will-change:auto}}
