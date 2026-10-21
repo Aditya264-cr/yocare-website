@@ -146,3 +146,11 @@
 .hero-visual .visual-label,.hero-visual .visual-node,.hero-visual .visual-caption{z-index:4}
 @media(max-width:720px){.orbital-rings .ring{top:48%}.hero-visual .visual-core{transform:none}}
 @media(prefers-reduced-motion:reduce){.orbital-rings .ring{will-change:auto}}
+
+
+/* Split orbital passes so front arcs cross the sphere while rear arcs stay subdued */
+.orbital-rings-front{z-index:3}
+.orbital-rings .ring.ring-depth{position:absolute;left:50%;top:48%;display:block;width:var(--size);height:var(--size);margin:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;transform-origin:50% 50%;transform-style:preserve-3d;backface-visibility:visible;will-change:transform,opacity}
+.orbital-rings .ring.ring-depth::before,.orbital-rings .ring.ring-depth::after{display:none;content:none}
+.orbital-rings-front .ring.ring-depth{pointer-events:none}
+@media(prefers-reduced-motion:reduce){.orbital-rings .ring.ring-depth{will-change:auto}}
