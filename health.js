@@ -9,10 +9,12 @@
   };
   const byId=id=>document.getElementById(id);
   const vaultSection=byId("privacy"),vaultForm=byId("vault-form"),workspace=byId("health-workspace");
-  const vaultMessage=byId("vault-message"),passphrase=byId("vault-passphrase"),confirmPassphrase=byId("vault-confirm");
+  const vaultMessage=byId("vault-message"),passphrase=byId("vault-passphrase"),confirmPassphrase=byId("vault-confirm"),usernameInput=byId("vault-username");
   const lockButton=byId("lock-button");
-  let vaultKey=null,vaultSalt=null,data=null,pendingLog=null,resetTimer=null;
-  const emptyData=()=>({logs:[],interventions:[],checkins:[],episodes:[],days:{}});
+  let vaultKey=null,vaultSalt=null,data=null,pendingLog=null,resetTimer=null,sleepTimer=null,sleepRemaining=0,sleepDuration=0,sleepStarted=0,sleepPhrase=null,sleepLocked=false;
+  const emptyData=()=>({logs:[],interventions:[],checkins:[],episodes:[],days:{},watchmanEntries:[],phrases:[],sleepSessions:[],releaseChecks:[]});
+  const normalizeData=value=>{value.watchmanEntries??=[];value.phrases??=[];value.sleepSessions??=[];value.releaseChecks??=[];return value;};
+  const normalizeUsername=value=>String(value??"").trim().toLocaleLowerCase();
   const textEncoder=new TextEncoder(),textDecoder=new TextDecoder();
   const toBase64=bytes=>{
     let binary="";
@@ -56,6 +58,8 @@
     byId("vault-description").textContent=existing
       ?"Unlock your encrypted local vault with the passphrase you created. Your entries are never sent to Yocare."
       :"Create a private vault with a passphrase. Your entries are encrypted in this browser and are never sent to Yocare.";
+    byId("username-label").textContent=existing?"Username":"Choose a username";
+    usernameInput.autocomplete="username";
     byId("passphrase-label").textContent=existing?"Passphrase":"Create a passphrase";
     passphrase.autocomplete=existing?"current-password":"new-password";
     confirmPassphrase.hidden=Boolean(existing);
@@ -81,13 +85,13 @@
   };
   const lock=()=>{
     if(resetTimer)clearInterval(resetTimer);
-    resetTimer=null;pendingLog=null;data=null;vaultKey=null;vaultSalt=null;
+    resetTimer=null;stopSleep(false);pendingLog=null;data=null;vaultKey=null;vaultSalt=null;
     workspace.hidden=true;vaultSection.hidden=false;lockButton.hidden=true;
     document.querySelectorAll(".health-workspace form").forEach(form=>form.reset());
     byId("reframe-card").hidden=true;byId("reset-card").hidden=true;
     byId("reset-breath").classList.remove("is-active");
     byId("breath-instruction").textContent="Let your shoulders soften. Take one comfortable breath.";
-    passphrase.value="";confirmPassphrase.value="";
+    usernameInput.value="";passphrase.value="";confirmPassphrase.value="";
     setVaultMode();
     window.scrollTo({top:0,behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
   };
@@ -158,9 +162,77 @@
     title.textContent=label;number.textContent=value;note.textContent=detail;
     card.append(title,number,note);return card;
   };
+    const renderPillarTwo=()=>{
+    const fill=(id,items,make)=>{
+      const list=byId(id);if(!list)return;list.replaceChildren();
+      const recent=(items||[]).slice(0,4);if(!recent.length){emptyRow(list);return;}
+      recent.forEach(item=>list.append(make(item)));
+    };
+    renderWatchman();renderPhrases();renderSleepHistory();renderRelease();
+  };
+  const renderWatchman=()=>renderList("watchman-list",data.watchmanEntries,(item)=>makeEntry(item.thought,localDateTime(item.timestamp)));
+  const renderPhrases=()=>{
+    const items=data.phrases||[],select=byId("sleep-phrase");
+    select.replaceChildren();
+    if(!items.length){const opt=document.createElement("option");opt.value="";opt.textContent="Save a phrase first";select.append(opt);select.disabled=true;}
+    else {select.disabled=false;items.forEach(item=>{const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.text;select.append(opt);});}
+    renderList("phrase-list",items,item=>makeEntry(item.text,item.category));
+  };
+  const renderSleepHistory=()=>renderList("sleep-list",data.sleepSessions,item=>makeEntry(item.phraseText,item.durationSeconds+" sec · "+localDateTime(item.timestamp)));
+  const renderRelease=()=>renderList("release-list",data.releaseChecks,item=>makeEntry(item.eventLabel,(item.score>=8?"Feels neutral today":item.score<=4?"Revisit when ready":"Saved for later")+" · "+localDateTime(item.timestamp)));
+  const renderList=(id,items,make)=>{
+    const list=byId(id);if(!list)return;list.replaceChildren();
+    if(!items||!items.length){emptyRow(list);return;}
+    items.slice(0,4).forEach(item=>list.append(make(item)));
+  };
+  const thoughtReply=value=>{
+    const lower=value.toLocaleLowerCase();
+    if(/\b(always|never|everyone|no one|nothing|everything|ruined|hopeless|worthless|can't|cannot|will fail)\b/.test(lower))
+      return "That sounds like a painful, all-or-nothing prediction. It may help to ask what you know for sure, and what is still uncertain.";
+    if(/\b(danger|unsafe|hurt|harm|threat)\b/.test(lower))
+      return "Your safety matters. If there may be immediate danger, focus on getting to a safer place or contacting someone you trust. You do not need to reframe a real safety concern.";
+    return "Your mind may be trying to protect you. We can pause before treating the thought as a fact.";
+  };
+  const stopSleep=async(completed=false)=>{
+    if(sleepTimer){clearInterval(sleepTimer);sleepTimer=null;}
+    const overlay=byId("sleep-overlay");if(!overlay)return;
+    if(completed){
+      if(data&&sleepPhrase){
+        try{await commit(next=>next.sleepSessions.unshift({id:crypto.randomUUID(),timestamp:Date.now(),durationSeconds:sleepDuration,phraseId:sleepPhrase.id,phraseText:sleepPhrase.text,completed:true}));}
+        catch(error){setMessage(byId("vault-message"),error.message,true);}
+      }
+      sleepLocked=true;overlay.classList.add("is-finished");
+      byId("sleep-phase").textContent="SESSION COMPLETE";
+      byId("sleep-guidance").textContent="You can let this be enough for tonight.";
+      byId("sleep-phrase-display").textContent="";
+      byId("sleep-clock").textContent=" ";
+      byId("sleep-stop").hidden=true;
+      byId("sleep-exit-hint").textContent="Press Escape to leave this quiet screen";
+      sleepRemaining=0;sleepPhrase=null;
+      return;
+    }
+    sleepLocked=false;overlay.hidden=true;overlay.classList.remove("is-finished");document.body.classList.remove("sleep-open");
+    byId("sleep-stop").hidden=false;
+    byId("sleep-exit-hint").textContent="Press Escape at any time to close";
+    sleepRemaining=0;sleepPhrase=null;
+  };
+  const updateSleepScreen=()=>{
+    if(!sleepPhrase)return;
+    const elapsed=Math.floor((Date.now()-sleepStarted)/1000),somatic=sleepDuration===180?65:115;
+    const phase=elapsed<somatic;
+    byId("sleep-phase").textContent=phase?"LET THE DAY SETTLE":"A PHRASE TO CARRY";
+    const prompts=sleepDuration===180
+      ?["Notice where your body meets the surface beneath you.","Let your jaw soften, if that feels comfortable.","Notice your shoulders without needing to change them.","Feel the support beneath your feet or hands."]
+      :["Notice the support beneath your body.","Let your forehead and jaw soften, if comfortable.","Notice your shoulders and hands as they are.","Feel the surface beneath your back.","Let your breath move at its own pace.","Notice one sound, then let it pass."];
+    if(phase){const idx=Math.min(prompts.length-1,Math.floor(elapsed/(somatic/prompts.length)));byId("sleep-guidance").textContent=prompts[idx];}
+    else{byId("sleep-guidance").textContent=sleepPhrase.text;byId("sleep-phrase-display").textContent=sleepPhrase.text;}
+    const remain=Math.max(0,sleepDuration-elapsed);byId("sleep-clock").textContent=Math.floor(remain/60)+":"+String(remain%60).padStart(2,"0");
+    if(remain<=0){sleepLocked=true;byId("sleep-phase").textContent="SESSION COMPLETE";byId("sleep-guidance").textContent="You can let this be enough for tonight.";byId("sleep-overlay").classList.add("is-finished");stopSleep(true);}
+  };
+
   const render=()=>{
     if(!data)return;
-    renderLogs();renderCheckins();renderEpisodes();
+    renderLogs();renderCheckins();renderEpisodes();renderPillarTwo();
     const tired=new Date().getHours()>=21||countInterventionsToday()>=4;
     byId("state-label").textContent=tired?"A slower pace may help":"Ready to reflect";
     byId("state-detail").textContent=countInterventionsToday()+" reframing "+(countInterventionsToday()===1?"exercise":"exercises")+" today · encrypted on this device";
@@ -224,22 +296,24 @@
     if(!window.isSecureContext||!crypto.subtle){setMessage(vaultMessage,"Open this experience over HTTPS to create an encrypted vault.",true);return;}
     const existing=readEnvelope(),secret=passphrase.value;
     if(!existing){
+      if(usernameInput.value.trim().length<2||usernameInput.value.trim().length>32){setMessage(vaultMessage,"Choose a username between 2 and 32 characters.",true);return;}
       if(secret.length<12){setMessage(vaultMessage,"Choose a passphrase with at least 12 characters.",true);return;}
       if(secret!==confirmPassphrase.value){setMessage(vaultMessage,"Those passphrases don't match yet.",true);return;}
       try{
         vaultSalt=crypto.getRandomValues(new Uint8Array(16));
         vaultKey=await deriveKey(secret,vaultSalt);
-        data=emptyData();
+        data=emptyData();data.profile={username:usernameInput.value.trim()};
         await encryptData(data,vaultKey,vaultSalt);
-        passphrase.value="";confirmPassphrase.value="";
+        usernameInput.value="";passphrase.value="";confirmPassphrase.value="";
         unlock();
       }catch(error){data=null;vaultKey=null;vaultSalt=null;setMessage(vaultMessage,"The private vault could not be created in this browser. Please try again.",true);}
       return;
     }
     try{
       const unlocked=await decryptData(existing,secret);
-      vaultKey=unlocked.key;vaultSalt=unlocked.salt;data=unlocked.value;
-      passphrase.value="";
+      if(normalizeUsername(unlocked.value.profile?.username)!==normalizeUsername(usernameInput.value))throw new Error("Vault identity did not match");
+      vaultKey=unlocked.key;vaultSalt=unlocked.salt;data=normalizeData(unlocked.value);
+      usernameInput.value="";passphrase.value="";
       unlock();
     }catch(error){setMessage(vaultMessage,"That passphrase did not unlock this vault. Nothing was changed.",true);}
   });
@@ -351,6 +425,41 @@
       byId("activity-name").value="";
       byId("episode-form").scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"nearest"});
     }catch(error){setMessage(vaultMessage,error.message,true);}
+  });
+  byId("watchman-thought").addEventListener("input",event=>{byId("watchman-prompt").textContent=thoughtReply(event.target.value);});
+  byId("watchman-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    const item={id:crypto.randomUUID(),timestamp:Date.now(),thought:byId("watchman-thought").value.trim(),reply:byId("watchman-response").value.trim()};
+    try{await commit(next=>next.watchmanEntries.unshift(item));byId("watchman-form").reset();byId("watchman-response").value="I’m having a difficult thought, not a certainty. I can look at one next step.";byId("watchman-prompt").textContent="Your mind may be trying to protect you. We can pause before treating the thought as a fact.";}
+    catch(error){setMessage(byId("vault-message"),error.message,true);}
+  });
+  const countWords=value=>value.trim().split(/\s+/).filter(Boolean).length;
+  byId("phrase-text").addEventListener("input",event=>{const n=countWords(event.target.value);byId("phrase-count").textContent=n+" / 3–6 words";byId("phrase-count").classList.toggle("is-valid",n>=3&&n<=6);});
+  byId("phrase-form").addEventListener("submit",async event=>{
+    event.preventDefault();const text=byId("phrase-text").value.trim(),words=countWords(text);
+    if(words<3||words>6){byId("phrase-text").setCustomValidity("Keep your phrase between 3 and 6 words.");byId("phrase-text").reportValidity();return;}
+    byId("phrase-text").setCustomValidity("");
+    const item={id:crypto.randomUUID(),timestamp:Date.now(),category:byId("phrase-category").value,text,outcome:byId("phrase-outcome").value.trim(),sensoryDetail:byId("phrase-senses").value.trim(),completionFeeling:byId("phrase-emotion").value.trim()};
+    try{await commit(next=>next.phrases.unshift(item));byId("phrase-form").reset();byId("phrase-count").textContent="0 / 3–6 words";}
+    catch(error){setMessage(byId("vault-message"),error.message,true);}
+  });
+  byId("sleep-form").addEventListener("submit",event=>{
+    event.preventDefault();if(!byId("sleep-consent").checked)return;
+    sleepPhrase=data.phrases.find(item=>item.id===byId("sleep-phrase").value);
+    if(!sleepPhrase){setMessage(byId("vault-message"),"Save or choose a phrase before starting.",true);return;}
+    sleepDuration=Number(byId("sleep-duration").value);sleepRemaining=sleepDuration;sleepStarted=Date.now();sleepLocked=false;
+    byId("sleep-overlay").hidden=false;byId("sleep-overlay").classList.remove("is-finished");document.body.classList.add("sleep-open");
+    byId("sleep-phrase-display").textContent=sleepPhrase.text;updateSleepScreen();
+    sleepTimer=setInterval(updateSleepScreen,1000);
+  });
+  byId("sleep-stop").addEventListener("click",()=>stopSleep(false));
+  document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!byId("sleep-overlay").hidden)stopSleep(false);});
+  byId("release-score").addEventListener("input",event=>byId("release-score-value").textContent=event.target.value);
+  byId("release-form").addEventListener("submit",async event=>{
+    event.preventDefault();const score=Number(byId("release-score").value);
+    const item={id:crypto.randomUUID(),timestamp:Date.now(),eventLabel:byId("release-event").value.trim(),note:byId("release-note").value.trim(),score,status:score>=8?"NEUTRAL_TODAY":"REVISIT_WHEN_READY"};
+    try{await commit(next=>next.releaseChecks.unshift(item));byId("release-form").reset();byId("release-score-value").textContent="3";setMessage(byId("release-message"),score>=8?"Saved as feeling neutral today. You can still revisit this whenever you choose.":"Saved. You can return to this in your own time.");}
+    catch(error){setMessage(byId("vault-message"),error.message,true);}
   });
   lockButton.addEventListener("click",lock);
   byId("delete-vault").addEventListener("click",()=>{
