@@ -59,6 +59,7 @@
     byId("passphrase-label").textContent=existing?"Passphrase":"Create a passphrase";
     passphrase.autocomplete=existing?"current-password":"new-password";
     confirmPassphrase.hidden=Boolean(existing);
+    confirmPassphrase.required=!existing;
     byId("confirm-label").hidden=Boolean(existing);
     byId("vault-submit").innerHTML=existing?'Unlock my vault <span>↗</span>':'Create private vault <span>↗</span>';
     passphrase.minLength=existing?1:12;
@@ -291,20 +292,21 @@
   byId("save-quick-log").addEventListener("click",()=>savePendingLog("BYPASSED_DUE_TO_DEPLETION"));
   byId("start-reset").addEventListener("click",event=>{
     if(resetTimer)clearInterval(resetTimer);
+    const button=event.currentTarget;
     let remaining=40;
     byId("reset-breath").classList.add("is-active");
     byId("breath-instruction").textContent="Follow the circle: breathe in as it expands, and out as it softens.";
-    event.currentTarget.disabled=true;event.currentTarget.textContent="Reset in progress · 40s";
+    button.disabled=true;button.textContent="Reset in progress · 40s";
     resetTimer=setInterval(()=>{
       remaining-=1;
       if(remaining<=0){
         clearInterval(resetTimer);resetTimer=null;
         byId("reset-breath").classList.remove("is-active");
         byId("breath-instruction").textContent="Pause here. You can stop, or save the quick log and return later.";
-        event.currentTarget.disabled=false;event.currentTarget.textContent="Start a 40-second reset";
+        button.disabled=false;button.textContent="Start a 40-second reset";
         return;
       }
-      event.currentTarget.textContent="Reset in progress · "+remaining+"s";
+      button.textContent="Reset in progress · "+remaining+"s";
     },1000);
   });
   byId("checkin-form").addEventListener("submit",async event=>{
