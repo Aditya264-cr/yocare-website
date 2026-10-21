@@ -190,6 +190,7 @@
         if(intervention)next.interventions.unshift(intervention);
       });
       pendingLog=null;
+      byId("reframe-form").reset();byId("evidence-value").textContent="3";
       byId("reframe-card").hidden=true;byId("reset-card").hidden=true;
       byId("impulse-form").reset();heuristicManuallySelected=false;byId("severity-value").textContent="4";
       byId("heuristic-hint").textContent="A pattern suggestion can help name a thought; it is not a diagnosis.";
@@ -356,6 +357,6 @@
     if(!window.confirm("Delete the encrypted Yocare Health vault from this device? This cannot be undone."))return;
     localStorage.removeItem(STORAGE_KEY);lock();
   });
-  window.addEventListener("pagehide",()=>{data=null;vaultKey=null;vaultSalt=null;});
+  window.addEventListener("pagehide",lock);
   setVaultMode();
 })();
