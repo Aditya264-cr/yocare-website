@@ -147,4 +147,67 @@
 @media(prefers-reduced-motion:reduce){
  .mind-orbit-ring,.mind-orbit-core,.reset-breath.is-active span{animation:none!important}
  .reset-breath.is-active span{transform:scale(1.1)}
-}
+}/* Pillar 02: shared visual language and gentle, optional interactions */
+.pillar-two{margin:46px 0 10px;padding:34px;border:1px solid #dfe8dc;border-radius:12px;background:radial-gradient(ellipse at 10% 0%,#e8f1e5 0,transparent 42%),#f1f5ef}
+.pillar-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:20px}
+.pillar-heading>div{max-width:680px}.pillar-heading h2{font:700 clamp(1.8rem,3vw,2.7rem)/1.12 var(--display);letter-spacing:-.055em;margin:0 0 10px}
+.pillar-heading>div>p:last-child{font-size:.8rem;line-height:1.7;color:#627164;margin:0}
+.pillar-badge{border:1px solid #ceddca;border-radius:99px;padding:8px 12px;font-size:.55rem;letter-spacing:.1em;color:#5a785d;white-space:nowrap}
+.pillar-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.pillar-grid .tool-card{background:#ffffffd9;box-shadow:0 10px 28px #263b2709}
+.pillar-grid h3{font:700 1.2rem/1.25 var(--display);letter-spacing:-.035em;margin:0}
+.pillar-grid .tool-heading{gap:11px}.pillar-grid .tool-intro{min-height:3.1em}
+.watchman-prompt{border-left:2px solid #80a17c;background:#f2f7f0;padding:11px 13px;color:#4e6851;font-size:.7rem;line-height:1.65}
+.word-count{font-size:.61rem;color:#758276}.word-count.is-valid{color:#4f8055}
+.consent-check{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid #e2e9df;border-radius:5px;background:#f8faf7;font-size:.67rem;line-height:1.55;color:#536155}
+.consent-check input{width:16px;height:16px;flex:none;accent-color:#59845b;margin:1px 0}
+.sleep-overlay{position:fixed;inset:0;z-index:99;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at center,#13231b 0%,#08110c 65%,#030705 100%);color:#f3f7ef;transition:opacity 1.2s ease}
+.sleep-overlay.is-finished{background:#020403}
+.sleep-panel{width:min(100%,560px);display:flex;flex-direction:column;align-items:center;text-align:center}
+.sleep-panel .section-label{color:#91a990}
+.sleep-clock{font:500 1rem var(--display);font-variant-numeric:tabular-nums;color:#c6d5c2}
+.sleep-phase{font-size:.59rem;letter-spacing:.18em;color:#9cad98;margin:22px 0 5px}
+.sleep-pulse{width:66px;height:66px;border:1px solid #839c80;border-radius:50%;margin:19px 0;background:radial-gradient(circle,#7b997555,transparent 70%);animation:sleep-pulse 8s ease-in-out infinite alternate}
+.sleep-guidance{font:500 clamp(1.05rem,3vw,1.35rem)/1.6 var(--display);max-width:480px;min-height:3.2em;color:#eff4eb}
+.sleep-phrase{font:700 1.2rem/1.4 var(--display);color:#bdd2b7;min-height:1.4em}
+.sleep-overlay .button{margin-top:22px;background:transparent;color:#d9e5d5;border-color:#839781}
+.sleep-exit-hint{font-size:.59rem;color:#89998a;margin-top:17px}
+.sleep-open{overflow:hidden}.sleep-open .health-header,.sleep-open .health-footer{visibility:hidden}
+@keyframes sleep-pulse{from{transform:scale(.83);opacity:.55}to{transform:scale(1.15);opacity:1}}
+@media(max-width:700px){.pillar-two{padding:21px 16px;margin-top:32px}.pillar-heading{align-items:flex-start;flex-direction:column}.pillar-grid{grid-template-columns:1fr}.pillar-grid .tool-intro{min-height:0}.pillar-badge{white-space:normal}}
+@media(prefers-reduced-motion:reduce){.sleep-pulse{animation:none}.sleep-overlay{transition:none}}
+
+/* Keep username and passphrase inputs easy to scan on every screen */
+#vault-form{grid-template-columns:minmax(0,1fr);max-width:480px}
+#vault-form label,#vault-form input{grid-column:1}
+#vault-form .username-note{grid-column:1;margin:-3px 0 4px;font-size:.63rem;line-height:1.55;color:#7a867c}
+
+/* Pillar 02: shared visual language and gentle, optional interactions */
+.pillar-two{margin:46px 0 10px;padding:34px;border:1px solid #dfe8dc;border-radius:12px;background:radial-gradient(ellipse at 10% 0%,#e8f1e5 0,transparent 42%),#f1f5ef}
+.pillar-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:20px}
+.pillar-heading>div{max-width:680px}.pillar-heading h2{font:700 clamp(1.8rem,3vw,2.7rem)/1.12 var(--display);letter-spacing:-.055em;margin:0 0 10px}
+.pillar-heading>div>p:last-child{font-size:.8rem;line-height:1.7;color:#627164;margin:0}
+.pillar-badge{border:1px solid #ceddca;border-radius:99px;padding:8px 12px;font-size:.55rem;letter-spacing:.1em;color:#5a785d;white-space:nowrap}
+.pillar-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.pillar-grid .tool-card{background:#ffffffd9;box-shadow:0 10px 28px #263b2709}
+.pillar-grid h3{font:700 1.2rem/1.25 var(--display);letter-spacing:-.035em;margin:0}
+.pillar-grid .tool-heading{gap:11px}.pillar-grid .tool-intro{min-height:3.1em}
+.watchman-prompt{border-left:2px solid #80a17c;background:#f2f7f0;padding:11px 13px;color:#4e6851;font-size:.7rem;line-height:1.65}
+.word-count{font-size:.61rem;color:#758276}.word-count.is-valid{color:#4f8055}
+.consent-check{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid #e2e9df;border-radius:5px;background:#f8faf7;font-size:.67rem;line-height:1.55;color:#536155}
+.consent-check input{width:16px;height:16px;flex:none;accent-color:#59845b;margin:1px 0}
+.sleep-overlay{position:fixed;inset:0;z-index:99;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at center,#13231b 0%,#08110c 65%,#030705 100%);color:#f3f7ef;transition:opacity 1.2s ease}
+.sleep-overlay.is-finished{background:#020403}
+.sleep-panel{width:min(100%,560px);display:flex;flex-direction:column;align-items:center;text-align:center}
+.sleep-panel .section-label{color:#91a990}
+.sleep-clock{font:500 1rem var(--display);font-variant-numeric:tabular-nums;color:#c6d5c2}
+.sleep-phase{font-size:.59rem;letter-spacing:.18em;color:#9cad98;margin:22px 0 5px}
+.sleep-pulse{width:66px;height:66px;border:1px solid #839c80;border-radius:50%;margin:19px 0;background:radial-gradient(circle,#7b997555,transparent 70%);animation:sleep-pulse 8s ease-in-out infinite alternate}
+.sleep-guidance{font:500 clamp(1.05rem,3vw,1.35rem)/1.6 var(--display);max-width:480px;min-height:3.2em;color:#eff4eb}
+.sleep-phrase{font:700 1.2rem/1.4 var(--display);color:#bdd2b7;min-height:1.4em}
+.sleep-overlay .button{margin-top:22px;background:transparent;color:#d9e5d5;border-color:#839781}
+.sleep-exit-hint{font-size:.59rem;color:#89998a;margin-top:17px}
+.sleep-open{overflow:hidden}.sleep-open .health-header,.sleep-open .health-footer{visibility:hidden}
+@keyframes sleep-pulse{from{transform:scale(.83);opacity:.55}to{transform:scale(1.15);opacity:1}}
+@media(max-width:700px){.pillar-two{padding:21px 16px;margin-top:32px}.pillar-heading{align-items:flex-start;flex-direction:column}.pillar-grid{grid-template-columns:1fr}.pillar-grid .tool-intro{min-height:0}.pillar-badge{white-space:normal}}
+@media(prefers-reduced-motion:reduce){.sleep-pulse{animation:none}.sleep-overlay{transition:none}}
