@@ -47,7 +47,7 @@
         shape.setAttribute("cx","250");
         shape.setAttribute("cy","250");
         shape.setAttribute("r","249");
-        shape.setAttribute("stroke-opacity",".3");
+        shape.setAttribute("stroke-opacity",".9");
         svg.appendChild(shape);
       }else{
         shape.setAttribute("stroke-linecap","round");
