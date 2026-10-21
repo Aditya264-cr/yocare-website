@@ -16,4 +16,30 @@
     const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add("is-visible");observer.unobserve(entry.target);}}),{threshold:.12,rootMargin:"0px 0px -24px 0px"});
     revealItems.forEach((el,i)=>{el.classList.add("reveal");if(i%3===1)el.style.transitionDelay=".08s";if(i%3===2)el.style.transitionDelay=".16s";observer.observe(el);});
   }
+
+  // Gentle pointer parallax gives the hero orbital system a little inertial depth.
+  const orbitalScene=document.querySelector(".hero-visual");
+  const motionPreference=window.matchMedia("(prefers-reduced-motion: reduce)");
+  if(orbitalScene&&!motionPreference.matches&&window.matchMedia("(hover: hover) and (pointer: fine)").matches){
+    let frame=0;
+    orbitalScene.addEventListener("pointermove",event=>{
+      const rect=orbitalScene.getBoundingClientRect();
+      const nx=(event.clientX-rect.left)/rect.width-.5;
+      const ny=(event.clientY-rect.top)/rect.height-.5;
+      if(frame)cancelAnimationFrame(frame);
+      frame=requestAnimationFrame(()=>{
+        orbitalScene.style.setProperty("--pointer-x",(nx*5).toFixed(2)+"deg");
+        orbitalScene.style.setProperty("--pointer-y",(-ny*4).toFixed(2)+"deg");
+      });
+    },{passive:true});
+    orbitalScene.addEventListener("pointerleave",()=>{
+      if(frame)cancelAnimationFrame(frame);
+      orbitalScene.style.setProperty("--pointer-x","0deg");
+      orbitalScene.style.setProperty("--pointer-y","0deg");
+    },{passive:true});
+    motionPreference.addEventListener?.("change",event=>{
+      if(event.matches){orbitalScene.style.transform="none";orbitalScene.style.transition="none";}
+    });
+  }
+
 })();
