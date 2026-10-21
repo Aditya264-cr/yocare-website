@@ -154,3 +154,40 @@
 .orbital-rings .ring.ring-depth::before,.orbital-rings .ring.ring-depth::after{display:none;content:none}
 .orbital-rings-front .ring.ring-depth{pointer-events:none}
 @media(prefers-reduced-motion:reduce){.orbital-rings .ring.ring-depth{will-change:auto}}
+
+
+/* Cohesive 2D visual system for the three platform cards */
+.platform-card{--graphic-accent:#4f8056;--graphic-wash:#e9f0e5}
+.health-card{--graphic-accent:#5e8d55;--graphic-wash:#e8f1e2}
+.education-card{--graphic-accent:#557c68;--graphic-wash:#e9f0ec}
+.research-card{--graphic-accent:#496f51;--graphic-wash:#eaf0e6}
+.platform-card .card-graphic{height:220px;background:radial-gradient(circle at 50% 48%,var(--graphic-wash) 0%,#f5f8f3 58%,#fbfcfa 100%)}
+.health-ring{border:1px solid color-mix(in srgb,var(--graphic-accent) 56%,transparent);box-shadow:none}
+.ring-2{border-color:color-mix(in srgb,var(--graphic-accent) 30%,transparent)}
+.health-center{position:relative;width:68px;height:68px;background:var(--graphic-accent);box-shadow:none}
+.health-center::after{content:"";position:absolute;inset:27px;border-radius:50%;background:#f5f8f3}
+.graphic-dot{width:8px;height:8px;background:var(--graphic-accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--graphic-accent) 12%,transparent)}
+.dot-2{background:#91aa78}
+.graphic-education .edu-line{height:1.5px;background:color-mix(in srgb,var(--graphic-accent) 62%,transparent)}
+.graphic-education .edu-node{width:11px;height:11px;background:var(--graphic-accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--graphic-accent) 13%,transparent);animation:edu-node-breathe 4.8s ease-in-out infinite}
+.graphic-education .n-2{animation-delay:-1.2s}
+.graphic-education .n-3{animation-delay:-2.4s}
+.graphic-education .n-4{animation-delay:-3.6s}
+.edu-center{width:58px;height:58px;background:#fbfcfa;color:var(--graphic-accent);border:1px solid color-mix(in srgb,var(--graphic-accent) 24%,transparent);box-shadow:none}
+.graphic-research svg{padding:18px}
+.research-edges{stroke:var(--graphic-accent);stroke-width:1.5;stroke-dasharray:none;opacity:.62;animation:research-drift 8s ease-in-out infinite}
+.research-points{fill:var(--graphic-accent)}
+.research-points circle{filter:none;stroke:#f5f8f3;stroke-width:2.5;transform-box:fill-box;transform-origin:center;animation:research-node-breathe 5.2s ease-in-out infinite}
+.research-points circle:nth-child(2){animation-delay:-.8s}
+.research-points circle:nth-child(3){animation-delay:-1.6s}
+.research-points circle:nth-child(4){animation-delay:-2.4s}
+.research-points circle:nth-child(5){animation-delay:-3.2s}
+.research-points circle:nth-child(6){animation-delay:-4s}
+.research-points circle:nth-child(7){animation-delay:-4.8s}
+.research-stamp{color:#66816a}
+@keyframes edu-node-breathe{0%,100%{transform:scale(.92);opacity:.78}50%{transform:scale(1.08);opacity:1}}
+@keyframes research-node-breathe{0%,100%{transform:scale(.94);opacity:.82}50%{transform:scale(1.08);opacity:1}}
+@keyframes research-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(1px,-1px)}}
+@media(prefers-reduced-motion:reduce){
+ .health-ring,.graphic-education .edu-node,.research-edges,.research-points circle{animation:none!important}
+}
