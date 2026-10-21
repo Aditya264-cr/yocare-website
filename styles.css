@@ -108,3 +108,30 @@
 /* Organic background image removed at the user's request */
 .intro-organic-art{display:none!important}
 .intro{min-height:0}
+
+
+/* Orbital system refinement: multi-axis planes, varied speeds, depth and inertial tilt */
+.hero-visual{perspective:1100px;transform-style:preserve-3d;--pointer-x:0deg;--pointer-y:0deg;transition:transform 520ms cubic-bezier(.16,1,.3,1);transform:rotateX(var(--pointer-y)) rotateY(var(--pointer-x))}
+.hero-visual .visual-orbit{border:1px solid #80a9828a;transform-style:preserve-3d;backface-visibility:visible;will-change:transform,opacity}
+.hero-visual .orbit-a{width:86%;height:42%;opacity:.88;border-color:#5f936bba;animation:orbit-plane-a 19s linear infinite}
+.hero-visual .orbit-b{width:96%;height:53%;opacity:.62;border-color:#8bad8a80;animation:orbit-plane-b 27s linear infinite}
+.hero-visual .orbit-c{width:65%;height:82%;opacity:.42;border-color:#9dbb9a66;animation:orbit-plane-c 35s linear infinite}
+.hero-visual .visual-orbit::before{content:"";position:absolute;top:0;left:50%;width:7px;height:7px;border-radius:50%;background:#f5ffe9;border:1px solid #76a978;box-shadow:0 0 0 4px #91bd8a26,0 0 15px #83b67d9c;transform:translate(-50%,-50%)}
+.hero-visual .orbit-b::before{width:6px;height:6px;top:50%;left:0;background:#d9eabf;box-shadow:0 0 0 4px #91bd8a20,0 0 12px #83b67d75}
+.hero-visual .orbit-c::before{width:5px;height:5px;top:50%;left:100%;background:#fff;box-shadow:0 0 0 3px #91bd8a20,0 0 10px #83b67d75}
+.hero-visual .visual-core{z-index:2;transform-style:preserve-3d}
+.hero-visual .orbit-a{z-index:1}.hero-visual .orbit-b{z-index:0}.hero-visual .orbit-c{z-index:0}
+@keyframes orbit-plane-a{
+  from{transform:translate(-50%,-50%) rotateX(62deg) rotateY(8deg) rotateZ(0deg)}
+  to{transform:translate(-50%,-50%) rotateX(62deg) rotateY(8deg) rotateZ(360deg)}
+}
+@keyframes orbit-plane-b{
+  from{transform:translate(-50%,-50%) rotateX(70deg) rotateY(28deg) rotateZ(360deg)}
+  to{transform:translate(-50%,-50%) rotateX(70deg) rotateY(28deg) rotateZ(0deg)}
+}
+@keyframes orbit-plane-c{
+  from{transform:translate(-50%,-50%) rotateX(36deg) rotateY(-38deg) rotateZ(-360deg)}
+  to{transform:translate(-50%,-50%) rotateX(36deg) rotateY(-38deg) rotateZ(0deg)}
+}
+@media(max-width:720px){.hero-visual{transform:none;transition:none}}
+@media(prefers-reduced-motion:reduce){.hero-visual{transform:none;transition:none}.hero-visual .visual-orbit{animation:none}.hero-visual .visual-orbit::before{display:none}}
