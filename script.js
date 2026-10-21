@@ -18,11 +18,15 @@
   }
 
 
-  // Multi-axis orbital rings adapted from the supplied prototype.
+  // Multi-axis orbital rings with depth-aware foreground arcs.
   const orbitalScene=document.querySelector(".hero-visual");
   const ringHost=document.getElementById("orbital-rings");
   const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
   if(orbitalScene&&ringHost){
+    const foregroundHost=document.createElement("div");
+    foregroundHost.className="orbital-rings orbital-rings-front";
+    foregroundHost.setAttribute("aria-hidden","true");
+    orbitalScene.appendChild(foregroundHost);
     const ringConfigs=[
       {size:220,speed:.42,dir:1,tiltX:70,tiltY:18,tiltZ:0,color:"rgba(94,234,212,.8)",phase:0},
       {size:290,speed:.51,dir:-1,tiltX:52,tiltY:30,tiltZ:22,color:"rgba(147,197,253,.75)",phase:1.1},
@@ -30,21 +34,47 @@
       {size:430,speed:.73,dir:-1,tiltX:20,tiltY:62,tiltZ:80,color:"rgba(254,215,170,.74)",phase:3.3},
       {size:500,speed:.88,dir:1,tiltX:8,tiltY:78,tiltZ:120,color:"rgba(253,186,116,.6)",phase:4.4}
     ];
+    const createSvg=(host,config)=>{
+      const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+      svg.classList.add("ring","ring-depth");
+      svg.setAttribute("viewBox","0 0 500 500");
+      svg.setAttribute("aria-hidden","true");
+      const shape=document.createElementNS("http://www.w3.org/2000/svg",host===ringHost?"circle":"path");
+      shape.setAttribute("fill","none");
+      shape.setAttribute("stroke",config.color);
+      shape.setAttribute("stroke-width","1.1");
+      if(host===ringHost){
+        shape.setAttribute("cx","250");
+        shape.setAttribute("cy","250");
+        shape.setAttribute("r","249");
+        shape.setAttribute("stroke-opacity",".9");
+        svg.appendChild(shape);
+      }else{
+        shape.setAttribute("stroke-linecap","round");
+        shape.setAttribute("stroke-linejoin","round");
+        svg.appendChild(shape);
+      }
+      host.appendChild(svg);
+      return {svg,shape};
+    };
     const rings=ringConfigs.map((config,index)=>{
-      const el=document.createElement("div");
-      el.className="ring";
-      el.style.setProperty("--stroke",config.color);
-      el.style.setProperty("--alpha",(0.58+index*.08).toFixed(2));
-      el.style.setProperty("--z",(index*10)+"px");
-      ringHost.appendChild(el);
-      return {...config,el,rotation:0,velocity:0};
+      const back=createSvg(ringHost,config);
+      const front=createSvg(foregroundHost,config);
+      return {...config,back:back.svg,backShape:back.shape,front:front.svg,frontShape:front.shape,rotation:0,velocity:0,index};
     });
     const pointer={x:0,y:0,targetX:0,targetY:0};
     let lastTime=0,elapsed=0,frameId=0,sceneScale=1;
     const resizeRings=()=>{
       const rect=orbitalScene.getBoundingClientRect();
       sceneScale=Math.min(rect.width,rect.height,540)/500;
-      rings.forEach(ring=>ring.el.style.setProperty("--size",Math.max(130,ring.size*sceneScale)+"px"));
+      rings.forEach(ring=>{
+        const size=Math.max(130,ring.size*sceneScale);
+        [ring.back,ring.front].forEach(svg=>{
+          svg.style.setProperty("--size",size+"px");
+          svg.style.width=size+"px";
+          svg.style.height=size+"px";
+        });
+      });
     };
     resizeRings();
     if("ResizeObserver" in window)new ResizeObserver(resizeRings).observe(orbitalScene);
@@ -59,36 +89,57 @@
       orbitalScene.addEventListener("pointerleave",()=>{pointer.targetX=0;pointer.targetY=0;},{passive:true});
     }
     const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
-    const animate=now=>{
-      if(!lastTime)lastTime=now;
-      const dt=Math.min((now-lastTime)/1000,.04);
-      lastTime=now;
-      elapsed+=dt;
+    const frontArcPath=(ring,tiltX,tiltY,spin)=>{
+      const segments=240,center=250,radius=248.8,parts=[];
+      const tx=tiltX*Math.PI/180,ty=tiltY*Math.PI/180;
+      for(let i=0;i<segments;i++){
+        const a0=(i/segments)*Math.PI*2+spin;
+        const a1=((i+1)/segments)*Math.PI*2+spin;
+        const isFront=angle=>{
+          const x=Math.cos(angle),y=Math.sin(angle);
+          const z=y*Math.sin(tx)-x*Math.sin(ty)*Math.cos(tx);
+          return z>.025;
+        };
+        if(!isFront((a0+a1)/2))continue;
+        const x0=center+radius*Math.cos(a0),y0=center+radius*Math.sin(a0);
+        const x1=center+radius*Math.cos(a1),y1=center+radius*Math.sin(a1);
+        parts.push(`M${x0.toFixed(2)} ${y0.toFixed(2)}L${x1.toFixed(2)} ${y1.toFixed(2)}`);
+      }
+      return parts.join("");
+    };
+    const renderRings=dt=>{
       pointer.x+=(pointer.targetX-pointer.x)*Math.min(1,dt*3.5);
       pointer.y+=(pointer.targetY-pointer.y)*Math.min(1,dt*3.5);
-      rings.forEach((ring,index)=>{
+      rings.forEach(ring=>{
         const targetVelocity=ring.speed*25;
         ring.velocity+=(targetVelocity-ring.velocity)*Math.min(1,dt*2.4);
         ring.rotation+=ring.velocity*dt*ring.dir;
-        const depth=.5+.5*Math.sin(elapsed*.9+ring.phase);
         const tiltX=ring.tiltX+pointer.y*10+Math.sin(elapsed*.8+ring.phase)*5;
         const tiltY=ring.tiltY+pointer.x*12+Math.cos(elapsed*.7+ring.phase)*6;
-        const tiltZ=ring.tiltZ+ring.rotation*.9;
-        const scale=1+Math.sin(elapsed*.9+ring.phase)*.025;
-        ring.el.style.transform=`translate(-50%,-50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${tiltZ}deg) scale(${scale})`;
-        ring.el.style.opacity=String(clamp(.28+depth*.62,.2,.9));
-        ring.el.style.filter=`brightness(${.72+depth*.55})`;
-        ring.el.style.setProperty("--alpha",(.22+depth*.58).toFixed(2));
-        ring.el.style.setProperty("--stroke-width",(.75+depth*.65).toFixed(2)+"px");
+        const spin=ring.tiltZ+ring.rotation*.9;
+        const transform=`translate(-50%,-50%) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${spin}deg)`;
+        ring.back.style.transform=transform;
+        ring.front.style.transform=transform;
+        const baseOpacity=.22+ring.index*.025;
+        ring.back.style.opacity=String(baseOpacity);
+        ring.backShape.setAttribute("stroke-width",(.8+ring.index*.08).toFixed(2));
+        ring.frontShape.setAttribute("d",frontArcPath(ring,tiltX,tiltY,spin*Math.PI/180));
+        ring.frontShape.setAttribute("stroke-opacity",String(.48+ring.index*.045));
+        ring.frontShape.setAttribute("stroke-width",(1.05+ring.index*.12).toFixed(2));
       });
-      if(!reduceMotion.matches)frameId=requestAnimationFrame(animate);
     };
     if(reduceMotion.matches){
-      rings.forEach(ring=>{
-        ring.el.style.transform=`translate(-50%,-50%) rotateX(${ring.tiltX}deg) rotateY(${ring.tiltY}deg) rotateZ(${ring.tiltZ}deg)`;
-        ring.el.style.opacity=".58";
-      });
+      renderRings(0);
+      pointer.targetX=pointer.targetY=0;
     }else{
+      const animate=now=>{
+        if(!lastTime)lastTime=now;
+        const dt=Math.min((now-lastTime)/1000,.04);
+        lastTime=now;
+        elapsed+=dt;
+        renderRings(dt);
+        frameId=requestAnimationFrame(animate);
+      };
       frameId=requestAnimationFrame(animate);
       reduceMotion.addEventListener?.("change",event=>{
         if(event.matches&&frameId)cancelAnimationFrame(frameId);
