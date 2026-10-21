@@ -28,11 +28,11 @@
     foregroundHost.setAttribute("aria-hidden","true");
     orbitalScene.appendChild(foregroundHost);
     const ringConfigs=[
-      {size:220,speed:.42,dir:1,tiltX:70,tiltY:18,tiltZ:0,color:"rgba(94,234,212,.8)",phase:0},
-      {size:290,speed:.51,dir:-1,tiltX:52,tiltY:30,tiltZ:22,color:"rgba(147,197,253,.75)",phase:1.1},
-      {size:360,speed:.61,dir:1,tiltX:35,tiltY:48,tiltZ:48,color:"rgba(167,139,250,.72)",phase:2.2},
-      {size:430,speed:.73,dir:-1,tiltX:20,tiltY:62,tiltZ:80,color:"rgba(254,215,170,.74)",phase:3.3},
-      {size:500,speed:.88,dir:1,tiltX:8,tiltY:78,tiltZ:120,color:"rgba(253,186,116,.6)",phase:4.4}
+      {size:220,speed:.42,dir:1,tiltX:70,tiltY:18,tiltZ:0,color:"rgba(31,74,43,.82)",phase:0},
+      {size:290,speed:.51,dir:-1,tiltX:52,tiltY:30,tiltZ:22,color:"rgba(40,86,49,.78)",phase:1.1},
+      {size:360,speed:.61,dir:1,tiltX:35,tiltY:48,tiltZ:48,color:"rgba(49,97,56,.74)",phase:2.2},
+      {size:430,speed:.73,dir:-1,tiltX:20,tiltY:62,tiltZ:80,color:"rgba(59,108,65,.70)",phase:3.3},
+      {size:500,speed:.88,dir:1,tiltX:8,tiltY:78,tiltZ:120,color:"rgba(72,119,75,.66)",phase:4.4}
     ];
     const createSvg=(host,config)=>{
       const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
