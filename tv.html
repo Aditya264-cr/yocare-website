@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b10">
+  <meta name="description" content="Yocare Live — explore live television channels by country and region.">
+  <title>Yocare Live — Television, in your orbit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tv.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js" defer></script>
+  <script src="tv.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="Yocare home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#channels">Discover</a><a href="#player">Now playing</a><a href="index.html">Yocare home ↗</a></nav>
+    <div class="top-status"><span class="status-dot"></span><span>LIVE CHANNELS</span></div>
+  </header>
+
+  <main class="app-shell">
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow"><span></span> YOUR WORLD, LIVE</p>
+        <h1>Television,<br><em>in your orbit.</em></h1>
+        <p class="intro-text">Discover live channels by country, explore what’s on, and tune in from one considered place.</p>
+      </div>
+      <div class="intro-orbit" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div><div class="orbit-core"><span>YC</span></div><i class="orbit-point point-a"></i><i class="orbit-point point-b"></i><i class="orbit-point point-c"></i></div>
+    </section>
+
+    <section class="player-section" id="player" aria-label="Live video player">
+      <div class="player-frame">
+        <video id="video" playsinline controls preload="none" aria-label="Live channel player"></video>
+        <div class="player-placeholder" id="player-placeholder">
+          <div class="play-orbit"><span>▶</span></div>
+          <p class="placeholder-kicker">YOUR LIVE SCREEN</p>
+          <h2>Choose a channel to begin.</h2>
+          <p>Playback starts only after you select a channel.</p>
+        </div>
+        <div class="player-shade" aria-hidden="true"></div>
+        <div class="player-topline"><span class="live-pill"><i></i> LIVE</span><span id="player-region">INDIA · LIVE TV</span></div>
+        <div class="player-bottomline"><div><span class="now-label">NOW PLAYING</span><h2 id="now-title">Select a channel</h2><p id="now-subtitle">Your channel will appear here</p></div><button class="icon-button" id="retry-button" type="button" aria-label="Retry playback" title="Retry playback">↻</button></div>
+        <div class="player-message" id="player-message" role="status" aria-live="polite" hidden></div>
+      </div>
+      <div class="player-foot"><span><i class="status-dot"></i> <span id="playback-state">Ready when you are</span></span><span id="stream-note">Stream quality depends on the broadcaster and your connection.</span></div>
+    </section>
+
+    <section class="channels-section" id="channels">
+      <div class="section-heading"><div><p class="eyebrow">THE CHANNEL GUIDE</p><h2>Find your frequency.</h2><p class="section-subtitle">Browse available streams by country or search for a channel.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
+      <div class="toolbar">
+        <label class="country-control"><span>LOCATION / COUNTRY</span><select id="country-select" aria-label="Choose country">
+          <option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option>
+        </select></label>
+        <label class="search-control"><span class="sr-only">Search channels</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search channels…" autocomplete="off" aria-label="Search channels"></label>
+        <button class="filter-button selected" id="all-filter" type="button" aria-pressed="true">All channels</button>
+        <button class="filter-button" id="news-filter" type="button" aria-pressed="false">News</button>
+        <button class="filter-button" id="music-filter" type="button" aria-pressed="false">Music</button>
+        <button class="filter-button" id="religion-filter" type="button" aria-pressed="false">Spiritual</button>
+      </div>
+      <div class="load-state" id="load-state" role="status" aria-live="polite"><span class="spinner"></span><span>Loading the channel guide…</span></div>
+      <div class="channel-grid" id="channel-grid" aria-label="Available channels"></div>
+      <div class="empty-state" id="empty-state" hidden><div>⌕</div><h3>No channels found</h3><p>Try a different search or select another country.</p><button id="clear-search" type="button">Clear search</button></div>
+      <div class="load-more-wrap"><button class="load-more" id="load-more" type="button" hidden>Load more channels <span>↓</span></button></div>
+      <p class="source-note">Channel availability and playback are provided by third-party broadcasters. Links can change or be unavailable by region. Only streams you have permission to access and distribute should be used.</p>
+    </section>
+  </main>
+  <footer class="footer"><a class="brand" href="index.html"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a><span>Thoughtfully connected to the world.</span><a href="#top">Back to top ↑</a></footer>
+</body>
+</html>
