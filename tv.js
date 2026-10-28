@@ -240,7 +240,7 @@
   function renderNextPage() {
     const start = page * PAGE_SIZE;
     const batch = filtered.slice(start, start + PAGE_SIZE);
-    batch.forEach((channel, i) => els.grid.append(makeCard(channel, start + i));
+    batch.forEach((channel, i) => els.grid.append(makeCard(channel, start + i)));
     page++;
     els.more.hidden = page * PAGE_SIZE >= filtered.length;
   }
