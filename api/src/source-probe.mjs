@@ -5,7 +5,7 @@ export function safeSourceUrl(value) {
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password) return false;
-    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, "");
     if (!host || host === "localhost" || host.endsWith(".localhost") ||
         host.endsWith(".local") || host.endsWith(".internal") || host.includes(":") ||
         /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return false;
