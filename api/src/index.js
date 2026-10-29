@@ -26,10 +26,11 @@ function validRightsRegions(value) {
 }
 function requestCountry(request, env) {
   const country = String(request.cf?.country || "").toUpperCase();
-  if (/^[A-Z]{2}$/.test(country)) return country;
+  if (/^[A-Z]{2}$/.test(country) && country !== "XX") return country;
   const origin = request.headers.get("Origin") || "";
-  if (env.DEV_ORIGIN && origin === env.DEV_ORIGIN && /^[A-Z]{2}$/.test(String(env.DEV_COUNTRY || "").toUpperCase())) {
-    return String(env.DEV_COUNTRY).toUpperCase();
+  const devCountry = String(env.DEV_COUNTRY || "").toUpperCase();
+  if (env.DEV_ORIGIN && origin === env.DEV_ORIGIN && /^[A-Z]{2}$/.test(devCountry) && devCountry !== "XX") {
+    return devCountry;
   }
   return "";
 }
