@@ -341,9 +341,10 @@ body:before{background:linear-gradient(90deg,#02070630,transparent 18%,transpare
 .topnav a[href="#on-now"]{color:#acb8b0}
 .hero-feature{min-width:0;display:grid;gap:10px}
 .hero-spotlight{min-height:365px;isolation:isolate}
-.spotlight-backdrop{position:absolute;z-index:-1;inset:0;width:100%;height:100%;object-fit:cover;opacity:.72;mask-image:linear-gradient(180deg,#000 0%,#0009 48%,#000 100%)}
-.hero-spotlight.has-program-art{background:linear-gradient(180deg,#08100c55,#08100ce8),#15251d}
-.hero-spotlight.has-program-art .spotlight-logo{display:none}
+.hero{position:relative;isolation:isolate;overflow:hidden}
+.hero>*:not(.spotlight-backdrop){position:relative;z-index:1}
+.hero .spotlight-backdrop{position:absolute;z-index:0;inset:0;width:100%;height:100%;object-fit:cover;opacity:.48;mask-image:linear-gradient(90deg,#000 0%,#000 68%,transparent 100%)}
+.hero.has-program-art{background:linear-gradient(90deg,#08100cf5 0%,#08100cd9 45%,#08100c55 100%),linear-gradient(0deg,#08100c66,transparent 65%),radial-gradient(ellipse at 77% 45%,#1a4938,#0a1110 75%)}
 .spotlight-controls{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:0 5px;color:#91a096;font-size:.62rem}
 .spotlight-controls[hidden]{display:none}
 .spotlight-controls button{width:34px;height:34px;border:1px solid #ffffff27;border-radius:50%;background:#111a15;color:#e7f1e7;font-size:1.3rem;line-height:1;cursor:pointer}
