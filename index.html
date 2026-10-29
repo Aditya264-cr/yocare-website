@@ -55,10 +55,14 @@
           <option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option>
         </select></label>
         <label class="search-control"><span class="sr-only">Search channels</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search channels…" autocomplete="off" aria-label="Search channels"></label>
-        <button class="filter-button selected" id="all-filter" type="button" aria-pressed="true">All channels</button>
-        <button class="filter-button" id="news-filter" type="button" aria-pressed="false">News</button>
-        <button class="filter-button" id="music-filter" type="button" aria-pressed="false">Music</button>
-        <button class="filter-button" id="religion-filter" type="button" aria-pressed="false">Spiritual</button>
+      </div>
+      <div class="category-bar">
+        <div class="category-heading"><span>EXPLORE BY CATEGORY</span><span id="category-summary">All genres</span></div>
+        <div class="category-chips" id="category-chips" role="group" aria-label="Filter channels by category">
+          <button class="category-chip selected" type="button" data-category="all" aria-pressed="true">All channels</button>
+        </div>
+      </div>
+      <div class="guide-toolbar-note"><span class="guide-live-dot"></span> Channel guide <span class="guide-note-divider">/</span> <span id="visible-summary">Loading available channels…</span>
       </div>
       <div class="load-state" id="load-state" role="status" aria-live="polite"><span class="spinner"></span><span>Loading the channel guide…</span></div>
       <div class="channel-grid" id="channel-grid" aria-label="Available channels"></div>
