@@ -3,6 +3,10 @@
 
   const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/";
   const PAGE_SIZE = 48;
+  const PLAYLIST_FETCH_TIMEOUT_MS = 15000;
+  const DIRECT_STARTUP_TIMEOUT_MS = 25000;
+  const STREAM_STARTUP_TIMEOUT_MS = 50000;
+  const BUFFER_STALL_TIMEOUT_MS = 30000;
   const $ = (id) => document.getElementById(id);
   const els = {
     video: $("video"), placeholder: $("player-placeholder"), grid: $("channel-grid"),
@@ -21,6 +25,8 @@
   let activeChannel = null;
   let spotlightChannel = null;
   let fallbackIndex = 0;
+  let sourceAttemptId = 0;
+  let lastSourceFailure = null;
   let hls = null;
   let dashPlayer = null;
   let loadController = null;
@@ -131,8 +137,35 @@
     els.state.textContent = message;
   }
 
-  function showPlayPrompt(channel, index) {
-    if (activeChannel !== channel || fallbackIndex !== index) return;
+  function isCurrentSource(channel, index, attemptId) {
+    return activeChannel === channel && fallbackIndex === index && sourceAttemptId === attemptId;
+  }
+
+  function sourceFailureMessage(category) {
+    const messages = {
+      invalid: "a source URL was malformed",
+      protocol: "a source used a protocol this browser cannot play",
+      player: "the required browser playback library did not load",
+      unsupported: "this browser could not play the source format",
+      denied: "the provider denied browser access",
+      missing: "the provider reported that the stream was missing",
+      decode: "the browser could not decode the stream",
+      network: "the source did not deliver playable media",
+      timeout: "the source did not become playable before the startup limit",
+      stalled: "the stream stopped delivering media"
+    };
+    return messages[category] || "the source could not be started";
+  }
+
+  function recordSourceFailure(channel, index, category, status) {
+    lastSourceFailure = category;
+    const details = {channel: channel.name, source: index + 1, category};
+    if (status) details.status = status;
+    console.warn("Yocare Live source failed", details);
+  }
+
+  function showPlayPrompt(channel, index, attemptId) {
+    if (!isCurrentSource(channel, index, attemptId)) return;
     window.clearTimeout(playbackTimer);
     setPlaybackState("Waiting for your tap");
     setMessage("Your browser blocked automatic playback. Select Play to start this channel.");
@@ -140,26 +173,56 @@
     els.playStart.disabled = false;
   }
 
-  function handlePlaybackRejection(channel, index, error) {
-    if (activeChannel !== channel || fallbackIndex !== index) return;
+  function handlePlaybackRejection(channel, index, attemptId, error) {
+    if (!isCurrentSource(channel, index, attemptId)) return;
     if (error && error.name === "NotAllowedError") {
-      showPlayPrompt(channel, index);
+      showPlayPrompt(channel, index, attemptId);
       return;
     }
-    if (error && error.name === "AbortError") return;
-    tryNextSource(channel, index);
+    if (error && error.name === "AbortError") {
+      els.playStart.disabled = false;
+      return;
+    }
+    const category = error && error.name === "NotSupportedError" ? "unsupported" :
+      error && error.name === "SecurityError" ? "denied" : "network";
+    recordSourceFailure(channel, index, category);
+    tryNextSource(channel, index, attemptId);
+  }
+
+  function requestPlayback(channel, index, attemptId) {
+    if (!isCurrentSource(channel, index, attemptId)) return;
+    try {
+      const playback = els.video.play();
+      if (!playback || typeof playback.then !== "function") return;
+      playback.then(() => {
+        if (!isCurrentSource(channel, index, attemptId)) return;
+        els.playStart.hidden = true;
+        els.playStart.disabled = false;
+        setMessage("");
+      }).catch(error => handlePlaybackRejection(channel, index, attemptId, error));
+    } catch (error) {
+      handlePlaybackRejection(channel, index, attemptId, error);
+    }
   }
 
   function resumePendingAlternateFallback() {
     const waiting = waitingForAlternateSource;
     waitingForAlternateSource = null;
-    if (waiting && activeChannel === waiting.channel) {
-      tryNextSource(waiting.channel, waiting.index);
+    if (waiting && isCurrentSource(waiting.channel, waiting.index, waiting.attemptId)) {
+      tryNextSource(waiting.channel, waiting.index, waiting.attemptId);
     }
   }
 
   function destroyPlayer() {
+    const attemptId = ++sourceAttemptId;
     window.clearTimeout(playbackTimer);
+    els.video.oncanplay = null;
+    els.video.onplaying = null;
+    els.video.onwaiting = null;
+    els.video.onstalled = null;
+    els.video.onerror = null;
+    els.playStart.hidden = true;
+    els.playStart.disabled = false;
     if (hls) {
       try { hls.destroy(); } catch (_) {}
       hls = null;
@@ -171,6 +234,7 @@
     els.video.pause();
     els.video.removeAttribute("src");
     els.video.load();
+    return attemptId;
   }
 
   function playlistUrl(code) {
@@ -190,19 +254,38 @@
         ];
     let lastError = null;
     for (const source of sources) {
+      const requestController = new AbortController();
+      let timedOut = false;
+      const abortFromOwner = () => requestController.abort();
+      if (signal) {
+        if (signal.aborted) requestController.abort();
+        else signal.addEventListener("abort", abortFromOwner, {once:true});
+      }
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true;
+        requestController.abort();
+      }, PLAYLIST_FETCH_TIMEOUT_MS);
       try {
         const response = await fetch(source, {
-          signal,
+          signal: requestController.signal,
           cache: "no-cache",
           headers: {"Accept": "application/vnd.apple.mpegurl, audio/x-mpegurl, text/plain, */*"}
         });
         if (!response.ok) throw new Error("Playlist source returned HTTP " + response.status + ".");
-        const text = await response.text();
-        if (!text.includes("#EXTINF:")) throw new Error("Playlist source returned no channel entries.");
-        return text;
+        const playlist = await response.text();
+        if (!playlist.includes("#EXTINF:")) throw new Error("Playlist source returned no channel entries.");
+        return playlist;
       } catch (error) {
-        if (error.name === "AbortError") throw error;
+        if (signal && signal.aborted) throw error;
+        if (timedOut) {
+          lastError = new Error("Playlist request timed out.");
+          continue;
+        }
+        if (error && error.name === "AbortError") throw error;
         lastError = error;
+      } finally {
+        window.clearTimeout(timeoutId);
+        if (signal) signal.removeEventListener("abort", abortFromOwner);
       }
     }
     throw lastError || new Error("All " + kind + " playlist sources were unavailable.");
@@ -249,6 +332,7 @@
     if (loadController) loadController.abort();
     alternatePlaylistPending = false;
     waitingForAlternateSource = null;
+    lastSourceFailure = null;
     loadController = new AbortController();
     const currentRequest = ++requestNumber;
     setLoading(true, "Loading channels for " + countryName() + "…");
@@ -549,6 +633,7 @@
     renderSpotlight(channel);
     fallbackIndex = 0;
     waitingForAlternateSource = null;
+    lastSourceFailure = null;
     els.title.textContent = channel.name;
     els.subtitle.textContent = channel.group || (countryName() + " · Live television");
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
@@ -563,86 +648,47 @@
     window.clearTimeout(playbackTimer);
     els.playStart.hidden = true;
     els.playStart.disabled = false;
+    fallbackIndex = index;
+    if (index === 0) lastSourceFailure = null;
     if (index >= channel.urls.length) {
-      setPlaybackState("Stream unavailable");
-      setMessage("This channel’s available links did not start. Try another channel or come back later; broadcaster links can go offline or block playback.");
-      showPlayerPlaceholder(true);
+      tryNextSource(channel, index, sourceAttemptId);
       return;
     }
-    fallbackIndex = index;
+
     networkRecoveryAttempts = 0;
     mediaRecoveryAttempts = 0;
-    destroyPlayer();
+    const attemptId = destroyPlayer();
     setMessage(index > 0 ? "Trying another available source…" : "");
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
     const url = channel.urls[index];
 
+    const fail = (category, status) => {
+      if (!isCurrentSource(channel, index, attemptId)) return;
+      recordSourceFailure(channel, index, category, status);
+      tryNextSource(channel, index, attemptId);
+    };
+
     let parsedUrl;
     try { parsedUrl = new URL(url); } catch (_) {
-      setPlaybackState("Invalid stream URL");
-      setMessage("This channel has a malformed stream URL. Try another channel.");
-      showPlayerPlaceholder(true); return;
+      fail("invalid");
+      return;
     }
     if (["rtsp:", "rtmp:", "rtmps:", "udp:", "rtp:", "mms:", "mmsh:"].includes(parsedUrl.protocol)) {
-      setPlaybackState("Source needs a compatible stream");
-      setMessage("This broadcaster uses " + parsedUrl.protocol.replace(":", "").toUpperCase() + ", which browsers cannot play directly. Yocare needs a browser-compatible HLS/DASH/MP4 URL or an authorized streaming gateway. Access restrictions are not bypassed.");
-      showPlayerPlaceholder(true); return;
+      fail("protocol");
+      return;
     }
     if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-      setPlaybackState("Unsupported stream protocol");
-      setMessage("This URL scheme is not supported for browser playback.");
-      showPlayerPlaceholder(true); return;
+      fail("protocol");
+      return;
     }
+
     const path = parsedUrl.pathname.toLowerCase();
     const isDash = path.endsWith(".mpd");
     const isDirectMedia = /\.(mp4|m4v|webm|ogv|ogg|mov|mp3|m4a|aac|wav)$/.test(path);
-    if (isDash) {
-      if (!window.dashjs || !window.dashjs.MediaPlayer) {
-        setPlaybackState("DASH player unavailable");
-        setMessage("The DASH playback component did not load. Check your connection and refresh.");
-        showPlayerPlaceholder(true); return;
-      }
-      dashPlayer = window.dashjs.MediaPlayer().create();
-      dashPlayer.initialize(els.video, url, false);
-      els.video.oncanplay = () => {
-        if (activeChannel === channel && fallbackIndex === index) {
-          els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
-        }
-      };
-      dashPlayer.on(window.dashjs.MediaPlayer.events.ERROR, () => {
-        if (activeChannel === channel) tryNextSource(channel, index);
-      });
-    } else if (isDirectMedia) {
-      els.video.src = url; els.video.load();
-      els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
-    } else if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
-      els.video.src = url; els.video.load();
-      els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
-    } else if (window.Hls && window.Hls.isSupported()) {
-      hls = new window.Hls({ enableWorker: true, lowLatencyMode: false, backBufferLength: 30, maxBufferLength: 30, maxMaxBufferLength: 60, manifestLoadingTimeOut: 15000, levelLoadingTimeOut: 20000, fragLoadingTimeOut: 25000, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, manifestLoadingRetryDelay: 800, levelLoadingRetryDelay: 800, fragLoadingRetryDelay: 800 });
-      hls.attachMedia(els.video);
-      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => { if (activeChannel === channel) hls.loadSource(url); });
-      hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-        if (activeChannel !== channel) return;
-        setPlaybackState("Stream ready"); setMessage("");
-        els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
-      });
-      hls.on(window.Hls.Events.ERROR, (_event, data) => {
-        if (activeChannel !== channel || !data.fatal) return;
-        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) { networkRecoveryAttempts++; setPlaybackState("Reconnecting…"); try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); } }
-        else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) { mediaRecoveryAttempts++; setPlaybackState("Recovering playback…"); try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); } }
-        else tryNextSource(channel, index);
-      });
-    } else {
-      setPlaybackState("Playback unsupported");
-      setMessage("This browser cannot play this stream format. Try a browser-compatible HLS, DASH or MP4 source.");
-      showPlayerPlaceholder(true); return;
-    }
-    // If a stream never becomes playable, move to its next available URL.
-    playbackTimer = window.setTimeout(() => {
-      if (activeChannel === channel && els.video.readyState < 2) tryNextSource(channel, index);
-    }, 18000);
+    const isHls = path.endsWith(".m3u8") || (!isDash && !isDirectMedia && els.video.canPlayType("application/vnd.apple.mpegurl") !== "");
+
     els.video.onplaying = () => {
+      if (!isCurrentSource(channel, index, attemptId)) return;
       window.clearTimeout(playbackTimer);
       setPlaybackState("Playing live");
       setMessage("");
@@ -650,40 +696,137 @@
       els.playStart.disabled = false;
       showPlayerPlaceholder(false);
     };
-    els.video.onwaiting = () => {
-      setPlaybackState("Buffering…");
+    const startStallTimer = (state) => {
+      if (!isCurrentSource(channel, index, attemptId) || els.video.readyState < 2) return;
+      setPlaybackState(state);
       window.clearTimeout(playbackTimer);
       playbackTimer = window.setTimeout(() => {
-        if (activeChannel === channel && fallbackIndex === index && els.video.readyState < 3) {
-          tryNextSource(channel, index);
-        }
-      }, 15000);
+        if (isCurrentSource(channel, index, attemptId) && els.video.readyState < 3) fail("stalled");
+      }, BUFFER_STALL_TIMEOUT_MS);
     };
-    els.video.onstalled = () => {
-      setPlaybackState("Connection stalled…");
-      window.clearTimeout(playbackTimer);
-      playbackTimer = window.setTimeout(() => {
-        if (activeChannel === channel && fallbackIndex === index) tryNextSource(channel, index);
-      }, 15000);
-    };
+    els.video.onwaiting = () => startStallTimer("Buffering…");
+    els.video.onstalled = () => startStallTimer("Connection stalled…");
     els.video.onerror = () => {
-      if (activeChannel === channel) tryNextSource(channel, index);
+      if (!isCurrentSource(channel, index, attemptId)) return;
+      const mediaCode = els.video.error ? els.video.error.code : 0;
+      fail(mediaCode === 3 ? "decode" : mediaCode === 4 ? "unsupported" : "network", mediaCode || undefined);
     };
+
+    if (isDash) {
+      if (!window.dashjs || !window.dashjs.MediaPlayer) {
+        fail("player");
+        return;
+      }
+      try {
+        const player = window.dashjs.MediaPlayer().create();
+        dashPlayer = player;
+        els.video.oncanplay = () => {
+          if (isCurrentSource(channel, index, attemptId)) requestPlayback(channel, index, attemptId);
+        };
+        player.on(window.dashjs.MediaPlayer.events.ERROR, () => {
+          if (isCurrentSource(channel, index, attemptId)) fail("network");
+        });
+        player.initialize(els.video, url, false);
+      } catch (_) {
+        fail("player");
+        return;
+      }
+    } else if (isDirectMedia) {
+      els.video.src = url;
+      els.video.load();
+      requestPlayback(channel, index, attemptId);
+    } else if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
+      els.video.src = url;
+      els.video.load();
+      requestPlayback(channel, index, attemptId);
+    } else if (window.Hls && window.Hls.isSupported()) {
+      let player;
+      try {
+        player = new window.Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          backBufferLength: 30,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          manifestLoadingTimeOut: 12000,
+          levelLoadingTimeOut: 15000,
+          fragLoadingTimeOut: 20000,
+          manifestLoadingMaxRetry: 2,
+          levelLoadingMaxRetry: 2,
+          fragLoadingMaxRetry: 2,
+          manifestLoadingRetryDelay: 800,
+          levelLoadingRetryDelay: 800,
+          fragLoadingRetryDelay: 800
+        });
+      } catch (_) {
+        fail("player");
+        return;
+      }
+      hls = player;
+      player.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+        if (!isCurrentSource(channel, index, attemptId)) return;
+        try { player.loadSource(url); } catch (_) { fail("network"); }
+      });
+      player.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        if (!isCurrentSource(channel, index, attemptId)) return;
+        setPlaybackState("Stream ready");
+        setMessage("");
+        requestPlayback(channel, index, attemptId);
+      });
+      player.on(window.Hls.Events.ERROR, (_event, data) => {
+        if (!isCurrentSource(channel, index, attemptId) || !data || !data.fatal) return;
+        const status = Number(data.response && data.response.code) || 0;
+        if ([401, 403].includes(status)) {
+          fail("denied", status);
+          return;
+        }
+        if ([404, 410].includes(status)) {
+          fail("missing", status);
+          return;
+        }
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
+          networkRecoveryAttempts++;
+          setPlaybackState("Reconnecting…");
+          try { player.startLoad(); } catch (_) { fail("network", status || undefined); }
+        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) {
+          mediaRecoveryAttempts++;
+          setPlaybackState("Recovering playback…");
+          try { player.recoverMediaError(); } catch (_) { fail("decode", status || undefined); }
+        } else {
+          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : "network", status || undefined);
+        }
+      });
+      try { player.attachMedia(els.video); } catch (_) { fail("player"); return; }
+    } else {
+      fail("unsupported");
+      return;
+    }
+
+    const startupLimit = isHls || isDash ? STREAM_STARTUP_TIMEOUT_MS : DIRECT_STARTUP_TIMEOUT_MS;
+    playbackTimer = window.setTimeout(() => {
+      if (isCurrentSource(channel, index, attemptId) && els.video.readyState < 2) fail("timeout");
+    }, startupLimit);
   }
 
-  function tryNextSource(channel, currentIndex) {
+  function tryNextSource(channel, currentIndex, attemptId) {
     if (activeChannel !== channel || fallbackIndex !== currentIndex) return;
+    if (attemptId !== undefined && sourceAttemptId !== attemptId) return;
     window.clearTimeout(playbackTimer);
     if (currentIndex + 1 < channel.urls.length) {
       startSource(channel, currentIndex + 1);
     } else if (alternatePlaylistPending) {
-      waitingForAlternateSource = {channel, index: currentIndex};
+      const waitingAttemptId = destroyPlayer();
+      waitingForAlternateSource = {channel, index: currentIndex, attemptId: waitingAttemptId};
       setPlaybackState("Checking alternate links…");
-      setMessage("The first link did not start. Checking for another available channel link.");
+      setMessage("The current stream did not start. Checking for another available channel link.");
       showPlayerPlaceholder(false);
     } else {
+      destroyPlayer();
       setPlaybackState("Stream unavailable");
-      setMessage("The broadcaster did not provide a playable stream. Try another channel. Yocare cannot repair an offline or access-restricted broadcaster link.");
+      const cause = lastSourceFailure
+        ? sourceFailureMessage(lastSourceFailure)
+        : "no playable source was listed";
+      setMessage("Yocare could not start this channel because " + cause + ". The feed may also be offline, region-restricted, or blocked by the broadcaster. Retry later or choose another channel.");
       showPlayerPlaceholder(true);
     }
   }
@@ -765,23 +908,15 @@
     setCategory("all");
   });
   els.playStart.addEventListener("click", () => {
-    const channel = activeChannel;
-    const index = fallbackIndex;
-    if (!channel || !els.video.src) return;
+    if (!activeChannel) return;
     els.playStart.disabled = true;
-    els.video.play().then(() => {
-      if (activeChannel === channel && fallbackIndex === index) {
-        els.playStart.hidden = true;
-        setMessage("");
-      }
-    }).catch(error => {
-      els.playStart.disabled = false;
-      handlePlaybackRejection(channel, index, error);
-    });
+    requestPlayback(activeChannel, fallbackIndex, sourceAttemptId);
   });
   els.retry.addEventListener("click", () => {
     if (activeChannel) {
+      waitingForAlternateSource = null;
       fallbackIndex = 0;
+      lastSourceFailure = null;
       startSource(activeChannel, 0);
     } else {
       loadCountry(els.country.value);
