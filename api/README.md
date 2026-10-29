@@ -36,7 +36,7 @@ The database ID is deliberately a placeholder. Do not deploy until it has been r
 
 ## Current scope and next milestones
 
-The player integration is present but opt-in: it remains disabled while the registry URL meta value is empty. Channel IDs must exactly match the stable IDs inserted in D1; the playlist's `tvg-id` is preferred, with normalized channel identity as a fallback. No production source records are seeded and no live EPG feed is configured. Next, seed and verify canonical IDs and approved feeds, deploy the API, configure CORS and the frontend meta value, then run browser-level failover tests. Add an authorized provider/EPG integration, rate limits and retention/cleanup for health logs before production.
+The production player reads the registry URL configured in `public/index.html`; if the API is unavailable, the page continues with its existing playlist fallback behavior. Channel IDs must match the stable IDs inserted in D1; the playlist `tvg-id` is preferred, with normalized channel identity as a fallback. No production source records are seeded and no live EPG feed is configured, so the registry cannot provide additional live sources until authorized feeds are registered. Before production, verify the API deployment and CORS, register authorized feeds, run browser-level failover checks, and add rate limits plus retention for health logs.
 
 ## Security notes
 
