@@ -103,7 +103,7 @@
       const url = new URL(value);
       if (/ythls\.onrender\.com$/i.test(url.hostname)) return true;
       // Exclude raw-IP endpoints on common home-server ports; these are poor public playback candidates.
-      if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(url.hostname) && /^(?:8080|3000|8000|8888|25461)$/.test(url.port)) return true;
+      if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(url.hostname) && url.port) return true;
       return false;
     } catch (_) { return true; }
   };
