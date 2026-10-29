@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080b10">
-  <meta name="description" content="Yocare Live is a live television discovery interface. Browse public channel listings by country and try available broadcaster streams.">
-  <title>Yocare Live — Television, in your orbit</title>
+  <meta name="theme-color" content="#08090c">
+  <meta name="description" content="Explore live channels from around the world with Yocare Live. Discover places, perspectives and programs through one global channel guide.">
+  <title>Yocare Live — The world, on air</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,63 +14,92 @@
   <script src="tv.js" defer></script>
 </head>
 <body>
-  <div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="Yocare Live home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a>
-    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#channels">Discover</a><a href="#player">Now playing</a><a href="#guide-note">About streams</a></nav>
-    <div class="top-status"><span class="status-dot"></span><span>LIVE CHANNELS</span></div>
+  <div class="film-grain" aria-hidden="true"></div>
+  <header class="topbar" id="top">
+    <a class="brand" href="#top" aria-label="Yocare Live home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>yocare<span class="brand-light">.live</span></span></a>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#discover">Discover</a><a href="#player">Watch</a><a href="#channels">The guide</a></nav>
+    <a class="top-action" href="#channels"><span class="live-dot"></span> Browse channels <span aria-hidden="true">↗</span></a>
   </header>
 
-  <main class="app-shell">
-    <section class="intro" id="top">
-      <div class="intro-copy">
-        <p class="eyebrow"><span></span> YOUR WORLD, LIVE</p>
-        <h1>Television,<br><em>in your orbit.</em></h1>
-        <p class="intro-text">Discover live channels by country, explore what’s on, and tune in from one considered place.</p>
+  <main>
+    <section class="hero" id="discover">
+      <div class="hero-backdrop" aria-hidden="true"><div class="hero-glow"></div><div class="hero-ring ring-one"></div><div class="hero-ring ring-two"></div><div class="hero-ring ring-three"></div><div class="hero-orb"></div><div class="hero-stars"></div></div>
+      <div class="hero-content">
+        <p class="eyebrow"><span class="eyebrow-line"></span> A WINDOW INTO EVERYWHERE</p>
+        <h1>Stay curious.<br><em>Stay in the world.</em></h1>
+        <p class="hero-copy">Move across borders, languages and points of view. Find a live signal that takes you somewhere new.</p>
+        <div class="hero-actions"><a class="primary-cta" href="#channels">Explore the guide <span aria-hidden="true">↗</span></a><a class="text-cta" href="#player"><span class="play-mini">▶</span> Enter the live room</a></div>
+        <div class="hero-meta"><span class="live-dot"></span><span>LIVE CHANNEL GUIDE</span><span class="meta-divider"></span><span>VOICES FROM EVERYWHERE</span></div>
       </div>
-      <div class="intro-orbit" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div><div class="orbit-core"><span>YC</span></div><i class="orbit-point point-a"></i><i class="orbit-point point-b"></i><i class="orbit-point point-c"></i></div>
+      <aside class="hero-world" aria-label="Yocare Live global signal artwork">
+        <div class="world-orbit world-orbit-one"></div><div class="world-orbit world-orbit-two"></div>
+        <div class="world-label world-label-top"><span class="world-pulse"></span> THE WORLD, RIGHT NOW</div>
+        <div class="world-globe">
+          <svg viewBox="0 0 320 320" role="presentation" aria-hidden="true">
+            <defs><radialGradient id="globeFill" cx="32%" cy="27%"><stop offset="0" stop-color="#d8f2be"/><stop offset=".34" stop-color="#648d72"/><stop offset=".72" stop-color="#183a34"/><stop offset="1" stop-color="#09110f"/></radialGradient><clipPath id="globeClip"><circle cx="160" cy="160" r="124"/></clipPath></defs>
+            <circle cx="160" cy="160" r="124" fill="url(#globeFill)"/>
+            <g clip-path="url(#globeClip)" fill="none" stroke="#d9f1cf" stroke-opacity=".16">
+              <ellipse cx="160" cy="160" rx="54" ry="124"/><ellipse cx="160" cy="160" rx="94" ry="124"/>
+              <ellipse cx="160" cy="160" rx="124" ry="44"/><ellipse cx="160" cy="160" rx="124" ry="84"/>
+            </g>
+            <g clip-path="url(#globeClip)" fill="#d1f0c7" fill-opacity=".83">
+              <path d="M69 82l20-15 24 5 12 13-8 12-20 3-9 17-12 4-5 21-12 5-12-17 7-26-3-13 9-9z"/>
+              <path d="M119 153l18-10 17 8 8 20-8 18-4 24-12 21-8-12-3-28-13-18z"/>
+              <path d="M166 72l18-12 29 6 14 13-5 14-19 3-8 17-16-3-5-14-14 1-8-12z"/>
+              <path d="M194 128l24-8 22 12 14 19-11 18-18 2-7 23-15 4-10-19-16-8 4-21-10-12z"/>
+            </g>
+            <circle cx="160" cy="160" r="124" fill="none" stroke="#e7f6dd" stroke-opacity=".44"/>
+          </svg>
+          <span class="globe-pin pin-one"></span><span class="globe-pin pin-two"></span><span class="globe-pin pin-three"></span>
+        </div>
+        <div class="world-label world-label-bottom"><span>01</span><i></i><span>OPEN A NEW WINDOW</span></div>
+        <div class="world-coordinate">20°N<br>77°E</div>
+      </aside>
+      <div class="hero-side-note" aria-hidden="true"><span>Y / L</span><span>01 — GLOBAL SIGNAL</span></div>
+      <a class="scroll-cue" href="#player" aria-label="Scroll to live player"><span></span> SCROLL TO DISCOVER</a>
     </section>
 
-    <section class="player-section" id="player" aria-label="Live video player">
+    <section class="player-section page-section" id="player" aria-label="Live video player">
+      <div class="section-intro player-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> ON YOUR SCREEN</p><h2>Step into the <em>live room.</em></h2></div><p>Every channel opens a different window. Pick a signal below and settle in.</p></div>
       <div class="player-frame">
         <video id="video" playsinline controls preload="none" aria-label="Live channel player"></video>
         <div class="player-placeholder" id="player-placeholder">
-          <div class="play-orbit"><span>▶</span></div>
-          <p class="placeholder-kicker">YOUR LIVE SCREEN</p>
-          <h2>Choose a channel to begin.</h2>
-          <p>Playback starts only after you select a channel.</p>
+          <div class="player-art" aria-hidden="true"><div class="art-ring"></div><div class="art-ring art-ring-two"></div><div class="art-core">Y<span>·</span>L</div></div>
+          <p class="placeholder-kicker">YOUR LIVE WINDOW</p>
+          <h3>Everywhere has a story.</h3>
+          <p>Choose a channel to tune in.</p>
+          <a href="#channels" class="placeholder-link">Find a channel <span>↓</span></a>
         </div>
         <div class="player-shade" aria-hidden="true"></div>
         <div class="player-topline"><span class="live-pill"><i></i> LIVE</span><span id="player-region">INDIA · LIVE TV</span></div>
-        <div class="player-bottomline"><div><span class="now-label">NOW PLAYING</span><h2 id="now-title">Select a channel</h2><p id="now-subtitle">Your channel will appear here</p></div><button class="icon-button" id="retry-button" type="button" aria-label="Retry playback" title="Retry playback">↻</button></div>
+        <div class="player-bottomline"><div><span class="now-label">NOW TUNING IN</span><h2 id="now-title">Choose your first channel</h2><p id="now-subtitle">A world of live television awaits</p></div><button class="icon-button" id="retry-button" type="button" aria-label="Retry playback" title="Retry playback">↻</button></div>
         <div class="player-message" id="player-message" role="status" aria-live="polite" hidden></div>
       </div>
-      <div class="player-foot"><span><i class="status-dot"></i> <span id="playback-state">Ready when you are</span></span><span id="stream-note">Stream quality depends on the broadcaster and your connection.</span></div>
+      <div class="player-foot"><span><i class="live-dot"></i> <span id="playback-state">Ready when you are</span></span><span id="stream-note">Stream quality and availability are controlled by broadcasters.</span></div>
     </section>
 
-    <section class="channels-section" id="channels">
-      <div class="section-heading"><div><p class="eyebrow">THE CHANNEL GUIDE</p><h2>Find your frequency.</h2><p class="section-subtitle">Browse available streams by country or search for a channel.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
+    <section class="channels-section page-section" id="channels">
+      <div class="section-intro channels-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> THE WORLD, IN CHANNELS</p><h2>Follow what <em>moves you.</em></h2><p class="section-subtitle">News, sport, music and more—find a place to begin.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
       <div class="toolbar">
-        <label class="country-control"><span>LOCATION / COUNTRY</span><select id="country-select" aria-label="Choose country">
+        <label class="country-control"><span>CHOOSE A REGION</span><select id="country-select" aria-label="Choose country">
           <option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option>
         </select></label>
-        <label class="search-control"><span class="sr-only">Search channels</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search channels…" autocomplete="off" aria-label="Search channels"></label>
+        <label class="search-control"><span class="sr-only">Search channels</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search channels, topics, places…" autocomplete="off" aria-label="Search channels"></label>
       </div>
       <div class="category-bar">
-        <div class="category-heading"><span>EXPLORE BY CATEGORY</span><span id="category-summary">All genres</span></div>
+        <div class="category-heading"><span>EXPLORE A MOOD</span><span id="category-summary">All genres</span></div>
         <div class="category-chips" id="category-chips" role="group" aria-label="Filter channels by category">
           <button class="category-chip selected" type="button" data-category="all" aria-pressed="true">All channels</button>
         </div>
       </div>
-      <div class="guide-toolbar-note"><span class="guide-live-dot"></span> Channel guide <span class="guide-note-divider">/</span> <span id="visible-summary">Loading available channels…</span>
-      </div>
-      <div class="load-state" id="load-state" role="status" aria-live="polite"><span class="spinner"></span><span>Loading the channel guide…</span></div>
+      <div class="guide-toolbar-note"><span class="guide-live-dot"></span><span>Channel guide</span><span class="guide-note-divider">/</span><span id="visible-summary">Loading available channels…</span></div>
+      <div class="load-state" id="load-state" role="status" aria-live="polite"><span class="spinner"></span><span>Opening the channel universe…</span></div>
       <div class="channel-grid" id="channel-grid" aria-label="Available channels"></div>
-      <div class="empty-state" id="empty-state" hidden><div>⌕</div><h3>No channels found</h3><p>Try a different search or select another country.</p><button id="clear-search" type="button">Clear search</button></div>
-      <div class="load-more-wrap"><button class="load-more" id="load-more" type="button" hidden>Load more channels <span>↓</span></button></div>
-      <p class="source-note" id="guide-note">Channel listings come from a public third-party playlist. Listing a stream does not verify its broadcast rights, uptime, or regional availability. Use only streams you are authorized to access and distribute.</p>
+      <div class="empty-state" id="empty-state" hidden><div>⌕</div><h3>No channels found</h3><p>Try another search or select a different country.</p><button id="clear-search" type="button">Clear search</button></div>
+      <div class="load-more-wrap"><button class="load-more" id="load-more" type="button" hidden>Discover more channels <span>↓</span></button></div>
+      <p class="source-note" id="guide-note">Channel listings are sourced from a public third-party playlist. A listing does not verify broadcast rights, uptime or regional availability. Use only streams you are authorized to access.</p>
     </section>
   </main>
-  <footer class="footer"><a class="brand" href="#top"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a><span>Thoughtfully connected to the world.</span><a href="#top">Back to top ↑</a></footer>
+  <footer class="footer"><a class="brand" href="#top"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>yocare<span class="brand-light">.live</span></span></a><span class="footer-note">A wider view of the world, one signal at a time.</span><div class="footer-links"><a href="#discover">Discover</a><a href="#channels">Channel guide</a><a href="#top">Back to top ↑</a></div></footer>
 </body>
 </html>
