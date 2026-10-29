@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="tv.css">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/dashjs@4.7.4/dist/dash.all.min.js" defer></script>
   <script src="tv.js" defer></script>
 </head>
 <body>
@@ -84,6 +85,7 @@
         <div class="player-topline"><span class="live-pill"><i></i> LIVE</span><span id="player-region">INDIA · LIVE TV</span></div>
         <div class="player-bottomline"><div><span class="now-label">NOW TUNING IN</span><h2 id="now-title">Choose your first channel</h2><p id="now-subtitle">A world of live television awaits</p></div><button class="icon-button" id="retry-button" type="button" aria-label="Retry playback" title="Retry playback">↻</button></div>
         <div class="player-message" id="player-message" role="status" aria-live="polite" hidden></div>
+        <button class="player-start" id="play-start" type="button" hidden>Play this channel <span aria-hidden="true">▶</span></button>
       </div>
       <div class="player-foot"><span><i class="live-dot"></i> <span id="playback-state">Ready when you are</span></span><span id="stream-note">Stream quality and availability are controlled by broadcasters.</span></div>
     </section>
