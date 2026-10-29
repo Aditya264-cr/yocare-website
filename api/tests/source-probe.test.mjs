@@ -9,6 +9,7 @@ test("source policy accepts secure public URLs and rejects insecure or private t
   assert.equal(safeSourceUrl("https://cdn.example.org/live/index.m3u8"), true);
   assert.equal(safeSourceUrl("http://cdn.example.org/live/index.m3u8"), false);
   assert.equal(safeSourceUrl("https://127.0.0.1/live.m3u8"), false);
+  assert.equal(safeSourceUrl("https://127.0.0.1./live.m3u8"), false);
   assert.equal(safeSourceUrl("https://[::ffff:127.0.0.1]/live.m3u8"), false);
   assert.equal(safeSourceUrl("https://user:pass@cdn.example.org/live.m3u8"), false);
 });
