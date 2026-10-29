@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/streams/";
+  const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/";
   const PAGE_SIZE = 48;
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -142,12 +142,17 @@
     return PLAYLIST_BASE + encodeURIComponent(code) + ".m3u";
   }
 
-  async function fetchPlaylistText(code, signal) {
+  async function fetchPlaylistText(code, signal, kind = "public") {
     const encoded = encodeURIComponent(code);
-    const sources = [
-      PLAYLIST_BASE + encoded + ".m3u",
-      "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
-    ];
+    const sources = kind === "public"
+      ? [
+          PLAYLIST_BASE + "countries/" + encoded + ".m3u",
+          "https://raw.githubusercontent.com/iptv-org/iptv/gh-pages/countries/" + encoded + ".m3u"
+        ]
+      : [
+          PLAYLIST_BASE + "streams/" + encoded + ".m3u",
+          "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
+        ];
     let lastError = null;
     for (const source of sources) {
       try {
@@ -165,7 +170,37 @@
         lastError = error;
       }
     }
-    throw lastError || new Error("All channel-list sources were unavailable.");
+    throw lastError || new Error("All " + kind + " playlist sources were unavailable.");
+  }
+
+  function mergePlaylistSources(primary, alternatives) {
+    const merged = new Map();
+    const add = (channel, isPrimary) => {
+      const key = channel.key || channel.idKey || channel.name;
+      if (!merged.has(key)) {
+        merged.set(key, {...channel, urls: [...(channel.urls || [channel.url]).filter(Boolean)]});
+        return;
+      }
+      const current = merged.get(key);
+      const incomingUrls = channel.urls || [channel.url];
+      for (const url of incomingUrls) {
+        if (url && !current.urls.includes(url)) current.urls.push(url);
+      }
+      // Prefer metadata (especially tvg-logo) from the public, user-facing playlist.
+      if (!current.logo && channel.logo) current.logo = channel.logo;
+      if (!current.group && channel.group) current.group = channel.group;
+      if (!current.id && channel.id) current.id = channel.id;
+      if (!current.idKey && channel.idKey) current.idKey = channel.idKey;
+      if (!isPrimary && !current.key) current.key = channel.key;
+    };
+    primary.forEach(channel => add(channel, true));
+    alternatives.forEach(channel => add(channel, false));
+    return [...merged.values()].map((channel, index) => ({
+      ...channel,
+      id: (channel.idKey || channel.key || "channel") + "-" + index,
+      category: categoryFor(channel.name, channel.group),
+      url: channel.urls[0]
+    })).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async function loadCountry(code) {
@@ -181,10 +216,23 @@
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
-      const text = await fetchPlaylistText(code, loadController.signal);
+      // Public playlists are generated for viewers and select the preferred stream per channel.
+      // The internal streams playlist is merged in as fallback URLs, not used as the primary list.
+      const results = await Promise.allSettled([
+        fetchPlaylistText(code, loadController.signal, "public"),
+        fetchPlaylistText(code, loadController.signal, "streams")
+      ]);
       if (currentRequest !== requestNumber) return;
-      const result = parsePlaylist(text);
-      if (!result.length) throw new Error("The playlist did not contain readable channel entries.");
+      const publicText = results[0].status === "fulfilled" ? results[0].value : "";
+      const streamsText = results[1].status === "fulfilled" ? results[1].value : "";
+      if (!publicText && !streamsText) {
+        const reason = results.find(result => result.status === "rejected");
+        throw (reason && reason.reason) || new Error("All channel-list sources were unavailable.");
+      }
+      const publicChannels = publicText ? parsePlaylist(publicText) : [];
+      const alternateChannels = streamsText ? parsePlaylist(streamsText) : [];
+      const result = mergePlaylistSources(publicChannels, alternateChannels);
+      if (!result.length) throw new Error("The playlists did not contain readable channel entries.");
       channels = result;
       renderCategories();
       applyFilters();
