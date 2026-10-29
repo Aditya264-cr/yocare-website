@@ -127,6 +127,7 @@ export async function inspectSource(source, options = {}) {
   const origin = options.origin || DEFAULT_ORIGIN;
   const timeoutMs = options.timeoutMs ?? 4000;
   const sourceType = source.source_type || source.type || "unknown";
+  let lastTtfbMs = null;
   const result = (ok, status, note, depth) => ({
     id: source.id,
     ok,
@@ -139,7 +140,6 @@ export async function inspectSource(source, options = {}) {
   });
 
   if (!safeSourceUrl(source.url)) return result(false, null, "https-required-or-unsafe-url", "none");
-  let lastTtfbMs = null;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const requestOptions = { fetchImpl, origin, signal: controller.signal };
