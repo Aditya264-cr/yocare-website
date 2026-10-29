@@ -104,7 +104,7 @@ jobs:
                           skip_entry = True
                           continue
                       match = raw_ip.match(stripped)
-                      if match and match.group("port") in {"8080", "3000", "8000", "8888", "25461"}:
+                      if match and match.group("port"):
                           out.append("# YOCARE_FLAG_RAW_IP_STREAM: review origin reliability before publishing")
                           raw_ip_flagged += 1
                       out.append(pending_extinf)
