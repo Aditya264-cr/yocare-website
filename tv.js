@@ -43,6 +43,7 @@
   let registryRefreshInFlight = null;
   const registrySourceIds = new Map();
   const registryRefreshAttempted = new WeakSet();
+  const upstreamRefreshAttempted = new WeakSet();
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -248,7 +249,7 @@
     return PLAYLIST_BASE + encodeURIComponent(code) + ".m3u";
   }
 
-  async function fetchPlaylistText(code, signal, kind = "public") {
+  async function fetchPlaylistText(code, signal, kind = "public", forceRefresh = false) {
     const encoded = encodeURIComponent(code);
     const sources = kind === "public"
       ? [
@@ -259,6 +260,7 @@
           PLAYLIST_BASE + "streams/" + encoded + ".m3u",
           "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
         ];
+    const refreshQuery = forceRefresh ? "?_yocare_refresh=" + Date.now() : "";
     let lastError = null;
     for (const source of sources) {
       const requestController = new AbortController();
@@ -273,7 +275,7 @@
         requestController.abort();
       }, PLAYLIST_FETCH_TIMEOUT_MS);
       try {
-        const response = await fetch(source, {
+        const response = await fetch(source + refreshQuery, {
           signal: requestController.signal,
           cache: "no-cache",
           headers: {"Accept": "application/vnd.apple.mpegurl, audio/x-mpegurl, text/plain, */*"}
@@ -712,6 +714,40 @@
     return registryRefreshInFlight;
   }
 
+  async function refreshUpstreamSources(channel) {
+    if (!channel || upstreamRefreshAttempted.has(channel)) return false;
+    upstreamRefreshAttempted.add(channel);
+    const countryCode = String(els.country && els.country.value || "").trim();
+    if (!/^[a-z]{2}$/i.test(countryCode)) return false;
+    try {
+      const playlistText = await fetchPlaylistText(countryCode, undefined, "streams", true);
+      const candidates = parsePlaylist(playlistText);
+      const hasTvGuideId = Boolean(channel.id);
+      const matching = candidates.filter(candidate => hasTvGuideId
+        ? candidate.id === channel.id
+        : normalise(candidate.name) === normalise(channel.name));
+      let added = 0;
+      for (const candidate of matching) {
+        for (const candidateUrl of candidate.urls || [candidate.url]) {
+          if (candidateUrl && !channel.urls.includes(candidateUrl)) {
+            channel.urls.push(candidateUrl);
+            added++;
+          }
+        }
+      }
+      if (added) {
+        console.info("Yocare Live refreshed upstream playlist candidates", {channel: channel.name, added});
+        renderFeaturedChannels();
+        applyFilters();
+        updateSelectedCard();
+      }
+      return added > 0;
+    } catch (error) {
+      if (error && error.name !== "AbortError") console.warn("Yocare Live upstream refresh failed:", error);
+      return false;
+    }
+  }
+
   function reportRegistryFailure(channel, url, reason) {
     if (!REGISTRY_BASE || !channel || !channel.registrySourceIds || !channel.registrySourceIds[url]) return;
     const sourceId = channel.registrySourceIds[url];
@@ -910,10 +946,35 @@
           startSource(channel, currentIndex + 1);
           return;
         }
+        setPlaybackState("Refreshing channel sources…");
+        setMessage("No new registry source found. Refreshing the upstream IPTV playlist once.");
+        refreshUpstreamSources(channel).then(upstreamAdded => {
+          if (activeChannel !== channel || sourceAttemptId !== failedAttemptId) return;
+          if (upstreamAdded && channel.urls.length > currentIndex + 1) {
+            startSource(channel, currentIndex + 1);
+            return;
+          }
+          destroyPlayer();
+          setPlaybackState("Stream unavailable");
+          const cause = lastSourceFailure ? sourceFailureMessage(lastSourceFailure) : "no playable source was listed";
+          setMessage("Yocare could not start this channel because " + cause + ". The registry and refreshed upstream playlist provided no new candidate. Retry later or choose another channel.");
+          showPlayerPlaceholder(true);
+        });
+      });
+    } else if (!upstreamRefreshAttempted.has(channel)) {
+      const failedAttemptId = sourceAttemptId;
+      setPlaybackState("Refreshing channel sources…");
+      setMessage("Refreshing the upstream IPTV playlist for another entry with the same channel identity.");
+      refreshUpstreamSources(channel).then(added => {
+        if (activeChannel !== channel || sourceAttemptId !== failedAttemptId) return;
+        if (added && channel.urls.length > currentIndex + 1) {
+          startSource(channel, currentIndex + 1);
+          return;
+        }
         destroyPlayer();
         setPlaybackState("Stream unavailable");
         const cause = lastSourceFailure ? sourceFailureMessage(lastSourceFailure) : "no playable source was listed";
-        setMessage("Yocare could not start this channel because " + cause + ". The feed may also be offline, region-restricted, or blocked by the broadcaster. Retry later or choose another channel.");
+        setMessage("Yocare could not start this channel because " + cause + ". The upstream playlist refresh found no new alternative. Retry later or choose another channel.");
         showPlayerPlaceholder(true);
       });
     } else {
@@ -922,7 +983,7 @@
       const cause = lastSourceFailure
         ? sourceFailureMessage(lastSourceFailure)
         : "no playable source was listed";
-      setMessage("Yocare could not start this channel because " + cause + ". The feed may also be offline, region-restricted, or blocked by the broadcaster. Retry later or choose another channel.");
+      setMessage("Yocare could not start this channel because " + cause + ". Yocare has exhausted its known sources and one upstream playlist refresh. Retry later or choose another channel.");
       showPlayerPlaceholder(true);
     }
   }
