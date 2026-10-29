@@ -2,6 +2,9 @@
   "use strict";
 
   const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/";
+  // Set this after the separate registry Worker is deployed, e.g. https://yocare-live-registry.<account>.workers.dev.
+  const REGISTRY_BASE = String(window.YOCARE_LIVE_REGISTRY_URL || "").replace(/\\/$/, "");
+  const REGISTRY_FETCH_TIMEOUT_MS = 7000;
   const PAGE_SIZE = 48;
   const PLAYLIST_FETCH_TIMEOUT_MS = 15000;
   const DIRECT_STARTUP_TIMEOUT_MS = 25000;
@@ -37,6 +40,9 @@
   let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
+  let registryRefreshInFlight = null;
+  const registrySourceIds = new Map();
+  const registryRefreshAttempted = new WeakSet();
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -343,7 +349,7 @@
     filtered = [];
     if (els.featured) els.featured.replaceChildren();
     if (els.genreRails) els.genreRails.replaceChildren();
-    renderSpotlight(null);
+    if (els.spotlightName || els.spotlightLogo) renderSpotlight(null);
     if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
@@ -436,7 +442,7 @@
   }
 
   function applyFilters() {
-    const query = normalise(els.search.value);
+    const query = normalise(els.search ? els.search.value : "");
     filtered = channels.filter(channel => {
       const matchesQuery = !query || normalise(channel.name + " " + channel.group + " " + channel.id).includes(query);
       const matchesCategory = activeFilter === "all" || channel.category === activeFilter;
@@ -548,9 +554,9 @@
       image.loading = "lazy";
       image.referrerPolicy = "no-referrer";
       image.src = candidate.logo;
-      image.addEventListener("load", () => els.spotlightLogo.classList.add("has-logo"), {once:true});
+      image.addEventListener("load", () => { if (els.spotlightLogo) els.spotlightLogo.classList.add("has-logo"); }, {once:true});
       image.addEventListener("error", () => image.remove(), {once:true});
-      els.spotlightLogo.append(image);
+      if (els.spotlightLogo) els.spotlightLogo.append(image);
     }
   }
 
@@ -644,7 +650,72 @@
     $("player").scrollIntoView({behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
   }
 
-  function startSource(channel, index) {
+
+  function canonicalRegistryId(channel) {
+    const candidate = String(channel && (channel.idKey || channel.id || channel.key) || "").trim();
+    return /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/.test(candidate) ? candidate : "";
+  }
+
+  async function refreshRegistrySources(channel) {
+    if (!REGISTRY_BASE || !channel || registryRefreshAttempted.has(channel)) return false;
+    if (registryRefreshInFlight) return registryRefreshInFlight;
+    const channelId = canonicalRegistryId(channel);
+    if (!channelId) return false;
+    registryRefreshAttempted.add(channel);
+    registryRefreshInFlight = (async () => {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
+      try {
+        const response = await fetch(REGISTRY_BASE + "/api/channels/" + encodeURIComponent(channelId) + "/sources", {
+          method: "GET", headers: { "accept": "application/json" }, signal: controller.signal, cache: "no-store"
+        });
+        if (!response.ok) return false;
+        const payload = await response.json();
+        if (!payload || !Array.isArray(payload.sources)) return false;
+        let added = false;
+        channel.registrySourceIds = channel.registrySourceIds || {};
+        for (const source of payload.sources) {
+          if (!source || typeof source.id !== "string" || typeof source.url !== "string") continue;
+          let parsed;
+          try { parsed = new URL(source.url); } catch (_) { continue; }
+          if (!["https:", "http:"].includes(parsed.protocol) || parsed.username || parsed.password) continue;
+          if (!channel.urls.includes(parsed.href)) {
+            channel.urls.push(parsed.href);
+            added = true;
+          }
+          channel.registrySourceIds[parsed.href] = source.id;
+        }
+        if (added) {
+          console.info("Yocare Live registry added approved fallback sources", {channel: channel.name, count: channel.urls.length});
+          renderFeaturedChannels();
+          applyFilters();
+          updateSelectedCard();
+        }
+        return added;
+      } catch (error) {
+        if (error && error.name !== "AbortError") console.warn("Yocare Live source registry unavailable:", error);
+        return false;
+      } finally {
+        window.clearTimeout(timeout);
+        registryRefreshInFlight = null;
+      }
+    })();
+    return registryRefreshInFlight;
+  }
+
+  function reportRegistryFailure(channel, url, reason) {
+    if (!REGISTRY_BASE || !channel || !channel.registrySourceIds || !channel.registrySourceIds[url]) return;
+    const sourceId = channel.registrySourceIds[url];
+    const channelId = canonicalRegistryId(channel);
+    if (!channelId) return;
+    fetch(REGISTRY_BASE + "/api/report", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({channel_id: channelId, source_id: sourceId, reason}),
+      keepalive: true
+    }).catch(() => {});
+  }
+\n  function startSource(channel, index) {
     window.clearTimeout(playbackTimer);
     els.playStart.hidden = true;
     els.playStart.disabled = false;
@@ -836,7 +907,7 @@
       acc[channel.category] = (acc[channel.category] || 0) + 1;
       return acc;
     }, {});
-    els.categories.replaceChildren();
+    if (!els.categories) return;\n    els.categories.replaceChildren();
     CATEGORY_ORDER.forEach(category => {
       const button = document.createElement("button");
       button.type = "button";
@@ -856,7 +927,7 @@
 
   function setCategory(category) {
     activeFilter = category;
-    els.categories.querySelectorAll(".category-chip").forEach(button => {
+    if (els.categories) els.categories.querySelectorAll(".category-chip").forEach(button => {
       const selected = button.dataset.category === category;
       button.classList.toggle("selected", selected);
       button.setAttribute("aria-pressed", String(selected));
@@ -882,13 +953,13 @@
     els.search.scrollIntoView({behavior: reducedMotion ? "auto" : "smooth", block: "center"});
     window.setTimeout(() => els.search.focus({preventScroll:true}), reducedMotion ? 0 : 420);
   });
-  els.spotlightPlay.addEventListener("click", () => {
+  if (els.spotlightPlay) els.spotlightPlay.addEventListener("click", () => {
     if (spotlightChannel) playChannel(spotlightChannel);
   });
-  els.spotlightCard.addEventListener("click", () => {
+  if (els.spotlightCard) els.spotlightCard.addEventListener("click", () => {
     if (spotlightChannel) playChannel(spotlightChannel);
   });
-  els.genreRails.addEventListener("click", event => {
+  if (els.genreRails) els.genreRails.addEventListener("click", event => {
     const button = event.target.closest("[data-guide-category]");
     if (!button) return;
     setCategory(button.dataset.guideCategory);
@@ -899,20 +970,20 @@
     const button = event.target.closest(".category-chip");
     if (button && !button.disabled) setCategory(button.dataset.category);
   });
-  els.clear.addEventListener("click", () => {
+  if (els.clear) els.clear.addEventListener("click", () => {
     if (!channels.length) {
       loadCountry(els.country.value);
       return;
     }
-    els.search.value = "";
+    if (els.search) els.search.value = "";
     setCategory("all");
   });
-  els.playStart.addEventListener("click", () => {
+  if (els.playStart) els.playStart.addEventListener("click", () => {
     if (!activeChannel) return;
     els.playStart.disabled = true;
     requestPlayback(activeChannel, fallbackIndex, sourceAttemptId);
   });
-  els.retry.addEventListener("click", () => {
+  if (els.retry) els.retry.addEventListener("click", () => {
     if (activeChannel) {
       waitingForAlternateSource = null;
       fallbackIndex = 0;
