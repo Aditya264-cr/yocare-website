@@ -225,24 +225,61 @@
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
-      // Public playlists are generated for viewers and select the preferred stream per channel.
-      // The internal streams playlist is merged in as fallback URLs, not used as the primary list.
-      const results = await Promise.allSettled([
-        fetchPlaylistText(code, loadController.signal, "public"),
-        fetchPlaylistText(code, loadController.signal, "streams")
-      ]);
-      if (currentRequest !== requestNumber) return;
-      const publicText = results[0].status === "fulfilled" ? results[0].value : "";
-      const streamsText = results[1].status === "fulfilled" ? results[1].value : "";
-      if (!publicText && !streamsText) {
-        const reason = results.find(result => result.status === "rejected");
-        throw (reason && reason.reason) || new Error("All channel-list sources were unavailable.");
+      // Load the public viewer playlist first so the guide can render without waiting
+      // for the much larger internal alternatives playlist.
+      let publicText = "";
+      try {
+        publicText = await fetchPlaylistText(code, loadController.signal, "public");
+      } catch (publicError) {
+        if (publicError.name === "AbortError") throw publicError;
+        console.warn("Yocare Live public playlist unavailable; trying internal streams:", publicError);
       }
-      const publicChannels = publicText ? parsePlaylist(publicText) : [];
-      const alternateChannels = streamsText ? parsePlaylist(streamsText) : [];
-      const result = mergePlaylistSources(publicChannels, alternateChannels);
-      if (!result.length) throw new Error("The playlists did not contain readable channel entries.");
-      channels = result;
+      if (currentRequest !== requestNumber) return;
+
+      if (publicText) {
+        channels = parsePlaylist(publicText);
+        if (!channels.length) throw new Error("The public playlist did not contain readable channel entries.");
+        renderFeaturedChannels();
+        renderCategories();
+        applyFilters();
+        setLoading(false);
+
+        // Fetch alternate URLs after the first channels are already visible.
+        // A slow or unavailable fallback playlist must not block the guide.
+        fetchPlaylistText(code, loadController.signal, "streams").then(streamsText => {
+          if (currentRequest !== requestNumber) return;
+          const alternatives = parsePlaylist(streamsText);
+          if (!alternatives.length) return;
+          const previousActive = activeChannel;
+          const merged = mergePlaylistSources(channels, alternatives);
+          channels = merged;
+          if (previousActive) {
+            const updatedActive = channels.find(channel =>
+              (previousActive.idKey && channel.idKey === previousActive.idKey) ||
+              (previousActive.key && channel.key === previousActive.key)
+            );
+            if (updatedActive) {
+              previousActive.urls = updatedActive.urls;
+              previousActive.id = updatedActive.id;
+            }
+          }
+          renderFeaturedChannels();
+          renderCategories();
+          applyFilters();
+          updateSelectedCard();
+        }).catch(error => {
+          if (error.name !== "AbortError" && currentRequest === requestNumber) {
+            console.warn("Yocare Live alternate stream list unavailable:", error);
+          }
+        });
+        return;
+      }
+
+      // If the public playlist fails, use the internal list as a recovery path.
+      const streamsText = await fetchPlaylistText(code, loadController.signal, "streams");
+      if (currentRequest !== requestNumber) return;
+      channels = parsePlaylist(streamsText);
+      if (!channels.length) throw new Error("The playlists did not contain readable channel entries.");
       renderFeaturedChannels();
       renderCategories();
       applyFilters();
