@@ -82,7 +82,7 @@ export default {
     try {
       if (url.pathname === "/api/health" && request.method === "GET") {
         const result = await env.DB.prepare("SELECT 1 AS ok").first();
-        return response({ ok: result?.ok === 1, service: "yocare-live-registry", version: 1 }, 200, headers);
+        return response({ ok: result?.ok === 1, service: "yocare-live-registry", version: 2 }, 200, headers);
       }
       const sourceMatch = url.pathname.match(/^\/api\/channels\/([^/]+)\/sources$/);
       if (sourceMatch && request.method === "GET") {
@@ -132,6 +132,15 @@ export default {
             .bind(body.id, body.name, body.country_code.toLowerCase()).run();
           return response({ saved: true, id: body.id }, 201, headers);
         }
+        const disableMatch = url.pathname.match(/^\/admin\/sources\/([^/]+)\/disable$/);
+        if (disableMatch && request.method === "POST") {
+          const sourceId = decodeURIComponent(disableMatch[1]);
+          if (!validId(sourceId)) return response({ error: "invalid_source_id" }, 400, headers);
+          const result = await env.DB.prepare(
+            "UPDATE sources SET enabled = 0, rights_verified_at = NULL, updated_at = datetime('now') WHERE id = ?"
+          ).bind(sourceId).run();
+          return response({ disabled: Boolean(result.meta?.changes), id: sourceId }, result.meta?.changes ? 200 : 404, headers);
+        }
         if (url.pathname === "/admin/sources" && request.method === "POST") {
           const body = await request.json().catch(() => null);
           const sourceType = body && body.source_type;
@@ -156,7 +165,7 @@ export default {
             "VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, datetime('now')) " +
             "ON CONFLICT(id) DO UPDATE SET channel_id=excluded.channel_id, url=excluded.url, source_type=excluded.source_type, " +
             "priority=excluded.priority, enabled=1, authorization_reference=excluded.authorization_reference, rights_regions=excluded.rights_regions, " +
-            "rights_expires_at=excluded.rights_expires_at, rights_verified_at=datetime('now')"
+            "rights_expires_at=excluded.rights_expires_at, rights_verified_at=datetime('now'), last_checked_at=NULL, last_ok_at=NULL, last_status=NULL, last_latency_ms=NULL, last_probe_depth=NULL, last_probe_note=NULL, consecutive_failures=0"
           ).bind(body.id, body.channel_id, body.url, sourceType, body.priority ?? 100, authorizationReference,
             JSON.stringify(regions.map(region => region.toUpperCase())),
             expiry ? new Date(expiryTime).toISOString() : null).run();
