@@ -1036,7 +1036,7 @@
           setPlaybackState("Recovering playback…");
           try { player.recoverMediaError(); } catch (_) { fail("decode", status || undefined); }
         } else {
-          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : "network", status || undefined);
+          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : status === 0 ? "cors" : "network", status || undefined);
         }
       });
       try {
@@ -1156,7 +1156,7 @@
           setPlaybackState("Recovering playback…");
           try { player.recoverMediaError(); } catch (_) { fail("decode", status || undefined); }
         } else {
-          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : "network", status || undefined);
+          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : status === 0 ? "cors" : "network", status || undefined);
         }
       });
       try { player.attachMedia(els.video); } catch (_) { fail("player"); return; }
