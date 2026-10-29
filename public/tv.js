@@ -176,6 +176,8 @@
     els.more.hidden = true;
     channels = [];
     filtered = [];
+    if (els.featured) els.featured.replaceChildren();
+    if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
