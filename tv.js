@@ -125,7 +125,7 @@
     }
     return [...grouped.values()].map((channel, index) => ({
       ...channel,
-      tvgId: channel.tvgId || channel.id || "",
+      tvgId: channel.tvgId || "",
       id: channel.idKey + "-" + index,
       category: categoryFor(channel.name, channel.group),
       url: channel.urls[0]
