@@ -60,6 +60,69 @@ jobs:
           print(f"Extracted {len(entries)} archive entries into {destination}")
           PY
 
+      - name: Filter unstable endpoints and report preferred CDN playlists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path("iptv-source")
+          if not root.exists():
+              raise SystemExit("Expected iptv-source directory after extraction.")
+
+          unstable_removed = 0
+          raw_ip_flagged = 0
+          fast_files = []
+          playlist_files = sorted(
+              p for p in root.rglob("*")
+              if p.is_file() and p.suffix.lower() in {".m3u", ".m3u8"}
+          )
+          raw_ip = re.compile(r"^https?://(?P<host>\d{1,3}(?:\.\d{1,3}){3})(?::(?P<port>\d+))?(?:/|$)", re.I)
+          fast_name = re.compile(r"(^|[_-])(pluto|samsung|distro|rakuten|amagi|plex)([_-]|\.)", re.I)
+
+          for playlist in playlist_files:
+              if fast_name.search(playlist.name):
+                  fast_files.append(str(playlist))
+              lines = playlist.read_text(encoding="utf-8", errors="replace").splitlines()
+              out = []
+              pending_extinf = None
+              skip_entry = False
+              for line in lines:
+                  stripped = line.strip()
+                  if stripped.startswith("#EXTINF:"):
+                      pending_extinf = line
+                      skip_entry = False
+                      continue
+                  if not stripped or stripped.startswith("#"):
+                      if not skip_entry:
+                          out.append(line)
+                      continue
+                  if pending_extinf is not None:
+                      if "ythls.onrender.com" in stripped.lower():
+                          unstable_removed += 1
+                          pending_extinf = None
+                          skip_entry = True
+                          continue
+                      match = raw_ip.match(stripped)
+                      if match and match.group("port"):
+                          out.append("# YOCARE_FLAG_RAW_IP_STREAM: review origin reliability before publishing")
+                          raw_ip_flagged += 1
+                      out.append(pending_extinf)
+                      pending_extinf = None
+                  if not skip_entry:
+                      out.append(line)
+              # Preserve an EXTINF that has no following URL.
+              if pending_extinf is not None and not skip_entry:
+                  out.append(pending_extinf)
+              playlist.write_text("\n".join(out) + "\n", encoding="utf-8")
+
+          print(f"Scanned {len(playlist_files)} playlists; removed {unstable_removed} ythls.onrender.com entries.")
+          print(f"Flagged {raw_ip_flagged} raw-IP streams on commonly constrained ports for review.")
+          print("Preferred CDN playlist files (prioritized by filename):")
+          for name in fast_files:
+              print(f"  {name}")
+          PY
+
       - name: Commit extracted files
         run: |
           git config user.name "github-actions[bot]"
