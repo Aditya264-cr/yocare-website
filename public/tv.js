@@ -2,6 +2,8 @@
   "use strict";
 
   const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/";
+  const REGISTRY_BASE = String(document.querySelector('meta[name="yocare-live-registry-url"]')?.content || "").trim().replace(/\/$/, "");
+  const REGISTRY_FETCH_TIMEOUT_MS = 7000;
   const PAGE_SIZE = 48;
   const PLAYLIST_FETCH_TIMEOUT_MS = 15000;
   const DIRECT_STARTUP_TIMEOUT_MS = 25000;
@@ -41,6 +43,8 @@
   let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
+  const registryRefreshAttempted = new WeakSet();
+  const registryRefreshes = new WeakMap();
   let programGuide = {channels:{}};
   let programEntries = [];
   let carouselIndex = 0;
@@ -191,6 +195,76 @@
     const details = {channel: channel.name, source: index + 1, category};
     if (status) details.status = status;
     console.warn("Yocare Live source failed", details);
+  }
+
+
+  function canonicalRegistryId(channel) {
+    const candidate = String(channel && (channel.idKey || channel.id || channel.key) || "").trim();
+    return /^[a-zA-Z0-9][a-zA-Z0-9._:@-]{0,119}$/.test(candidate) ? candidate : "";
+  }
+
+  function refreshRegistrySources(channel) {
+    if (!REGISTRY_BASE || !channel || registryRefreshAttempted.has(channel)) return Promise.resolve(false);
+    const existing = registryRefreshes.get(channel);
+    if (existing) return existing;
+    const channelId = canonicalRegistryId(channel);
+    if (!channelId) return Promise.resolve(false);
+    registryRefreshAttempted.add(channel);
+    const pending = (async () => {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
+      try {
+        const response = await fetch(REGISTRY_BASE + "/api/channels/" + encodeURIComponent(channelId) + "/sources", {
+          method: "GET",
+          headers: { "accept": "application/json" },
+          signal: controller.signal,
+          cache: "no-store"
+        });
+        if (!response.ok) return false;
+        const payload = await response.json();
+        if (!payload || !Array.isArray(payload.sources)) return false;
+        channel.registrySourceIds = channel.registrySourceIds || Object.create(null);
+        let added = false;
+        for (const source of payload.sources) {
+          if (!source || typeof source.id !== "string" || typeof source.url !== "string") continue;
+          let parsed;
+          try { parsed = new URL(source.url); } catch (_) { continue; }
+          if (!["https:", "http:"].includes(parsed.protocol) || parsed.username || parsed.password) continue;
+          const playbackUrl = parsed.href;
+          if (!channel.urls.includes(playbackUrl)) {
+            channel.urls.push(playbackUrl);
+            added = true;
+          }
+          channel.registrySourceIds[playbackUrl] = source.id;
+        }
+        if (added) {
+          console.info("Yocare Live registry added approved fallback sources", {channel:channel.name, count:channel.urls.length});
+          renderFeaturedChannels();
+          applyFilters();
+          updateSelectedCard();
+        }
+        return added;
+      } catch (error) {
+        if (error && error.name !== "AbortError") console.warn("Yocare Live source registry unavailable:", error);
+        return false;
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    })();
+    registryRefreshes.set(channel, pending);
+    return pending;
+  }
+
+  function reportRegistryFailure(channel, url, reason) {
+    if (!REGISTRY_BASE || !channel || !channel.registrySourceIds || !channel.registrySourceIds[url]) return;
+    const channelId = canonicalRegistryId(channel);
+    if (!channelId) return;
+    fetch(REGISTRY_BASE + "/api/report", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({channel_id:channelId, source_id:channel.registrySourceIds[url], reason}),
+      keepalive: true
+    }).catch(() => {});
   }
 
   function showPlayPrompt(channel, index, attemptId) {
@@ -936,6 +1010,7 @@
     const fail = (category, status) => {
       if (!isCurrentSource(channel, index, attemptId)) return;
       recordSourceFailure(channel, index, category, status);
+      reportRegistryFailure(channel, channel.urls[index], category === "stalled" ? "stalled" : category === "denied" ? "forbidden" : category === "missing" ? "not_found" : category === "decode" || category === "unsupported" ? "decode" : category === "timeout" ? "startup" : "network");
       tryNextSource(channel, index, attemptId);
     };
 
@@ -1153,17 +1228,35 @@
       startSource(channel, currentIndex + 1);
     } else if (alternatePlaylistPending) {
       const waitingAttemptId = destroyPlayer();
-      waitingForAlternateSource = {channel, index: currentIndex, attemptId: waitingAttemptId};
+      waitingForAlternateSource = {channel, index:currentIndex, attemptId:waitingAttemptId};
       setPlaybackState("Checking alternate links…");
       setMessage("The current stream did not start. Checking for another available channel link.");
       showPlayerPlaceholder(false);
+    } else if (REGISTRY_BASE && !registryRefreshAttempted.has(channel)) {
+      const failedAttemptId = sourceAttemptId;
+      setPlaybackState("Finding verified alternatives…");
+      setMessage("Checking Yocare’s approved source registry for another available feed.");
+      refreshRegistrySources(channel).then(added => {
+        if (activeChannel !== channel || sourceAttemptId !== failedAttemptId) return;
+        if (added && channel.urls.length > currentIndex + 1) {
+          startSource(channel, currentIndex + 1);
+          return;
+        }
+        destroyPlayer();
+        setPlaybackState("Stream unavailable");
+        const cause = lastSourceFailure
+          ? sourceFailureMessage(lastSourceFailure)
+          : "no playable source was listed";
+        setMessage("Yocare could not start this channel because " + cause + ". No additional approved feed was available. Retry later or choose another channel.");
+        showPlayerPlaceholder(true);
+      });
     } else {
       destroyPlayer();
       setPlaybackState("Stream unavailable");
       const cause = lastSourceFailure
         ? sourceFailureMessage(lastSourceFailure)
         : "no playable source was listed";
-      setMessage("Yocare could not start this channel because " + cause + ". The feed may also be offline, region-restricted, or blocked by the broadcaster. Retry later or choose another channel.");
+      setMessage("Yocare could not start this channel because " + cause + ". No additional approved feed was available. Retry later or choose another channel.");
       showPlayerPlaceholder(true);
     }
   }
