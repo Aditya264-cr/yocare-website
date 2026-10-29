@@ -137,6 +137,13 @@ async function proxyAuthorizedStream(request, env, requestUrl) {
   const isManifest = /\\.m3u8?$/i.test(target.pathname) || /mpegurl/i.test(request.headers.get("accept") || "");
   const cacheSeconds = isManifest ? 2 : 60;
   const range = request.headers.get("Range");
+  const cacheKey = new Request(new URL("/__yocare_edge_cache?source_id=" + encodeURIComponent(sourceId) + "&country=" + encodeURIComponent(country) + "&url=" + encodeURIComponent(target.href), request.url).href, { method: "GET" });
+  if (request.method === "GET" && !range) {
+    try {
+      const cached = await caches.default.match(cacheKey);
+      if (cached) return cached;
+    } catch { /* Cache API may be unavailable in local development. */ }
+  }
   let current = target;
   let upstream;
   for (let redirects = 0; redirects <= 3; redirects += 1) {
@@ -148,7 +155,6 @@ async function proxyAuthorizedStream(request, env, requestUrl) {
         "User-Agent": "YocareLive/1.0",
         "Accept": request.headers.get("Accept") || "*/*"
       },
-      cf: { cacheTtl: range ? 0 : cacheSeconds, cacheEverything: !range }
     });
     if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
     const location = upstream.headers.get("location");
@@ -167,13 +173,21 @@ async function proxyAuthorizedStream(request, env, requestUrl) {
     const manifestText = await upstream.text();
     try {
       const rewritten = rewriteHlsManifest(manifestText, current.href, sourceId, registered.hostname.toLowerCase().replace(/\\.$/, ""));
-      return proxyResponse(rewritten, 200, headers, "application/vnd.apple.mpegurl; charset=utf-8", "public, max-age=2");
+      const response = proxyResponse(rewritten, 200, headers, "application/vnd.apple.mpegurl; charset=utf-8", "public, max-age=2");
+      if (request.method === "GET" && !range) {
+        try { await caches.default.put(cacheKey, response.clone()); } catch { /* Keep playback working if edge cache is unavailable. */ }
+      }
+      return response;
     } catch {
       return proxyResponse("Manifest references an unapproved host", 502, headers, "text/plain; charset=utf-8", "no-store");
     }
   }
-  return proxyResponse(request.method === "HEAD" ? null : upstream.body, upstream.status, headers, contentType,
-    range ? "no-store" : "public, max-age=60");
+  const response = proxyResponse(request.method === "HEAD" ? null : upstream.body, upstream.status, headers, contentType,
+    range || upstream.status !== 200 ? "no-store" : "public, max-age=60");
+  if (request.method === "GET" && !range && upstream.status === 200) {
+    try { await caches.default.put(cacheKey, response.clone()); } catch { /* Keep playback working if edge cache is unavailable. */ }
+  }
+  return response;
 }
 
 async function checkSource(env, source) {
