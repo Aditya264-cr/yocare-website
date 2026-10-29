@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080b10">
-  <meta name="description" content="Yocare Live — explore live television channels by country and region.">
-  <title>Yocare Live — Television, in your orbit</title>
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Yocare Live — discover live television, channels and what's on now in one cinematic place.">
+  <title>Yocare Live — Your world, on air</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,32 +14,52 @@
   <script src="tv.js" defer></script>
 </head>
 <body>
-  <div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
-  <header class="topbar">
-    <a class="brand" href="index.html" aria-label="Yocare home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a>
-    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#channels">Discover</a><a href="#player">Now playing</a><a href="index.html">Yocare home ↗</a></nav>
-    <div class="top-status"><span class="status-dot"></span><span>LIVE CHANNELS</span></div>
+  <a class="skip-link" href="#channels">Skip to channels</a>
+  <header class="topbar" id="top">
+    <a class="brand" href="tv.html" aria-label="Yocare Live home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a>
+    <nav class="topnav" aria-label="Main navigation">
+      <a class="active" href="#discover">For you</a><a href="#channels">Live TV</a><a href="#latest">Latest</a><a href="#player">Now playing</a><a href="#guide">Channel guide</a><a href="index.html">Yocare ↗</a>
+    </nav>
+    <div class="top-actions"><a class="search-shortcut" href="#search-input" aria-label="Search channels">⌕ <span>Search</span></a><span class="top-status"><i class="status-dot"></i> LIVE</span></div>
   </header>
 
   <main class="app-shell">
-    <section class="intro">
-      <div class="intro-copy">
-        <p class="eyebrow"><span></span> YOUR WORLD, LIVE</p>
-        <h1>Television,<br><em>in your orbit.</em></h1>
-        <p class="intro-text">Discover live channels by country, explore what’s on, and tune in from one considered place.</p>
+    <section class="hero" id="discover" aria-label="Featured entertainment">
+      <div class="hero-art" id="hero-art" role="img" aria-label="Cinematic landscape from the featured selection"></div>
+      <div class="hero-vignette" aria-hidden="true"></div>
+      <div class="hero-content">
+        <p class="eyebrow"><span class="eyebrow-line"></span> THE Yocare PREMIERE</p>
+        <p class="hero-kicker" id="hero-kicker">FEATURED • DISCOVER SOMETHING NEW</p>
+        <h1 id="hero-title">Stories worth<br><em>staying in for.</em></h1>
+        <p class="hero-description" id="hero-description">A world of live moments, standout stories and new favourites — all in one place.</p>
+        <div class="hero-meta"><span class="meta-pill">CURATED DISCOVERY</span><span>New picks, refreshed regularly</span></div>
+        <div class="hero-actions"><a class="primary-cta" href="#latest">Explore the selection <span>↗</span></a><a class="secondary-cta" href="#player">Watch live <span>▶</span></a></div>
       </div>
-      <div class="intro-orbit" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div><div class="orbit-core"><span>YC</span></div><i class="orbit-point point-a"></i><i class="orbit-point point-b"></i><i class="orbit-point point-c"></i></div>
+      <div class="hero-controls" aria-label="Featured carousel controls"><span class="hero-count" id="hero-count">01 <i>/</i> 03</span><div class="hero-dots"><button class="hero-dot active" type="button" aria-label="Show featured slide 1" data-slide="0"></button><button class="hero-dot" type="button" aria-label="Show featured slide 2" data-slide="1"></button><button class="hero-dot" type="button" aria-label="Show featured slide 3" data-slide="2"></button></div><button class="hero-arrow" id="hero-prev" type="button" aria-label="Previous featured slide">←</button><button class="hero-arrow" id="hero-next" type="button" aria-label="Next featured slide">→</button></div>
+    </section>
+
+    <section class="channels-section channel-orbit-section" id="channels" aria-label="Live channels">
+      <div class="section-heading compact-heading"><div><p class="eyebrow">ON AIR RIGHT NOW</p><h2>Your channels.</h2><p class="section-subtitle">Tap a station to tune in. Availability varies by broadcaster and region.</p></div><a class="text-link" href="#guide">All channels <span>↗</span></a></div>
+      <div class="channel-orbit-row" id="featured-channels" aria-label="Featured live channels"><div class="featured-loading" id="featured-loading">Loading live channels…</div></div>
+      <div class="channel-row-foot"><span><i class="status-dot"></i> <span id="home-region">India & global streams</span></span><span id="visible-summary">Live directory</span></div>
+    </section>
+
+    <section class="latest-section" id="latest" aria-label="Latest and featured shows">
+      <div class="section-heading"><div><p class="eyebrow">HANDPICKED FOR YOUR NEXT WATCH</p><h2>Fresh on your screen.</h2><p class="section-subtitle">A cinematic discovery shelf. Editorial artwork is illustrative until a licensed metadata feed is connected.</p></div><div class="shelf-controls"><button class="shelf-arrow" type="button" data-scroll="latest-rail" data-dir="-1" aria-label="Scroll featured titles left">←</button><button class="shelf-arrow" type="button" data-scroll="latest-rail" data-dir="1" aria-label="Scroll featured titles right">→</button></div></div>
+      <div class="poster-rail" id="latest-rail">
+        <article class="poster-card poster-wide"><div class="poster-image" style="--poster:url('https://image.tmdb.org/t/p/w780/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg')"></div><div class="poster-overlay"><span class="poster-tag">FILM • FEATURED</span><h3>Worlds beyond</h3><p>Big stories. Bigger horizons.</p></div></article>
+        <article class="poster-card"><div class="poster-image" style="--poster:url('https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg')"></div><div class="poster-overlay"><span class="poster-tag">CINEMA</span><h3>The big picture</h3><p>Discover your next favourite.</p></div></article>
+        <article class="poster-card"><div class="poster-image" style="--poster:url('https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg')"></div><div class="poster-overlay"><span class="poster-tag">NEW DISCOVERY</span><h3>Into the unknown</h3><p>Find a story that stays with you.</p></div></article>
+        <article class="poster-card"><div class="poster-image" style="--poster:url('https://image.tmdb.org/t/p/w500/2cxhvwyEwRlysAmRH4iodkvo0z5.jpg')"></div><div class="poster-overlay"><span class="poster-tag">SPOTLIGHT</span><h3>Beyond the ordinary</h3><p>Made for your watchlist.</p></div></article>
+        <article class="poster-card"><div class="poster-image" style="--poster:url('https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg')"></div><div class="poster-overlay"><span class="poster-tag">CULTURE</span><h3>Stories everywhere</h3><p>A wider world, one screen.</p></div></article>
+      </div>
     </section>
 
     <section class="player-section" id="player" aria-label="Live video player">
+      <div class="section-heading player-heading"><div><p class="eyebrow"><span class="live-inline"></span> YOUR LIVE SCREEN</p><h2>Now playing.</h2><p class="section-subtitle">Choose a channel above or from the full guide below.</p></div><span class="player-live-label"><i class="status-dot"></i> LIVE PLAYER</span></div>
       <div class="player-frame">
         <video id="video" playsinline controls preload="none" aria-label="Live channel player"></video>
-        <div class="player-placeholder" id="player-placeholder">
-          <div class="play-orbit"><span>▶</span></div>
-          <p class="placeholder-kicker">YOUR LIVE SCREEN</p>
-          <h2>Choose a channel to begin.</h2>
-          <p>Playback starts only after you select a channel.</p>
-        </div>
+        <div class="player-placeholder" id="player-placeholder"><div class="play-orbit"><span>▶</span></div><p class="placeholder-kicker">YOUR LIVE SCREEN</p><h2>Choose a channel to begin.</h2><p>Playback starts only after you select a channel.</p></div>
         <div class="player-shade" aria-hidden="true"></div>
         <div class="player-topline"><span class="live-pill"><i></i> LIVE</span><span id="player-region">INDIA · LIVE TV</span></div>
         <div class="player-bottomline"><div><span class="now-label">NOW PLAYING</span><h2 id="now-title">Select a channel</h2><p id="now-subtitle">Your channel will appear here</p></div><button class="icon-button" id="retry-button" type="button" aria-label="Retry playback" title="Retry playback">↻</button></div>
@@ -48,25 +68,49 @@
       <div class="player-foot"><span><i class="status-dot"></i> <span id="playback-state">Ready when you are</span></span><span id="stream-note">Stream quality depends on the broadcaster and your connection.</span></div>
     </section>
 
-    <section class="channels-section" id="channels">
-      <div class="section-heading"><div><p class="eyebrow">THE CHANNEL GUIDE</p><h2>Find your frequency.</h2><p class="section-subtitle">Browse available streams by country or search for a channel.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
+    <section class="channels-section guide-section" id="guide">
+      <div class="section-heading"><div><p class="eyebrow">EXPLORE THE WORLD</p><h2>The channel guide.</h2><p class="section-subtitle">Search and filter public channel listings by country and category.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
       <div class="toolbar">
-        <label class="country-control"><span>LOCATION / COUNTRY</span><select id="country-select" aria-label="Choose country">
-          <option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option>
-        </select></label>
+        <label class="country-control"><span>LOCATION / COUNTRY</span><select id="country-select" aria-label="Choose country"><option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option></select></label>
         <label class="search-control"><span class="sr-only">Search channels</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search channels…" autocomplete="off" aria-label="Search channels"></label>
-        <button class="filter-button selected" id="all-filter" type="button" aria-pressed="true">All channels</button>
-        <button class="filter-button" id="news-filter" type="button" aria-pressed="false">News</button>
-        <button class="filter-button" id="music-filter" type="button" aria-pressed="false">Music</button>
-        <button class="filter-button" id="religion-filter" type="button" aria-pressed="false">Spiritual</button>
+        <button class="filter-button selected" id="all-filter" type="button" aria-pressed="true">All channels</button><button class="filter-button" id="news-filter" type="button" aria-pressed="false">News</button><button class="filter-button" id="music-filter" type="button" aria-pressed="false">Music</button><button class="filter-button" id="religion-filter" type="button" aria-pressed="false">Spiritual</button>
       </div>
       <div class="load-state" id="load-state" role="status" aria-live="polite"><span class="spinner"></span><span>Loading the channel guide…</span></div>
       <div class="channel-grid" id="channel-grid" aria-label="Available channels"></div>
       <div class="empty-state" id="empty-state" hidden><div>⌕</div><h3>No channels found</h3><p>Try a different search or select another country.</p><button id="clear-search" type="button">Clear search</button></div>
       <div class="load-more-wrap"><button class="load-more" id="load-more" type="button" hidden>Load more channels <span>↓</span></button></div>
-      <p class="source-note">Channel availability and playback are provided by third-party broadcasters. Links can change or be unavailable by region. Only streams you have permission to access and distribute should be used.</p>
+      <p class="source-note">Channel availability and playback are provided by third-party broadcasters. Listings are not a guarantee of programme schedules or rights. Only streams you have permission to access and distribute should be used.</p>
     </section>
   </main>
-  <footer class="footer"><a class="brand" href="index.html"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a><span>Thoughtfully connected to the world.</span><a href="#top">Back to top ↑</a></footer>
+  <footer class="footer"><a class="brand" href="tv.html"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a><span>One world. Many screens.</span><a href="#top">Back to top ↑</a></footer>
+  <script>
+  (() => {
+    const slides = [
+      {kicker:"FEATURED • DISCOVER SOMETHING NEW",title:"Stories worth<br><em>staying in for.</em>",description:"A world of live moments, standout stories and new favourites — all in one place.",image:"https://image.tmdb.org/t/p/original/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg"},
+      {kicker:"YOUR NEXT GREAT WATCH",title:"Find your next<br><em>favourite world.</em>",description:"From unforgettable journeys to stories that bring us closer, let curiosity lead.",image:"https://image.tmdb.org/t/p/original/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg"},
+      {kicker:"A LITTLE MORE WONDER",title:"Press play on<br><em>the unexpected.</em>",description:"Explore a new perspective, discover a new voice, and make tonight yours.",image:"https://image.tmdb.org/t/p/original/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg"}
+    ];
+    let active = 0;
+    const art = document.getElementById("hero-art");
+    const setSlide = (index) => {
+      active = (index + slides.length) % slides.length;
+      const slide = slides[active];
+      document.getElementById("hero-kicker").textContent = slide.kicker;
+      document.getElementById("hero-title").innerHTML = slide.title;
+      document.getElementById("hero-description").textContent = slide.description;
+      art.style.backgroundImage = "url('" + slide.image + "')";
+      document.getElementById("hero-count").innerHTML = String(active + 1).padStart(2,"0") + " <i>/</i> 03";
+      document.querySelectorAll(".hero-dot").forEach((dot,i) => { dot.classList.toggle("active", i === active); dot.setAttribute("aria-current", i === active ? "true" : "false"); });
+    };
+    document.getElementById("hero-prev").addEventListener("click", () => setSlide(active - 1));
+    document.getElementById("hero-next").addEventListener("click", () => setSlide(active + 1));
+    document.querySelectorAll(".hero-dot").forEach(dot => dot.addEventListener("click", () => setSlide(Number(dot.dataset.slide))));
+    document.querySelectorAll("[data-scroll]").forEach(button => button.addEventListener("click", () => {
+      const rail = document.getElementById(button.dataset.scroll);
+      rail?.scrollBy({left: Number(button.dataset.dir) * Math.min(700, rail.clientWidth * .8), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+    }));
+    setSlide(0);
+  })();
+  </script>
 </body>
 </html>
