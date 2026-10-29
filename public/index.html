@@ -18,7 +18,7 @@
   <header class="topbar" id="top">
     <a class="brand" href="#top" aria-label="Yocare Live home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>yocare<span class="brand-light">.live</span></span></a>
     <nav class="topnav" aria-label="Main navigation"><a class="active" href="#discover">Discover</a><a href="#player">Watch</a><a href="#channels">The guide</a></nav>
-    <a class="top-action" href="#channels"><span class="live-dot"></span> Browse channels <span aria-hidden="true">↗</span></a>
+    <a class="top-action" href="#channels">Browse guide <span aria-hidden="true">↗</span></a>
   </header>
 
   <main>
@@ -26,10 +26,10 @@
       <div class="hero-backdrop" aria-hidden="true"><div class="hero-glow"></div><div class="hero-ring ring-one"></div><div class="hero-ring ring-two"></div><div class="hero-ring ring-three"></div><div class="hero-orb"></div><div class="hero-stars"></div></div>
       <div class="hero-content">
         <p class="eyebrow"><span class="eyebrow-line"></span> A WINDOW INTO EVERYWHERE</p>
-        <h1>Stay curious.<br><em>Stay in the world.</em></h1>
-        <p class="hero-copy">Move across borders, languages and points of view. Find a live signal that takes you somewhere new.</p>
-        <div class="hero-actions"><a class="primary-cta" href="#channels">Explore the guide <span aria-hidden="true">↗</span></a><a class="text-cta" href="#player"><span class="play-mini">▶</span> Enter the live room</a></div>
-        <div class="hero-meta"><span class="live-dot"></span><span>LIVE CHANNEL GUIDE</span><span class="meta-divider"></span><span>VOICES FROM EVERYWHERE</span></div>
+        <h1>A new world<br><em>is always live.</em></h1>
+        <p class="hero-copy">From headlines to music and sport, find a live signal and see what’s happening beyond your usual horizon.</p>
+        <div class="hero-actions"><a class="primary-cta" href="#channels">Browse live channels <span aria-hidden="true">↗</span></a><a class="text-cta" href="#player"><span class="play-mini">▶</span> Enter the live room</a></div>
+        <div class="hero-meta"><span class="live-dot"></span><span>GLOBAL CHANNEL GUIDE</span><span class="meta-divider"></span><span>LIVE FROM EVERYWHERE</span></div>
       </div>
       <aside class="hero-world" aria-label="Yocare Live global signal artwork">
         <div class="world-orbit world-orbit-one"></div><div class="world-orbit world-orbit-two"></div>
@@ -59,6 +59,16 @@
       <a class="scroll-cue" href="#player" aria-label="Scroll to live player"><span></span> SCROLL TO DISCOVER</a>
     </section>
 
+
+    <section class="featured-section page-section" id="for-you" aria-labelledby="featured-title">
+      <div class="featured-heading">
+        <div><p class="eyebrow"><span class="eyebrow-line"></span> A WORLD OF CHANNELS</p><h2 id="featured-title">Signals to <em>explore.</em></h2></div>
+        <a class="featured-link" href="#channels">View full guide <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="featured-subtitle">Browse live channel logos from the selected region. Choose one to start watching.</p>
+      <div class="featured-rail" id="featured-channels" aria-label="Featured live channels"></div>
+      <div class="rail-loading" id="featured-loading" role="status"><span class="spinner"></span><span>Finding channels in your region…</span></div>
+    </section>
     <section class="player-section page-section" id="player" aria-label="Live video player">
       <div class="section-intro player-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> ON YOUR SCREEN</p><h2>Step into the <em>live room.</em></h2></div><p>Every channel opens a different window. Pick a signal below and settle in.</p></div>
       <div class="player-frame">
@@ -79,7 +89,7 @@
     </section>
 
     <section class="channels-section page-section" id="channels">
-      <div class="section-intro channels-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> THE WORLD, IN CHANNELS</p><h2>Follow what <em>moves you.</em></h2><p class="section-subtitle">News, sport, music and more—find a place to begin.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
+      <div class="section-intro channels-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> THE WORLD, IN CHANNELS</p><h2>Find your <em>next channel.</em></h2><p class="section-subtitle">Explore the full guide by country, category or channel name.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
       <div class="toolbar">
         <label class="country-control"><span>CHOOSE A REGION</span><select id="country-select" aria-label="Choose country">
           <option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option>
