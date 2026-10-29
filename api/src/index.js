@@ -215,7 +215,10 @@ export default {
     const headers = cors(request, env);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
     try {
-      if (url.pathname === "/api/proxy" && (request.method === "GET" || request.method === "HEAD")) {\n        return await proxyAuthorizedStream(request, env, url);\n      }\n      if (url.pathname === "/api/health" && request.method === "GET") {
+      if (url.pathname === "/api/proxy" && (request.method === "GET" || request.method === "HEAD")) {
+        return await proxyAuthorizedStream(request, env, url);
+      }
+      if (url.pathname === "/api/health" && request.method === "GET") {
         const result = await env.DB.prepare("SELECT 1 AS ok").first();
         return response({ ok: result?.ok === 1, service: "yocare-live-registry", version: 2 }, 200, headers);
       }
