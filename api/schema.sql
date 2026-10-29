@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS sources (
   last_ok_at TEXT,
   last_status INTEGER,
   last_latency_ms INTEGER,
+  latency_ms INTEGER,
+  reliability_score INTEGER NOT NULL DEFAULT 50 CHECK(reliability_score BETWEEN 0 AND 100),
   consecutive_failures INTEGER NOT NULL DEFAULT 0,
   authorization_reference TEXT,
   rights_regions TEXT NOT NULL DEFAULT '[]',
@@ -32,6 +34,7 @@ CREATE TABLE IF NOT EXISTS sources (
 );
 CREATE INDEX IF NOT EXISTS idx_sources_channel_enabled_priority ON sources(channel_id, enabled, priority);
 CREATE INDEX IF NOT EXISTS idx_sources_health ON sources(enabled, last_checked_at, last_ok_at);
+CREATE INDEX IF NOT EXISTS idx_sources_latency ON sources(channel_id, latency_ms, reliability_score);
 CREATE INDEX IF NOT EXISTS idx_sources_authorization ON sources(enabled, rights_verified_at, rights_expires_at);
 
 CREATE TABLE IF NOT EXISTS source_checks (
