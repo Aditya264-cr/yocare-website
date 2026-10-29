@@ -16,9 +16,10 @@
     state: $("playback-state"), message: $("player-message"), retry: $("retry-button"), playStart: $("play-start"),
     clear: $("clear-search"), categories: $("category-chips"),
     categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading"), genreRails: $("genre-rails"), spotlightPlay: $("spotlight-play"), spotlightCard: $("spotlight-card"), spotlightLogo: $("spotlight-logo"), spotlightName: $("spotlight-name"), spotlightDetail: $("spotlight-detail"), spotlightRegion: $("spotlight-region"), homeRegion: $("home-region"), searchAction: $("search-action"),
+    homeTitle: $("home-title"), heroCopy: $("hero-copy"), topPicks: $("top-picks-rail"), topPicksLoading: $("top-picks-loading"),
     spotlightBackdrop: $("spotlight-backdrop"), spotlightStatus: $("spotlight-status"), spotlightLabel: $("spotlight-label"),
     spotlightControls: $("spotlight-controls"), spotlightPrev: $("spotlight-prev"), spotlightNext: $("spotlight-next"), spotlightPosition: $("spotlight-position"),
-    programRail: $("program-rail"), programEmpty: $("program-empty"), guideStatus: $("guide-status")
+    programSection: $("on-now"), programRail: $("program-rail"), programEmpty: $("program-empty"), guideStatus: $("guide-status")
   };
 
   let channels = [];
@@ -449,6 +450,7 @@
     els.programRail.replaceChildren();
     visible.forEach((item, index) => els.programRail.append(makeProgramCard(item, index)));
     els.programRail.hidden = visible.length === 0;
+    els.programSection.hidden = visible.length === 0;
     els.programEmpty.hidden = visible.length > 0;
     if (!visible.length) {
       const configured = Object.keys(guideChannels()).length > 0;
@@ -523,8 +525,11 @@
     channels = [];
     filtered = [];
     if (els.featured) els.featured.replaceChildren();
+    if (els.topPicks) els.topPicks.replaceChildren();
+    if (els.topPicksLoading) { els.topPicksLoading.hidden = false; }
     if (els.genreRails) els.genreRails.replaceChildren();
     if (els.programRail) els.programRail.replaceChildren();
+    if (els.programSection) els.programSection.hidden = true;
     programGuide = {channels:{}};
     programEntries = [];
     carouselIndex = 0;
@@ -614,6 +619,7 @@
       if (error.name === "AbortError" || currentRequest !== requestNumber) return;
       setLoading(false);
       if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Channel picks will appear when the guide is available."; }
+      if (els.topPicksLoading) { els.topPicksLoading.hidden = false; els.topPicksLoading.textContent = "Live channel picks are unavailable right now."; }
       els.grid.replaceChildren();
       els.empty.hidden = false;
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
@@ -705,11 +711,34 @@
     return button;
   }
 
+  function spotlightSlides() {
+    if (programEntries.length) {
+      return programEntries.map(entry => ({channel:entry.channel, program:entry}));
+    }
+    const withLogos = channels.filter(channel => channel.logo);
+    const picks = (withLogos.length >= 4 ? withLogos : channels).slice(0, 10);
+    return picks.map(channel => ({channel, program:null}));
+  }
+
+  function setHeroTitle(value) {
+    const words = String(value || "Live TV").trim().split(/\s+/).filter(Boolean);
+    const splitAt = words.length > 1 ? Math.ceil(words.length / 2) : words.length;
+    const first = words.slice(0, splitAt).join(" ");
+    const second = words.slice(splitAt).join(" ");
+    const emphasis = document.createElement("em");
+    emphasis.textContent = second;
+    const children = [document.createTextNode(first)];
+    if (second) children.push(document.createElement("br"), emphasis);
+    els.homeTitle.replaceChildren(...children);
+  }
+
   function renderSpotlight(channel) {
-    const item = channel
-      ? programEntries.find(entry => entry.channel.key === channel.key && entry.isCurrent)
-      : (programEntries[carouselIndex] || null);
-    const candidate = channel || (item && item.channel) || activeChannel || channels.find(entry => entry.logo) || channels[0] || null;
+    const slides = spotlightSlides();
+    const selected = channel
+      ? {channel, program:programEntries.find(entry => entry.channel.key === channel.key && entry.isCurrent) || null}
+      : (slides[carouselIndex] || null);
+    const item = selected && selected.program;
+    const candidate = channel || (selected && selected.channel) || activeChannel || channels.find(entry => entry.logo) || channels[0] || null;
     spotlightChannel = candidate;
     if (els.spotlightPlay) els.spotlightPlay.disabled = !candidate;
     if (els.spotlightCard) {
@@ -718,45 +747,47 @@
         ? (item ? "Watch " + item.title + " on " + candidate.name : "Watch " + candidate.name + " live")
         : "No live channel is available");
     }
-    els.spotlightControls.hidden = programEntries.length < 2;
-    els.spotlightPosition.textContent = programEntries.length ? (carouselIndex + 1) + " / " + programEntries.length : "1 / 1";
+    els.spotlightControls.hidden = slides.length < 2;
+    els.spotlightPosition.textContent = slides.length ? (carouselIndex + 1) + " / " + slides.length : "1 / 1";
     els.spotlightStatus.textContent = item ? (item.isCurrent ? "ON NOW" : "UP NEXT") : "LIVE CHANNEL";
     els.spotlightLabel.textContent = item ? (item.isCurrent ? "NOW SHOWING" : "COMING UP") : "FEATURED CHANNEL";
     els.spotlightBackdrop.hidden = true;
     els.spotlightBackdrop.onerror = null;
     els.spotlightBackdrop.removeAttribute("src");
-    $("discover").classList.remove("has-program-art");
-    els.spotlightLogo.hidden = false;
+    $("discover").classList.remove("has-program-art", "has-channel-art");
     if (!candidate) {
       els.spotlightName.textContent = channels.length ? "Choose a live channel" : "Finding channels…";
       els.spotlightDetail.textContent = channels.length ? "Browse the channel rows below" : "Loading the channel guide";
-      els.spotlightLogo.replaceChildren();
-      const fallback = document.createElement("span");
-      fallback.className = "spotlight-fallback";
-      fallback.textContent = "YL";
-      els.spotlightLogo.append(fallback);
-      els.spotlightLogo.classList.remove("has-logo");
+      els.heroCopy.textContent = "Discover channels from your region and tune in with one click.";
       return;
     }
-    els.spotlightName.textContent = item ? item.title : candidate.name;
+
+    const title = item ? item.title : candidate.name;
+    setHeroTitle(title);
+    els.spotlightName.textContent = title;
     els.spotlightDetail.textContent = item
       ? candidate.name + " · " + formatProgramTime(item)
-      : [categoryLabel(candidate.category), countryName()].filter(Boolean).join(" · ");
+      : [categoryLabel(candidate.category), countryName(), "Available to watch live"].filter(Boolean).join(" · ");
+    els.heroCopy.textContent = item
+      ? (item.description || (candidate.name + " · " + formatProgramTime(item) + " · " + countryName()))
+      : ("Tune in to " + candidate.name + " live from " + countryName() + ".");
     els.spotlightLogo.replaceChildren();
     els.spotlightLogo.classList.remove("has-logo");
     const fallback = document.createElement("span");
     fallback.className = "spotlight-fallback";
     fallback.textContent = initialsFor(candidate.name);
     els.spotlightLogo.append(fallback);
-    const imageUrl = item ? item.image : safeImageUrl(candidate.logo);
-    if (item && imageUrl) {
+
+    const programImage = item && item.image;
+    const imageUrl = programImage || safeImageUrl(candidate.logo);
+    if (imageUrl) {
       els.spotlightBackdrop.src = imageUrl;
       els.spotlightBackdrop.hidden = false;
-      $("discover").classList.add("has-program-art");
+      $("discover").classList.add(programImage ? "has-program-art" : "has-channel-art");
       els.spotlightBackdrop.onerror = () => {
         if (els.spotlightBackdrop.src !== imageUrl) return;
         els.spotlightBackdrop.hidden = true;
-        $("discover").classList.remove("has-program-art");
+        $("discover").classList.remove("has-program-art", "has-channel-art");
       };
     }
     if (candidate.logo && safeImageUrl(candidate.logo)) {
@@ -771,7 +802,6 @@
       els.spotlightLogo.append(image);
     }
   }
-
   function renderGenreRails() {
     if (!els.genreRails) return;
     els.genreRails.replaceChildren();
@@ -806,9 +836,24 @@
   }
 
   function moveSpotlight(offset) {
-    if (programEntries.length < 2) return;
-    carouselIndex = (carouselIndex + offset + programEntries.length) % programEntries.length;
+    const slides = spotlightSlides();
+    if (slides.length < 2) return;
+    carouselIndex = (carouselIndex + offset + slides.length) % slides.length;
     renderSpotlight(null);
+  }
+
+
+  function renderTopPicks() {
+    if (!els.topPicks) return;
+    const withLogos = channels.filter(channel => channel.logo);
+    const picks = (withLogos.length >= 6 ? withLogos : channels).slice(0, 10);
+    els.topPicks.replaceChildren();
+    picks.forEach((channel, index) => {
+      const card = makeCard(channel, index);
+      card.classList.add("top-pick-card");
+      els.topPicks.append(card);
+    });
+    if (els.topPicksLoading) els.topPicksLoading.hidden = picks.length > 0;
   }
 
   function renderFeaturedChannels() {
@@ -821,7 +866,9 @@
       card.classList.add("featured-channel");
       els.featured.append(card);
     });
+    renderTopPicks();
     renderGenreRails();
+    carouselIndex = spotlightSlides().length ? carouselIndex % spotlightSlides().length : 0;
     renderSpotlight(activeChannel || null);
     if (els.featuredLoading) els.featuredLoading.hidden = true;
   }
@@ -839,7 +886,7 @@
   }
 
   function updateSelectedCard() {
-    [els.grid, els.featured, els.genreRails].filter(Boolean).forEach(container => container.querySelectorAll(".channel-card").forEach(card => {
+    [els.grid, els.featured, els.topPicks, els.genreRails].filter(Boolean).forEach(container => container.querySelectorAll(".channel-card").forEach(card => {
       const selected = !!activeChannel && card.dataset.channelId === activeChannel.id;
       card.setAttribute("aria-current", selected ? "true" : "false");
       const play = card.querySelector(".channel-play");
@@ -1287,7 +1334,7 @@
     if (Object.keys(guideChannels()).length) renderProgramGuide();
   }, 60_000);
   window.setInterval(() => {
-    if (programEntries.length > 1 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) moveSpotlight(1);
+    if (spotlightSlides().length > 1 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) moveSpotlight(1);
   }, 9_000);
 
   loadCountry(els.country.value);
