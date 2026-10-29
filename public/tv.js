@@ -912,7 +912,7 @@
     const isHls = path.endsWith(".m3u8") || (!isDash && !isDirectMedia && els.video.canPlayType("application/vnd.apple.mpegurl") !== "");
     let nativeHlsFallbackAttempted = false;
     const tryNativeHlsFallback = () => {
-      if (nativeHlsFallbackAttempted || !isHls || !window.Hls || !window.Hls.isSupported()) return false;
+      if (nativeHlsFallbackAttempted || hls || !isHls || !window.Hls || !window.Hls.isSupported()) return false;
       nativeHlsFallbackAttempted = true;
       let player;
       try {
