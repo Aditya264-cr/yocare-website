@@ -2,7 +2,7 @@
   "use strict";
 
   const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/streams/";
-  const PAGE_SIZE = 24;
+  const PAGE_SIZE = 48;
   const $ = (id) => document.getElementById(id);
   const els = {
     video: $("video"), placeholder: $("player-placeholder"), grid: $("channel-grid"),
@@ -10,8 +10,8 @@
     loading: $("load-state"), empty: $("empty-state"), more: $("load-more"),
     title: $("now-title"), subtitle: $("now-subtitle"), region: $("player-region"),
     state: $("playback-state"), message: $("player-message"), retry: $("retry-button"),
-    clear: $("clear-search"), all: $("all-filter"), news: $("news-filter"),
-    music: $("music-filter"), religion: $("religion-filter")
+    clear: $("clear-search"), categories: $("category-chips"),
+    categorySummary: $("category-summary"), visibleSummary: $("visible-summary")
   };
 
   let channels = [];
@@ -39,9 +39,16 @@
     return "general";
   };
   const initialsFor = (name) => {
-    const words = name.replace(/\([^)]*\)/g, "").trim().split(/\s+/).filter(Boolean);
+    const cleaned = name.replace(/\([^)]*\)/g, "").replace(/\b(HD|FHD|UHD|4K|TV)\b/gi, "").trim();
+    const words = cleaned.split(/\s+/).filter(Boolean);
     return (words.length > 1 ? words.slice(0, 2).map(w => w[0]) : (words[0] || "TV").slice(0, 2)).join("").toUpperCase();
   };
+  const CATEGORY_LABELS = {
+    all: "All channels", news: "News", sports: "Sports", entertainment: "Entertainment",
+    music: "Music", kids: "Kids & family", religion: "Spiritual", general: "General"
+  };
+  const CATEGORY_ORDER = ["all", "news", "sports", "entertainment", "music", "kids", "religion", "general"];
+  const categoryLabel = (category) => CATEGORY_LABELS[category] || "General";
   const safeText = (value) => String(value || "").replace(/[<>]/g, "");
 
   function parsePlaylist(text) {
@@ -155,6 +162,7 @@
       const result = parsePlaylist(text);
       if (!result.length) throw new Error("The playlist did not contain readable channel entries.");
       channels = result;
+      renderCategories();
       applyFilters();
       setLoading(false);
     } catch (error) {
@@ -180,6 +188,15 @@
     page = 0;
     els.grid.replaceChildren();
     els.count.textContent = String(filtered.length);
+    if (els.visibleSummary) {
+      const total = channels.length;
+      els.visibleSummary.textContent = activeFilter === "all"
+        ? filtered.length + " of " + total + " channels shown"
+        : filtered.length + " " + categoryLabel(activeFilter).toLowerCase() + " channels";
+    }
+    if (els.categorySummary) {
+      els.categorySummary.textContent = activeFilter === "all" ? "Every available genre" : categoryLabel(activeFilter);
+    }
     els.empty.hidden = filtered.length > 0 || isLoadingPlaylist;
     if (filtered.length === 0 && !isLoadingPlaylist) {
       els.empty.querySelector("h3").textContent = "No channels found";
@@ -199,16 +216,21 @@
     button.setAttribute("aria-current", activeChannel && activeChannel.key === channel.key ? "true" : "false");
 
     const logo = document.createElement("span");
-    logo.className = "channel-logo";
-    logo.textContent = initialsFor(channel.name);
+    logo.className = "channel-logo logo-" + channel.category;
+    const initials = initialsFor(channel.name);
+    const fallback = document.createElement("span");
+    fallback.className = "logo-fallback";
+    fallback.textContent = initials;
+    logo.append(fallback);
     if (channel.logo && /^https?:\/\//i.test(channel.logo)) {
       const image = document.createElement("img");
       image.loading = "lazy";
-      image.alt = "";
+      image.alt = safeText(channel.name) + " logo";
       image.referrerPolicy = "no-referrer";
       image.src = channel.logo;
+      image.addEventListener("load", () => logo.classList.add("has-logo"), {once:true});
       image.addEventListener("error", () => image.remove(), {once:true});
-      logo.replaceChildren(image);
+      logo.append(image);
     }
 
     const info = document.createElement("span");
@@ -221,7 +243,7 @@
     meta.className = "channel-meta";
     const tag = document.createElement("span");
     tag.className = "channel-tag";
-    tag.textContent = channel.category === "religion" ? "Spiritual" : channel.category;
+    tag.textContent = categoryLabel(channel.category);
     meta.append(tag);
     const sourceCount = document.createElement("span");
     sourceCount.textContent = channel.urls.length > 1 ? channel.urls.length + " sources" : "Live stream";
@@ -243,6 +265,10 @@
     batch.forEach((channel, i) => els.grid.append(makeCard(channel, start + i)));
     page++;
     els.more.hidden = page * PAGE_SIZE >= filtered.length;
+    if (!els.more.hidden) {
+      const remaining = filtered.length - page * PAGE_SIZE;
+      els.more.innerHTML = "Show " + Math.min(PAGE_SIZE, remaining) + " more channels <span>↓</span>";
+    }
   }
 
   function updateSelectedCard() {
@@ -373,12 +399,35 @@
     }
   }
 
-  function setCategory(category, button) {
+  function renderCategories() {
+    const counts = channels.reduce((acc, channel) => {
+      acc[channel.category] = (acc[channel.category] || 0) + 1;
+      return acc;
+    }, {});
+    els.categories.replaceChildren();
+    CATEGORY_ORDER.forEach(category => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "category-chip" + (category === activeFilter ? " selected" : "");
+      button.dataset.category = category;
+      button.setAttribute("aria-pressed", String(category === activeFilter));
+      const label = document.createElement("span");
+      label.textContent = categoryLabel(category);
+      const count = document.createElement("span");
+      count.className = "category-chip-count";
+      count.textContent = category === "all" ? String(channels.length) : String(counts[category] || 0);
+      button.append(label, count);
+      button.disabled = category !== "all" && !counts[category];
+      els.categories.append(button);
+    });
+  }
+
+  function setCategory(category) {
     activeFilter = category;
-    [els.all, els.news, els.music, els.religion].forEach(el => {
-      const selected = el === button;
-      el.classList.toggle("selected", selected);
-      el.setAttribute("aria-pressed", String(selected));
+    els.categories.querySelectorAll(".category-chip").forEach(button => {
+      const selected = button.dataset.category === category;
+      button.classList.toggle("selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
     });
     applyFilters();
   }
@@ -397,17 +446,17 @@
   });
   els.search.addEventListener("input", applyFilters);
   els.more.addEventListener("click", renderNextPage);
-  els.all.addEventListener("click", () => setCategory("all", els.all));
-  els.news.addEventListener("click", () => setCategory("news", els.news));
-  els.music.addEventListener("click", () => setCategory("music", els.music));
-  els.religion.addEventListener("click", () => setCategory("religion", els.religion));
+  els.categories.addEventListener("click", (event) => {
+    const button = event.target.closest(".category-chip");
+    if (button && !button.disabled) setCategory(button.dataset.category);
+  });
   els.clear.addEventListener("click", () => {
     if (!channels.length) {
       loadCountry(els.country.value);
       return;
     }
     els.search.value = "";
-    setCategory("all", els.all);
+    setCategory("all");
   });
   els.retry.addEventListener("click", () => {
     if (activeChannel) {
