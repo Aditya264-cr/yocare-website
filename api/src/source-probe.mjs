@@ -59,6 +59,7 @@ async function safeFetch(url, options) {
   let current = new URL(url);
   for (let redirects = 0; redirects <= 3; redirects += 1) {
     if (!safeSourceUrl(current.href)) throw new Error("unsafe-redirect");
+    const requestStarted = Date.now();
     const response = await options.fetchImpl(current.href, {
       method: "GET",
       redirect: "manual",
@@ -69,7 +70,8 @@ async function safeFetch(url, options) {
         "User-Agent": "YocareLiveHealth/2.0"
       }
     });
-    if (!REDIRECT_STATUSES.has(response.status)) return { response, url: current.href };
+    const ttfb_ms = Date.now() - requestStarted;
+    if (!REDIRECT_STATUSES.has(response.status)) return { response, url: current.href, ttfb_ms };
     const location = response.headers.get("location");
     await response.body?.cancel();
     if (!location || redirects === 3) throw new Error("redirect-limit");
@@ -96,8 +98,8 @@ async function readMedia(url, options) {
   }
   const body = await readPrefix(response, 1024);
   return body.length
-    ? { ok: true, status: response.status, url: result.url }
-    : { ok: false, status: response.status, note: "empty-media-response" };
+    ? { ok: true, status: response.status, url: result.url, ttfb_ms: result.ttfb_ms }
+    : { ok: false, status: response.status, note: "empty-media-response", ttfb_ms: result.ttfb_ms };
 }
 
 function mediaUri(lines) {
@@ -123,24 +125,28 @@ export async function inspectSource(source, options = {}) {
   const started = Date.now();
   const fetchImpl = options.fetchImpl || fetch;
   const origin = options.origin || DEFAULT_ORIGIN;
-  const timeoutMs = options.timeoutMs || 8000;
+  const timeoutMs = options.timeoutMs ?? 4000;
   const sourceType = source.source_type || source.type || "unknown";
   const result = (ok, status, note, depth) => ({
     id: source.id,
     ok,
     status: status || null,
     latency_ms: Date.now() - started,
+    ttfb_ms: lastTtfbMs,
+    latency_tier: lastTtfbMs == null ? "unknown" : lastTtfbMs > 2500 ? "slow" : "fast",
     note,
     probe_depth: depth
   });
 
   if (!safeSourceUrl(source.url)) return result(false, null, "https-required-or-unsafe-url", "none");
+  let lastTtfbMs = null;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const requestOptions = { fetchImpl, origin, signal: controller.signal };
 
   try {
     const root = await safeFetch(source.url, requestOptions);
+    lastTtfbMs = root.ttfb_ms;
     const response = root.response;
     if (!response.ok) {
       await response.body?.cancel();
@@ -171,6 +177,7 @@ export async function inspectSource(source, options = {}) {
       let mediaPlaylistUrl = mediaUrl;
       if (first.kind === "variant") {
         const variant = await safeFetch(mediaUrl, requestOptions);
+        lastTtfbMs = variant.ttfb_ms;
         if (!variant.response.ok || !corsAllowed(variant.response, origin)) {
           const status = variant.response.status;
           await variant.response.body?.cancel();
@@ -190,8 +197,9 @@ export async function inspectSource(source, options = {}) {
       }
 
       const segmentResult = await readMedia(mediaUrl, requestOptions);
+      lastTtfbMs = segmentResult.ttfb_ms ?? lastTtfbMs;
       if (!segmentResult.ok) return result(false, segmentResult.status, segmentResult.note, "segment");
-      return result(true, segmentResult.status, "manifest-and-first-segment-reachable", "segment");
+      return result(true, segmentResult.status, lastTtfbMs > 2500 ? "manifest-and-segment-reachable-slow" : "manifest-and-first-segment-reachable", "segment");
     }
 
     if (sourceType === "dash" || looksDash || /\.mpd(?:$|[?#])/i.test(new URL(source.url).pathname)) {
