@@ -29,6 +29,36 @@ function safeSourceUrl(value) {
     return true;
   } catch { return false; }
 }
+
+async function readResponsePrefix(response, maxBytes = 16384) {
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+  const chunks = [];
+  let total = 0;
+  try {
+    while (total < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const count = Math.min(value.byteLength, maxBytes - total);
+      chunks.push(value.subarray(0, count));
+      total += count;
+      if (count < value.byteLength || total >= maxBytes) {
+        await reader.cancel();
+        break;
+      }
+    }
+  } finally {
+    try { reader.releaseLock(); } catch {}
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
+}
+
 function admin(request, env) {
   const supplied = request.headers.get("Authorization") || "";
   return Boolean(env.REGISTRY_ADMIN_TOKEN && supplied === "Bearer " + env.REGISTRY_ADMIN_TOKEN);
@@ -66,12 +96,22 @@ async function checkSource(env, source) {
       await res.body?.cancel();
     } else if (res.ok) {
       const type = (res.headers.get("content-type") || "").toLowerCase();
-      const body = await res.text();
+      const body = await readResponsePrefix(res);
       const looksLikeHls = body.trimStart().startsWith("#EXTM3U");
+      const looksLikeDash = /<MPD(?:\s|>)/i.test(body);
       const looksLikeManifest = /\.m3u8?(?:$|[?#])/i.test(new URL(source.url).pathname) || /mpegurl/.test(type);
       const looksLikeMedia = /video|audio|octet-stream/.test(type) || /\.(mp4|m4v|webm|mp3|aac)(?:$|[?#])/i.test(source.url);
-      ok = looksLikeHls ? body.includes("#EXTINF") || body.includes("#EXT-X-STREAM-INF") : looksLikeManifest ? false : looksLikeMedia;
-      note = ok ? "reachable" : "content-not-verified";
+      const sourceType = source.source_type || "unknown";
+      if (sourceType === "hls" || looksLikeManifest) {
+        ok = looksLikeHls && /#EXT(?:INF|X-STREAM-INF):/.test(body);
+      } else if (sourceType === "dash" || looksLikeDash) {
+        ok = looksLikeDash;
+      } else {
+        ok = looksLikeHls
+          ? /#EXT(?:INF|X-STREAM-INF):/.test(body)
+          : looksLikeDash || looksLikeMedia;
+      }
+      note = ok ? "manifest-or-media-reachable" : "content-not-verified";
     } else {
       note = "http-error";
       await res.body?.cancel();
@@ -112,7 +152,7 @@ export default {
         const sources = await getSources(env, channelId);
         return response({
           channel: { id: channel.id, name: channel.name, country_code: channel.country_code },
-          sources: sources.map(s => ({ id: s.id, url: s.url, type: s.source_type, priority: s.priority, health: s.healthy ? "recently-healthy" : s.last_checked_at ? "unknown-or-unhealthy" : "untested" })),
+          sources: sources.map(s => ({ id: s.id, url: s.url, type: s.source_type, priority: s.priority, health: s.healthy ? "recently-reachable" : s.last_checked_at ? "unknown-or-unhealthy" : "untested" })),
           checked_at: sources.reduce((latest, s) => s.last_checked_at && s.last_checked_at > latest ? s.last_checked_at : latest, "")
         }, 200, headers);
       }
@@ -165,10 +205,19 @@ export default {
   },
   async scheduled(_controller, env) {
     const { results = [] } = await env.DB.prepare(
-      "SELECT id, url FROM sources WHERE enabled = 1 ORDER BY last_checked_at ASC LIMIT 100"
+      "SELECT id, url, source_type FROM sources WHERE enabled = 1 ORDER BY last_checked_at ASC LIMIT 100"
     ).all();
-    for (let i = 0; i < results.length; i += 1) {
-      await checkSource(env, results[i]);
+    const batchSize = 10;
+    for (let i = 0; i < results.length; i += batchSize) {
+      const settled = await Promise.allSettled(results.slice(i, i + batchSize).map(source => checkSource(env, source)));
+      settled.forEach((result, offset) => {
+        if (result.status === "rejected") {
+          console.error("Yocare Live source check failed", {
+            source: results[i + offset].id,
+            message: String(result.reason?.message || result.reason)
+          });
+        }
+      });
     }
   }
 };
