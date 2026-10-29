@@ -41,7 +41,9 @@
   const initialsFor = (name) => {
     const cleaned = name.replace(/\([^)]*\)/g, "").replace(/\b(HD|FHD|UHD|4K|TV)\b/gi, "").trim();
     const words = cleaned.split(/\s+/).filter(Boolean);
-    return (words.length > 1 ? words.slice(0, 2).map(w => w[0]) : (words[0] || "TV").slice(0, 2)).join("").toUpperCase();
+    return words.length > 1
+      ? words.slice(0, 2).map(word => word[0]).join("").toUpperCase()
+      : (words[0] || "TV").slice(0, 2).toUpperCase();
   };
   const CATEGORY_LABELS = {
     all: "All channels", news: "News", sports: "Sports", entertainment: "Entertainment",
@@ -138,6 +140,32 @@
     return PLAYLIST_BASE + encodeURIComponent(code) + ".m3u";
   }
 
+  async function fetchPlaylistText(code, signal) {
+    const encoded = encodeURIComponent(code);
+    const sources = [
+      PLAYLIST_BASE + encoded + ".m3u",
+      "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
+    ];
+    let lastError = null;
+    for (const source of sources) {
+      try {
+        const response = await fetch(source, {
+          signal,
+          cache: "no-cache",
+          headers: {"Accept": "application/vnd.apple.mpegurl, audio/x-mpegurl, text/plain, */*"}
+        });
+        if (!response.ok) throw new Error("Playlist source returned HTTP " + response.status + ".");
+        const text = await response.text();
+        if (!text.includes("#EXTINF:")) throw new Error("Playlist source returned no channel entries.");
+        return text;
+      } catch (error) {
+        if (error.name === "AbortError") throw error;
+        lastError = error;
+      }
+    }
+    throw lastError || new Error("All channel-list sources were unavailable.");
+  }
+
   async function loadCountry(code) {
     if (loadController) loadController.abort();
     loadController = new AbortController();
@@ -151,13 +179,7 @@
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
-      const response = await fetch(playlistUrl(code), {
-        signal: loadController.signal,
-        cache: "no-cache",
-        headers: {"Accept": "application/vnd.apple.mpegurl, audio/x-mpegurl, text/plain, */*"}
-      });
-      if (!response.ok) throw new Error("The channel guide returned HTTP " + response.status + ".");
-      const text = await response.text();
+      const text = await fetchPlaylistText(code, loadController.signal);
       if (currentRequest !== requestNumber) return;
       const result = parsePlaylist(text);
       if (!result.length) throw new Error("The playlist did not contain readable channel entries.");
@@ -171,7 +193,7 @@
       els.grid.replaceChildren();
       els.empty.hidden = false;
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
-      els.empty.querySelector("p").textContent = "The playlist could not be reached. Check your connection or try again in a moment.";
+      els.empty.querySelector("p").textContent = "We couldn’t load this country’s channel list. Check your connection, then retry. (" + (error.message || "Network error") + ")";
       els.clear.textContent = "Retry channel guide";
       els.count.textContent = "0";
       console.warn("Yocare Live playlist load failed:", error);
@@ -189,9 +211,8 @@
     els.grid.replaceChildren();
     els.count.textContent = String(filtered.length);
     if (els.visibleSummary) {
-      const total = channels.length;
       els.visibleSummary.textContent = activeFilter === "all"
-        ? filtered.length + " of " + total + " channels shown"
+        ? filtered.length + " of " + channels.length + " channels shown"
         : filtered.length + " " + categoryLabel(activeFilter).toLowerCase() + " channels";
     }
     if (els.categorySummary) {
@@ -217,10 +238,9 @@
 
     const logo = document.createElement("span");
     logo.className = "channel-logo logo-" + channel.category;
-    const initials = initialsFor(channel.name);
     const fallback = document.createElement("span");
     fallback.className = "logo-fallback";
-    fallback.textContent = initials;
+    fallback.textContent = initialsFor(channel.name);
     logo.append(fallback);
     if (channel.logo && /^https?:\/\//i.test(channel.logo)) {
       const image = document.createElement("img");
@@ -312,26 +332,15 @@
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
     const url = channel.urls[index];
 
-    // Prefer hls.js on browsers where Media Source Extensions are available.
-    // Native HLS is the fallback for Safari/iOS and other native-HLS browsers.
-    const useHlsJs = !!(window.Hls && window.Hls.isSupported());
-    const useNativeHls = !!els.video.canPlayType("application/vnd.apple.mpegurl");
-
-    els.video.onplaying = () => {
-      window.clearTimeout(playbackTimer);
-      setPlaybackState("Playing live");
-      setMessage("");
-      showPlayerPlaceholder(false);
-    };
-    els.video.onwaiting = () => setPlaybackState("Buffering…");
-    els.video.onstalled = () => setPlaybackState("Connection stalled…");
-    els.video.onerror = () => {
-      if (activeChannel === channel && fallbackIndex === index) {
-        tryNextSource(channel, index);
-      }
-    };
-
-    if (useHlsJs) {
+    // Some broadcasters provide native HLS; others require hls.js in Chromium browsers.
+    if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
+      els.video.src = url;
+      els.video.load();
+      els.video.play().catch(() => {
+        setPlaybackState("Ready to play");
+        setMessage("Press play in the video controls if playback did not start automatically.");
+      });
+    } else if (window.Hls && window.Hls.isSupported()) {
       hls = new window.Hls({
         enableWorker: true,
         lowLatencyMode: false,
@@ -348,51 +357,54 @@
         levelLoadingRetryDelay: 800,
         fragLoadingRetryDelay: 800
       });
-      const playerInstance = hls;
-      playerInstance.attachMedia(els.video);
-      playerInstance.on(window.Hls.Events.MEDIA_ATTACHED, () => {
-        if (activeChannel !== channel || hls !== playerInstance) return;
-        playerInstance.loadSource(url);
+      hls.attachMedia(els.video);
+      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+        if (activeChannel !== channel) return;
+        hls.loadSource(url);
       });
-      playerInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
-        if (activeChannel !== channel || hls !== playerInstance) return;
-        setPlaybackState("Stream found · starting playback…");
+      hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        if (activeChannel !== channel) return;
+        setPlaybackState("Stream ready");
         setMessage("");
         els.video.play().catch(() => {
-          window.clearTimeout(playbackTimer);
-          setPlaybackState("Tap Play to start");
-          setMessage("Your browser blocked autoplay. Tap the play control below. If it still stays black, this broadcaster may be unavailable in your region or browser.");
+          setPlaybackState("Ready to play");
+          setMessage("Your browser needs a tap on Play to start this stream.");
         });
       });
-      playerInstance.on(window.Hls.Events.ERROR, (_event, data) => {
-        if (activeChannel !== channel || hls !== playerInstance || !data.fatal) return;
-        if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+      hls.on(window.Hls.Events.ERROR, (_event, data) => {
+        if (activeChannel !== channel || !data.fatal) return;
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+          setPlaybackState("Reconnecting…");
+          try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); }
+        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
           setPlaybackState("Recovering playback…");
-          try { playerInstance.recoverMediaError(); } catch (_) { tryNextSource(channel, index); }
+          try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); }
         } else {
-          // Fatal network/manifest errors should fail over instead of retrying forever.
           tryNextSource(channel, index);
         }
       });
-    } else if (useNativeHls) {
-      els.video.src = url;
-      els.video.load();
-      els.video.play().catch(() => {
-        window.clearTimeout(playbackTimer);
-        setPlaybackState("Tap Play to start");
-        setMessage("Your browser blocked autoplay. Tap the play control below. If playback still does not start, this broadcaster may be unavailable.");
-      });
     } else {
       setPlaybackState("Playback unsupported");
-      setMessage("This browser cannot play this stream format. Try an updated browser or select another channel.");
+      setMessage("This browser does not support HLS playback. Try a current version of Safari, Chrome, Edge, or Firefox.");
       showPlayerPlaceholder(true);
       return;
     }
 
-    // Fail over if the stream never produces playable media.
+    // If a stream never becomes playable, move to its next available URL.
     playbackTimer = window.setTimeout(() => {
       if (activeChannel === channel && els.video.readyState < 2) tryNextSource(channel, index);
     }, 18000);
+    els.video.onplaying = () => {
+      window.clearTimeout(playbackTimer);
+      setPlaybackState("Playing live");
+      setMessage("");
+      showPlayerPlaceholder(false);
+    };
+    els.video.onwaiting = () => setPlaybackState("Buffering…");
+    els.video.onstalled = () => setPlaybackState("Connection stalled…");
+    els.video.onerror = () => {
+      if (activeChannel === channel) tryNextSource(channel, index);
+    };
   }
 
   function tryNextSource(channel, currentIndex) {
