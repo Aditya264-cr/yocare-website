@@ -7,12 +7,12 @@ This is a separate Cloudflare Worker for source discovery and health monitoring.
 - Store canonical channel IDs and approved source URLs in D1.
 - Return alternative source candidates for one exact channel.
 - Accept playback failure reports from the player without accepting arbitrary URLs.
-- Run scheduled HTTP checks every five minutes and record health history.
+- Run scheduled reachability checks every five minutes in bounded batches and record health history.
 - Keep administrative writes behind a secret bearer token.
 
 ## Important reliability boundary
 
-An HTTP check cannot prove a stream is watchable end-to-end, that it contains the expected channel, or that the viewer's region is allowed. Browser playback reports and real provider/EPG metadata are required for stronger confidence. This service does not discover unauthorized IPs, bypass DRM, evade geoblocking, or scrape private endpoints. Add only sources you have permission to access and distribute.
+An HTTP check reads only a small response prefix and can confirm a recognizable HLS/DASH manifest or media response is reachable. It cannot prove that media segments decode, that the feed contains the expected channel, or that a viewer's region is allowed. Browser playback reports and provider status are required for stronger confidence. The API reports reachability, not a channel uptime guarantee. This service does not discover unauthorized IPs, bypass DRM, evade geoblocking, or scrape private endpoints. Add only sources you have permission to access and distribute.
 
 ## Create and deploy
 
@@ -22,7 +22,7 @@ An HTTP check cannot prove a stream is watchable end-to-end, that it contains th
 4. Set an admin secret: `npx wrangler secret put REGISTRY_ADMIN_TOKEN --config api/wrangler.jsonc`.
 5. Deploy: `npx wrangler deploy --config api/wrangler.jsonc`.
 6. Add an API origin custom domain or use the Worker URL initially. Add the exact website origin to `ALLOWED_ORIGINS` (or configure `DEV_ORIGIN` for local testing).
-7. In `tv.html`, set the `content` of the `meta[name="yocare-live-registry-url"]` element to the deployed registry base URL, without a trailing slash. Leave it empty until the API is deployed and CORS is configured.
+7. In the deployed app at `public/index.html`, set the `content` of the `meta[name="yocare-live-registry-url"]` element to the registry base URL, without a trailing slash. The production player checks this registry after its listed playlist candidates fail. Keep it empty until the API is deployed and CORS is configured.
 
 The database ID is deliberately a placeholder. Do not deploy until it has been replaced with the real ID. Never commit the admin token.
 
@@ -42,6 +42,13 @@ The player integration is present but opt-in: it remains disabled while the regi
 
 - Keep the admin token server-side only.
 - Admin routes require a bearer token.
-- Source URLs must be HTTP(S); local/private address patterns are rejected.
+- Source URLs must be HTTP(S); local/private address patterns are rejected. Register only playback URLs Yocare is authorized to use. Do not place broadcaster passwords, API keys or expiring secrets in source URLs returned by the public source endpoint.
 - Health checks do not follow redirects, reducing redirect-based SSRF exposure.
 - Add Cloudflare rate limiting and request-size limits before public production exposure.
+
+
+## Delivery pipeline boundary
+
+The registry selects approved playback candidates and monitors response reachability. It does not ingest, transcode, package or re-host a broadcaster's feed. A browser cannot make an offline upstream source live.
+
+For channels whose owners can push a contribution feed, evaluate Cloudflare Stream Live or Mux using the broadcaster's RTMPS/SRT credentials. For an authorized HLS pull feed that needs normalization, evaluate AWS Elemental MediaLive with an origin/packager and CDN. Each service needs an account, channel-owner authorization and separate configuration. Do not re-stream a public playlist URL through Yocare unless the broadcaster has granted that distribution right.
