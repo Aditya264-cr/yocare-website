@@ -157,7 +157,7 @@ export async function inspectSource(source, options = {}) {
     const looksDash = /<MPD(?:\s|>)/i.test(body);
 
     if (sourceType === "hls" || looksHls || /mpegurl/.test(contentType)) {
-      if (!looksHls || !/#EXT(?:INF|X-STREAM-INF|X-PART):/.test(body)) {
+      if (!looksHls || !/#EXT(?:INF|-X-STREAM-INF|-X-PART):/.test(body)) {
         return result(false, response.status, "invalid-hls-manifest", "manifest");
       }
       const first = mediaUri(body.split(/\r?\n/));
@@ -177,7 +177,7 @@ export async function inspectSource(source, options = {}) {
           return result(false, status, variant.response.ok ? "cors-blocked" : "hls-variant-request-failed", "variant");
         }
         const variantBody = await readPrefix(variant.response);
-        if (!variantBody.trimStart().startsWith("#EXTM3U") || !/#EXT(?:INF|X-PART):/.test(variantBody)) {
+        if (!variantBody.trimStart().startsWith("#EXTM3U") || !/#EXT(?:INF|-X-PART):/.test(variantBody)) {
           return result(false, variant.response.status, "invalid-hls-variant", "variant");
         }
         mediaPlaylistUrl = variant.url;
