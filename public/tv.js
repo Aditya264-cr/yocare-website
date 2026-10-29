@@ -174,28 +174,35 @@
   }
 
   function mergePlaylistSources(primary, alternatives) {
-    const merged = new Map();
-    const add = (channel, isPrimary) => {
-      const key = channel.key || channel.idKey || channel.name;
-      if (!merged.has(key)) {
-        merged.set(key, {...channel, urls: [...(channel.urls || [channel.url]).filter(Boolean)]});
+    const merged = [];
+    const byName = new Map();
+    const byId = new Map();
+    const add = (channel) => {
+      const nameKey = channel.key || normalise(channel.name);
+      const idKey = (channel.idKey || "").toLowerCase();
+      const current = (idKey && byId.get(idKey)) || (nameKey && byName.get(nameKey));
+      if (!current) {
+        const entry = {...channel, urls: [...(channel.urls || [channel.url]).filter(Boolean)]};
+        merged.push(entry);
+        if (nameKey) byName.set(nameKey, entry);
+        if (idKey) byId.set(idKey, entry);
         return;
       }
-      const current = merged.get(key);
       const incomingUrls = channel.urls || [channel.url];
       for (const url of incomingUrls) {
         if (url && !current.urls.includes(url)) current.urls.push(url);
       }
-      // Prefer metadata (especially tvg-logo) from the public, user-facing playlist.
+      // Public playlist entries are added first, so their logo and preferred URL win.
       if (!current.logo && channel.logo) current.logo = channel.logo;
       if (!current.group && channel.group) current.group = channel.group;
       if (!current.id && channel.id) current.id = channel.id;
       if (!current.idKey && channel.idKey) current.idKey = channel.idKey;
-      if (!isPrimary && !current.key) current.key = channel.key;
+      if (nameKey) byName.set(nameKey, current);
+      if (idKey) byId.set(idKey, current);
     };
-    primary.forEach(channel => add(channel, true));
-    alternatives.forEach(channel => add(channel, false));
-    return [...merged.values()].map((channel, index) => ({
+    primary.forEach(add);
+    alternatives.forEach(add);
+    return merged.map((channel, index) => ({
       ...channel,
       id: (channel.idKey || channel.key || "channel") + "-" + index,
       category: categoryFor(channel.name, channel.group),
