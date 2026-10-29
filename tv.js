@@ -90,8 +90,7 @@
   };
 
   function parsePlaylist(text) {
-    const lines = text.replace(/^\uFEFF/, "").split(/\r?
-/);
+    const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
     const parsed = [];
     let pending = null;
     for (const rawLine of lines) {
