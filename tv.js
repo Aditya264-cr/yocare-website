@@ -93,6 +93,7 @@
           group: getAttr("group-title"),
           logo: getAttr("tvg-logo"),
           id: getAttr("tvg-id"),
+          tvgId: getAttr("tvg-id"),
           url: ""
         };
       } else if (line.startsWith("#") || !pending) {
@@ -124,6 +125,7 @@
     }
     return [...grouped.values()].map((channel, index) => ({
       ...channel,
+      tvgId: channel.tvgId || "",
       id: channel.idKey + "-" + index,
       category: categoryFor(channel.name, channel.group),
       url: channel.urls[0]
@@ -722,10 +724,16 @@
     try {
       const playlistText = await fetchPlaylistText(countryCode, undefined, "streams", true);
       const candidates = parsePlaylist(playlistText);
-      const hasTvGuideId = Boolean(channel.id);
-      const matching = candidates.filter(candidate => hasTvGuideId
-        ? candidate.id === channel.id
-        : normalise(candidate.name) === normalise(channel.name));
+      // parsePlaylist() assigns a presentation id even when the source has no tvg-id.
+      // Match on the actual upstream identity first; fall back to the normalized name.
+      const channelGuideId = String(channel.tvgId || channel.sourceTvgId || "");
+      const channelIdKey = String(channel.idKey || "");
+      const matching = candidates.filter(candidate => {
+        const candidateGuideId = String(candidate.tvgId || candidate.sourceTvgId || "");
+        if (channelGuideId && candidateGuideId) return candidateGuideId === channelGuideId;
+        if (channelIdKey && candidate.idKey && channelIdKey === candidate.idKey) return true;
+        return normalise(candidate.name) === normalise(channel.name);
+      });
       let added = 0;
       for (const candidate of matching) {
         for (const candidateUrl of candidate.urls || [candidate.url]) {
@@ -1075,6 +1083,7 @@
     if (activeChannel) {
       waitingForAlternateSource = null;
       registryRefreshAttempted.delete(activeChannel);
+      upstreamRefreshAttempted.delete(activeChannel);
       fallbackIndex = 0;
       lastSourceFailure = null;
       startSource(activeChannel, 0);
