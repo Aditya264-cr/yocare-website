@@ -723,8 +723,9 @@
     els.spotlightStatus.textContent = item ? (item.isCurrent ? "ON NOW" : "UP NEXT") : "LIVE CHANNEL";
     els.spotlightLabel.textContent = item ? (item.isCurrent ? "NOW SHOWING" : "COMING UP") : "FEATURED CHANNEL";
     els.spotlightBackdrop.hidden = true;
+    els.spotlightBackdrop.onerror = null;
     els.spotlightBackdrop.removeAttribute("src");
-    els.spotlightCard.classList.remove("has-program-art");
+    $("discover").classList.remove("has-program-art");
     els.spotlightLogo.hidden = false;
     if (!candidate) {
       els.spotlightName.textContent = channels.length ? "Choose a live channel" : "Finding channels…";
@@ -751,9 +752,14 @@
     if (item && imageUrl) {
       els.spotlightBackdrop.src = imageUrl;
       els.spotlightBackdrop.hidden = false;
-      els.spotlightCard.classList.add("has-program-art");
-      els.spotlightLogo.hidden = true;
-    } else if (candidate.logo && safeImageUrl(candidate.logo)) {
+      $("discover").classList.add("has-program-art");
+      els.spotlightBackdrop.onerror = () => {
+        if (els.spotlightBackdrop.src !== imageUrl) return;
+        els.spotlightBackdrop.hidden = true;
+        $("discover").classList.remove("has-program-art");
+      };
+    }
+    if (candidate.logo && safeImageUrl(candidate.logo)) {
       const image = document.createElement("img");
       image.alt = "";
       image.setAttribute("aria-hidden", "true");
