@@ -1,79 +1,72 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#ffffff">
-<meta name="description" content="Yocare brings emotional wellbeing, cognitive growth, and evidence-informed tools together to help young people thrive.">
-<title>Yocare — Technology for a healthier human future</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b10">
+  <meta name="description" content="Yocare Live is a live television discovery interface. Browse public channel listings by country and try available broadcaster streams.">
+  <title>Yocare Live — Television, in your orbit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tv.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js" defer></script>
+  <script src="tv.js" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header">
-  <div class="header-inner">
-    <a class="brand" href="#top" aria-label="Yocare home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>yocare</span></a>
-    <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open navigation"><span></span><span></span></button>
-    <nav class="primary-nav" id="primary-nav" aria-label="Main navigation">
-      <a href="#platform">Platform</a><a href="tv.html">Live TV</a><a href="#impact">Our approach</a><a href="#research">Research</a><a href="#trust">Trust & safety</a>
-      <a class="nav-cta" href="#contact">Get in touch <span>↗</span></a>
-    </nav>
-  </div>
-</header>
-<main id="main">
-<section class="hero" id="top">
-  <div class="hero-grid"></div><div class="hero-inner">
-    <div class="hero-copy">
-      <p class="eyebrow"><span class="eyebrow-dot"></span> HUMAN-CENTRED TECHNOLOGY</p>
-      <h1>Better technology.<br><span>Healthier humans.</span></h1>
-      <p class="hero-lead">Building a more thoughtful digital future for emotional wellbeing, cognitive growth, and human connection.</p>
-      <div class="hero-actions"><a class="button button-dark" href="#platform">Explore Yocare <span>↗</span></a><a class="text-link" href="#impact">Discover our approach <span>↓</span></a></div>
-      <div class="hero-proof"><span class="proof-line"></span><p>Designed around people. Informed by evidence. Built for what comes next.</p></div>
-    </div>
-    <div class="hero-visual" aria-label="Abstract Yocare visual identity">
-      <div class="visual-label label-top"><span>YOCARE SYSTEMS</span><span>01 — 03</span></div>
-      <div class="orbital-rings" id="orbital-rings" aria-hidden="true"></div>
-      <div class="visual-core"><div class="core-layer layer-a"></div><div class="core-layer layer-b"></div><div class="core-layer layer-c"></div><div class="core-center"></div></div>
-      <div class="visual-node node-a"><span class="node-symbol">✳</span><span>WELLBEING</span></div>
-      <div class="visual-node node-b"><span class="node-symbol">⌁</span><span>LEARNING</span></div>
-      <div class="visual-node node-c"><span class="node-symbol">↗</span><span>CONNECTION</span></div>
-      <div class="visual-caption"><span>Technology should help us</span><strong>be more human.</strong></div>
-      <div class="visual-label label-bottom"><span>PEOPLE FIRST, ALWAYS</span><span>YC / 2026</span></div>
-    </div>
-  </div>
-  <div class="hero-bottom"><span>01 / A DIFFERENT KIND OF TECH COMPANY</span><a href="#platform" aria-label="Scroll to platform">SCROLL TO EXPLORE <span>↓</span></a></div>
-</section>
-<section class="intro section-shell" id="impact">
-  <div class="intro-content">
-    <div class="section-kicker"><span>OUR PURPOSE</span><span>01 — WHY YOCARE</span></div>
-    <div class="intro-grid"><h2>Technology is powerful.<br><span>How we use it matters.</span></h2><div class="intro-body"><p>We believe technology should strengthen the human experience, not compete with it. Yocare is a developing platform bringing emotional awareness, critical thinking, and research-informed learning into one considered experience.</p><a class="arrow-link" href="#research">The principles behind our work <span>↗</span></a></div></div>
-    <div class="metrics-strip"><div><strong>Human-first</strong><span>Designed around real needs</span></div><div><strong>Evidence-aware</strong><span>Curious, careful, transparent</span></div><div><strong>Built for change</strong><span>Learning and improving over time</span></div></div>
-  </div>
-</section>
-<section class="platform section-shell" id="platform">
-  <div class="section-kicker"><span>THE YOCARE PLATFORM</span><span>02 — THREE CONNECTED AREAS</span></div>
-  <div class="platform-heading"><h2>One mission.<br><span>Different ways forward.</span></h2><p>Connected experiences for the parts of life that deserve more attention, care, and clarity.</p></div>
-  <div class="platform-grid">
-    <article class="platform-card health-card"><div class="card-top"><span>01 / WELLBEING</span><span class="card-icon">✳</span></div><div class="card-graphic graphic-health"><div class="health-ring ring-1"></div><div class="health-ring ring-2"></div><div class="health-center"></div><span class="graphic-dot dot-1"></span><span class="graphic-dot dot-2"></span></div><div class="card-content"><h3>Yocare Health</h3><p>Make room to check in, understand your emotions, and build healthier everyday practices.</p><a href="health.html" aria-label="Explore Yocare Health">Explore Health <span>↗</span></a></div></article>
-    <article class="platform-card education-card"><div class="card-top"><span>02 / COGNITIVE GROWTH</span><span class="card-icon">⌁</span></div><div class="card-graphic graphic-education"><div class="edu-line line-1"></div><div class="edu-line line-2"></div><div class="edu-line line-3"></div><div class="edu-node n-1"></div><div class="edu-node n-2"></div><div class="edu-node n-3"></div><div class="edu-node n-4"></div><div class="edu-center">?</div></div><div class="card-content"><h3>Yocare Education</h3><p>Explore perspective, strengthen critical thinking, and build a more intentional relationship with technology.</p><a href="#contact" aria-label="Ask about Yocare Education">Explore Education <span>↗</span></a></div></article>
-    <article class="platform-card research-card" id="research"><div class="card-top"><span>03 / EVIDENCE & INSIGHT</span><span class="card-icon">⌘</span></div><div class="card-graphic graphic-research"><svg viewBox="0 0 320 210" role="img" aria-label="Abstract network of connected research ideas"><g class="research-edges"><path d="M42 140 94 58 151 108 211 40 275 88 241 164 151 108 94 176 42 140M94 58 241 164M151 108 275 88M94 176 211 40"/></g><g class="research-points"><circle cx="42" cy="140" r="5"/><circle cx="94" cy="58" r="7"/><circle cx="151" cy="108" r="10"/><circle cx="211" cy="40" r="5"/><circle cx="275" cy="88" r="7"/><circle cx="241" cy="164" r="5"/><circle cx="94" cy="176" r="6"/></g></svg><span class="research-stamp">QUESTION → EVIDENCE → INSIGHT</span></div><div class="card-content"><h3>Yocare Research</h3><p>Make complex ideas easier to explore through clear explanations, thoughtful synthesis, and links to evidence.</p><a href="#contact" aria-label="Ask about Yocare Research">Explore Research <span>↗</span></a></div></article>
-  </div>
-</section>
-<section class="statement">
-  <div class="statement-pattern" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-  <div class="statement-inner"><p class="eyebrow light-eyebrow">THE BELIEF THAT GUIDES US</p><h2>Progress should be measured<br>by <em>people thriving.</em></h2><p>Not by the time they spend online, but by the confidence, clarity, and connection they carry into the world.</p><a class="button button-light" href="#trust">What we stand for <span>↗</span></a></div>
-</section>
-<section class="principles section-shell" id="trust">
-  <div class="section-kicker"><span>OUR PRINCIPLES</span><span>03 — THE STANDARD</span></div>
-  <div class="principles-layout"><div><h2>Trust isn't a feature.<br><span>It's the foundation.</span></h2><p class="principles-lead">Especially when technology touches wellbeing, the details matter. We want our choices to be clear, responsible, and worthy of the people we serve.</p></div>
-  <div class="principle-list"><article><span class="principle-num">01</span><div><h3>People before product</h3><p>Design decisions begin with human needs, accessibility, and the experience beyond the screen.</p></div><span class="principle-arrow">↗</span></article><article><span class="principle-num">02</span><div><h3>Evidence over exaggeration</h3><p>We aim to communicate what is known, what is emerging, and what still needs to be tested.</p></div><span class="principle-arrow">↗</span></article><article><span class="principle-num">03</span><div><h3>Privacy with purpose</h3><p>Data practices should be understandable and proportionate. Our production architecture must earn trust through implementation, not slogans.</p></div><span class="principle-arrow">↗</span></article><article><span class="principle-num">04</span><div><h3>Safety by design</h3><p>Age-aware experiences, thoughtful boundaries, and responsible product decisions are part of the work from the beginning.</p></div><span class="principle-arrow">↗</span></article></div></div>
-</section>
-<section class="contact" id="contact"><div class="contact-inner"><div><p class="eyebrow light-eyebrow">LET'S BUILD A BETTER DIGITAL FUTURE</p><h2>The future is human.<br><span>Let's shape it together.</span></h2></div><a class="contact-button" href="mailto:hello@yocare.online?subject=Connect%20with%20Yocare">Connect with Yocare <span>↗</span></a></div><div class="contact-bottom"><span>YOCARE / YOUR CARE, ALWAYS</span><span>THOUGHTFUL TECHNOLOGY FOR HUMAN POTENTIAL</span></div></section>
-</main>
-<footer class="site-footer"><a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>yocare</span></a><p>Technology for a healthier human future.</p><div class="footer-links"><a href="#platform">Platform</a><a href="#impact">Our approach</a><a href="#trust">Trust & safety</a><a href="mailto:hello@yocare.online">Contact</a></div><small>© <span id="year"></span> Yocare. A developing platform, not a medical service.</small></footer>
-<script src="script.js"></script>
+  <div class="ambient ambient-one" aria-hidden="true"></div><div class="ambient ambient-two" aria-hidden="true"></div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Yocare Live home"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#channels">Discover</a><a href="#player">Now playing</a><a href="#guide-note">About streams</a></nav>
+    <div class="top-status"><span class="status-dot"></span><span>LIVE CHANNELS</span></div>
+  </header>
+
+  <main class="app-shell">
+    <section class="intro" id="top">
+      <div class="intro-copy">
+        <p class="eyebrow"><span></span> YOUR WORLD, LIVE</p>
+        <h1>Television,<br><em>in your orbit.</em></h1>
+        <p class="intro-text">Discover live channels by country, explore what’s on, and tune in from one considered place.</p>
+      </div>
+      <div class="intro-orbit" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="orbit orbit-c"></div><div class="orbit-core"><span>YC</span></div><i class="orbit-point point-a"></i><i class="orbit-point point-b"></i><i class="orbit-point point-c"></i></div>
+    </section>
+
+    <section class="player-section" id="player" aria-label="Live video player">
+      <div class="player-frame">
+        <video id="video" playsinline controls preload="none" aria-label="Live channel player"></video>
+        <div class="player-placeholder" id="player-placeholder">
+          <div class="play-orbit"><span>▶</span></div>
+          <p class="placeholder-kicker">YOUR LIVE SCREEN</p>
+          <h2>Choose a channel to begin.</h2>
+          <p>Playback starts only after you select a channel.</p>
+        </div>
+        <div class="player-shade" aria-hidden="true"></div>
+        <div class="player-topline"><span class="live-pill"><i></i> LIVE</span><span id="player-region">INDIA · LIVE TV</span></div>
+        <div class="player-bottomline"><div><span class="now-label">NOW PLAYING</span><h2 id="now-title">Select a channel</h2><p id="now-subtitle">Your channel will appear here</p></div><button class="icon-button" id="retry-button" type="button" aria-label="Retry playback" title="Retry playback">↻</button></div>
+        <div class="player-message" id="player-message" role="status" aria-live="polite" hidden></div>
+      </div>
+      <div class="player-foot"><span><i class="status-dot"></i> <span id="playback-state">Ready when you are</span></span><span id="stream-note">Stream quality depends on the broadcaster and your connection.</span></div>
+    </section>
+
+    <section class="channels-section" id="channels">
+      <div class="section-heading"><div><p class="eyebrow">THE CHANNEL GUIDE</p><h2>Find your frequency.</h2><p class="section-subtitle">Browse available streams by country or search for a channel.</p></div><div class="channel-count"><strong id="channel-count">—</strong><span>CHANNELS LISTED</span></div></div>
+      <div class="toolbar">
+        <label class="country-control"><span>LOCATION / COUNTRY</span><select id="country-select" aria-label="Choose country">
+          <option value="in" selected>🇮🇳 India</option><option value="us">🇺🇸 United States</option><option value="gb">🇬🇧 United Kingdom</option><option value="ca">🇨🇦 Canada</option><option value="au">🇦🇺 Australia</option><option value="jp">🇯🇵 Japan</option><option value="kr">🇰🇷 South Korea</option><option value="de">🇩🇪 Germany</option><option value="fr">🇫🇷 France</option><option value="it">🇮🇹 Italy</option><option value="br">🇧🇷 Brazil</option><option value="za">🇿🇦 South Africa</option><option value="sg">🇸🇬 Singapore</option><option value="es">🇪🇸 Spain</option><option value="nl">🇳🇱 Netherlands</option><option value="mx">🇲🇽 Mexico</option><option value="ph">🇵🇭 Philippines</option><option value="pk">🇵🇰 Pakistan</option><option value="bd">🇧🇩 Bangladesh</option><option value="np">🇳🇵 Nepal</option>
+        </select></label>
+        <label class="search-control"><span class="sr-only">Search channels</span><span class="search-icon" aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Search channels…" autocomplete="off" aria-label="Search channels"></label>
+        <button class="filter-button selected" id="all-filter" type="button" aria-pressed="true">All channels</button>
+        <button class="filter-button" id="news-filter" type="button" aria-pressed="false">News</button>
+        <button class="filter-button" id="music-filter" type="button" aria-pressed="false">Music</button>
+        <button class="filter-button" id="religion-filter" type="button" aria-pressed="false">Spiritual</button>
+      </div>
+      <div class="load-state" id="load-state" role="status" aria-live="polite"><span class="spinner"></span><span>Loading the channel guide…</span></div>
+      <div class="channel-grid" id="channel-grid" aria-label="Available channels"></div>
+      <div class="empty-state" id="empty-state" hidden><div>⌕</div><h3>No channels found</h3><p>Try a different search or select another country.</p><button id="clear-search" type="button">Clear search</button></div>
+      <div class="load-more-wrap"><button class="load-more" id="load-more" type="button" hidden>Load more channels <span>↓</span></button></div>
+      <p class="source-note" id="guide-note">Channel listings come from a public third-party playlist. Listing a stream does not verify its broadcast rights, uptime, or regional availability. Use only streams you are authorized to access and distribute.</p>
+    </section>
+  </main>
+  <footer class="footer"><a class="brand" href="#top"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>yocare<span class="brand-light"> live</span></span></a><span>Thoughtfully connected to the world.</span><a href="#top">Back to top ↑</a></footer>
 </body>
 </html>
