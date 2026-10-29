@@ -910,6 +910,71 @@
     const isDash = path.endsWith(".mpd");
     const isDirectMedia = /\.(mp4|m4v|webm|ogv|ogg|mov|mp3|m4a|aac|wav)$/.test(path);
     const isHls = path.endsWith(".m3u8") || (!isDash && !isDirectMedia && els.video.canPlayType("application/vnd.apple.mpegurl") !== "");
+    let nativeHlsFallbackAttempted = false;
+    const tryNativeHlsFallback = () => {
+      if (nativeHlsFallbackAttempted || hls || !isHls || !window.Hls || !window.Hls.isSupported()) return false;
+      nativeHlsFallbackAttempted = true;
+      let player;
+      try {
+        player = new window.Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+          backBufferLength: 30,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 60,
+          manifestLoadingTimeOut: 12000,
+          levelLoadingTimeOut: 15000,
+          fragLoadingTimeOut: 20000,
+          manifestLoadingMaxRetry: 2,
+          levelLoadingMaxRetry: 2,
+          fragLoadingMaxRetry: 2,
+          manifestLoadingRetryDelay: 800,
+          levelLoadingRetryDelay: 800,
+          fragLoadingRetryDelay: 800
+        });
+      } catch (_) {
+        return false;
+      }
+      hls = player;
+      setPlaybackState("Retrying with HLS compatibility playback…");
+      player.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+        if (!isCurrentSource(channel, index, attemptId)) return;
+        try { player.loadSource(url); } catch (_) { fail("network"); }
+      });
+      player.on(window.Hls.Events.MANIFEST_PARSED, () => {
+        if (!isCurrentSource(channel, index, attemptId)) return;
+        setPlaybackState("Stream ready");
+        setMessage("");
+        requestPlayback(channel, index, attemptId);
+      });
+      player.on(window.Hls.Events.ERROR, (_event, data) => {
+        if (!isCurrentSource(channel, index, attemptId) || !data || !data.fatal) return;
+        const status = Number(data.response && data.response.code) || 0;
+        if ([401, 403].includes(status)) {
+          fail("denied", status);
+        } else if ([404, 410].includes(status)) {
+          fail("missing", status);
+        } else if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
+          networkRecoveryAttempts++;
+          setPlaybackState("Reconnecting…");
+          try { player.startLoad(); } catch (_) { fail("network", status || undefined); }
+        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) {
+          mediaRecoveryAttempts++;
+          setPlaybackState("Recovering playback…");
+          try { player.recoverMediaError(); } catch (_) { fail("decode", status || undefined); }
+        } else {
+          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : "network", status || undefined);
+        }
+      });
+      try {
+        player.attachMedia(els.video);
+        return true;
+      } catch (_) {
+        try { player.destroy(); } catch (_) {}
+        if (hls === player) hls = null;
+        return false;
+      }
+    };
 
     els.video.onplaying = () => {
       if (!isCurrentSource(channel, index, attemptId)) return;
@@ -933,6 +998,7 @@
     els.video.onerror = () => {
       if (!isCurrentSource(channel, index, attemptId)) return;
       const mediaCode = els.video.error ? els.video.error.code : 0;
+      if (mediaCode === 4 && tryNativeHlsFallback()) return;
       fail(mediaCode === 3 ? "decode" : mediaCode === 4 ? "unsupported" : "network", mediaCode || undefined);
     };
 
