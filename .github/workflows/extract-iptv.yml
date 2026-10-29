@@ -77,8 +77,8 @@ jobs:
               p for p in root.rglob("*")
               if p.is_file() and p.suffix.lower() in {".m3u", ".m3u8"}
           )
-          raw_ip = re.compile(r"^https?://(?P<host>\\d{1,3}(?:\\.\\d{1,3}){3})(?::(?P<port>\\d+))?(?:/|$)", re.I)
-          fast_name = re.compile(r"(^|[_-])(pluto|samsung|distro|rakuten|amagi|plex)([_-]|\\.)", re.I)
+          raw_ip = re.compile(r"^https?://(?P<host>\d{1,3}(?:\.\d{1,3}){3})(?::(?P<port>\d+))?(?:/|$)", re.I)
+          fast_name = re.compile(r"(^|[_-])(pluto|samsung|distro|rakuten|amagi|plex)([_-]|\.)", re.I)
 
           for playlist in playlist_files:
               if fast_name.search(playlist.name):
@@ -114,7 +114,7 @@ jobs:
               # Preserve an EXTINF that has no following URL.
               if pending_extinf is not None and not skip_entry:
                   out.append(pending_extinf)
-              playlist.write_text("\\n".join(out) + "\\n", encoding="utf-8")
+              playlist.write_text("\n".join(out) + "\n", encoding="utf-8")
 
           print(f"Scanned {len(playlist_files)} playlists; removed {unstable_removed} ythls.onrender.com entries.")
           print(f"Flagged {raw_ip_flagged} raw-IP streams on commonly constrained ports for review.")
