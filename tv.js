@@ -359,6 +359,7 @@
         setPlaybackState("Stream found · starting playback…");
         setMessage("");
         els.video.play().catch(() => {
+          window.clearTimeout(playbackTimer);
           setPlaybackState("Tap Play to start");
           setMessage("Your browser blocked autoplay. Tap the play control below. If it still stays black, this broadcaster may be unavailable in your region or browser.");
         });
@@ -377,6 +378,7 @@
       els.video.src = url;
       els.video.load();
       els.video.play().catch(() => {
+        window.clearTimeout(playbackTimer);
         setPlaybackState("Tap Play to start");
         setMessage("Your browser blocked autoplay. Tap the play control below. If playback still does not start, this broadcaster may be unavailable.");
       });
