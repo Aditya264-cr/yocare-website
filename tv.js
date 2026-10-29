@@ -418,7 +418,6 @@
       count.textContent = category === "all" ? String(channels.length) : String(counts[category] || 0);
       button.append(label, count);
       button.disabled = category !== "all" && !counts[category];
-      button.addEventListener("click", () => setCategory(category));
       els.categories.append(button);
     });
   }
