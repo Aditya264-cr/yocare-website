@@ -366,6 +366,8 @@ body:before{background:linear-gradient(90deg,#02070630,transparent 18%,transpare
 .program-intro h2 em{font-style:normal;color:#c8f28a}
 .program-intro>p{max-width:390px;margin:0;color:#91a096;font-size:.65rem;line-height:1.6;text-align:right}
 .program-rail{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.program-rail[hidden]{display:none}
+.program-art-fallback[hidden]{display:none}
 .program-card{min-width:0;overflow:hidden;padding:0;border:1px solid #ffffff17;border-radius:12px;background:#121915;color:#eef4ed;text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
 .program-card:hover,.program-card:focus-visible{transform:translateY(-3px);border-color:#c8f28a77;box-shadow:0 16px 34px #0006}
 .program-art{position:relative;display:block;aspect-ratio:16/9;overflow:hidden;background:radial-gradient(ellipse at 65% 25%,#34513c,#132019 70%)}
