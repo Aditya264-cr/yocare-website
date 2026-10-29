@@ -25,6 +25,8 @@
   let requestNumber = 0;
   let playbackTimer = 0;
   let isLoadingPlaylist = false;
+  let networkRecoveryAttempts = 0;
+  let mediaRecoveryAttempts = 0;
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -327,6 +329,8 @@
       return;
     }
     fallbackIndex = index;
+    networkRecoveryAttempts = 0;
+    mediaRecoveryAttempts = 0;
     destroyPlayer();
     setMessage(index > 0 ? "Trying another available source…" : "");
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
@@ -373,13 +377,16 @@
       });
       hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (activeChannel !== channel || !data.fatal) return;
-        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
+          networkRecoveryAttempts++;
           setPlaybackState("Reconnecting…");
           try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); }
-        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) {
+          mediaRecoveryAttempts++;
           setPlaybackState("Recovering playback…");
           try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); }
         } else {
+          // Avoid looping forever on a fatal offline, blocked, or incompatible source.
           tryNextSource(channel, index);
         }
       });
@@ -400,8 +407,22 @@
       setMessage("");
       showPlayerPlaceholder(false);
     };
-    els.video.onwaiting = () => setPlaybackState("Buffering…");
-    els.video.onstalled = () => setPlaybackState("Connection stalled…");
+    els.video.onwaiting = () => {
+      setPlaybackState("Buffering…");
+      window.clearTimeout(playbackTimer);
+      playbackTimer = window.setTimeout(() => {
+        if (activeChannel === channel && fallbackIndex === index && els.video.readyState < 3) {
+          tryNextSource(channel, index);
+        }
+      }, 15000);
+    };
+    els.video.onstalled = () => {
+      setPlaybackState("Connection stalled…");
+      window.clearTimeout(playbackTimer);
+      playbackTimer = window.setTimeout(() => {
+        if (activeChannel === channel && fallbackIndex === index) tryNextSource(channel, index);
+      }, 15000);
+    };
     els.video.onerror = () => {
       if (activeChannel === channel) tryNextSource(channel, index);
     };
