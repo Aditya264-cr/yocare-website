@@ -1234,7 +1234,7 @@
       showPlayerPlaceholder(false);
     } else if (REGISTRY_BASE && !registryRefreshAttempted.has(channel)) {
       const failedAttemptId = sourceAttemptId;
-      setPlaybackState("Finding verified alternatives…");
+      setPlaybackState("Finding approved alternatives…");
       setMessage("Checking Yocare’s approved source registry for another available feed.");
       refreshRegistrySources(channel).then(added => {
         if (activeChannel !== channel || sourceAttemptId !== failedAttemptId) return;
@@ -1247,7 +1247,7 @@
         const cause = lastSourceFailure
           ? sourceFailureMessage(lastSourceFailure)
           : "no playable source was listed";
-        setMessage("Yocare could not start this channel because " + cause + ". No additional approved feed was available. Retry later or choose another channel.");
+        setMessage("Yocare could not start this channel because " + cause + ". No alternate configured feed was available. Retry later or choose another channel.");
         showPlayerPlaceholder(true);
       });
     } else {
@@ -1256,7 +1256,7 @@
       const cause = lastSourceFailure
         ? sourceFailureMessage(lastSourceFailure)
         : "no playable source was listed";
-      setMessage("Yocare could not start this channel because " + cause + ". No additional approved feed was available. Retry later or choose another channel.");
+      setMessage("Yocare could not start this channel because " + cause + ". No alternate configured feed was available. Retry later or choose another channel.");
       showPlayerPlaceholder(true);
     }
   }
@@ -1349,6 +1349,8 @@
       waitingForAlternateSource = null;
       fallbackIndex = 0;
       lastSourceFailure = null;
+      registryRefreshAttempted.delete(activeChannel);
+      registryRefreshes.delete(activeChannel);
       startSource(activeChannel, 0);
     } else {
       loadCountry(els.country.value);
