@@ -7,9 +7,7 @@ export function safeSourceUrl(value) {
     if (url.protocol !== "https:" || url.username || url.password) return false;
     const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     if (!host || host === "localhost" || host.endsWith(".localhost") ||
-        host.endsWith(".local") || host.endsWith(".internal") ||
-        host === "::" || host === "::1" || host.startsWith("fc") ||
-        host.startsWith("fd") || host.startsWith("fe80:") ||
+        host.endsWith(".local") || host.endsWith(".internal") || host.includes(":") ||
         /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)) return false;
     return true;
   } catch {
