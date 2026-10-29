@@ -180,3 +180,70 @@ body:before{background:linear-gradient(90deg,#02070630,transparent 18%,transpare
  .footer{gap:14px}.footer-note{display:none}
 }
 @media(prefers-reduced-motion:reduce){.world-orbit{animation:none}}
+
+/* TV-first discovery inspired by the user's references; Yocare's own layout and palette */
+.topbar{height:76px;padding-inline:clamp(22px,5vw,84px);background:#0a1110eF;border-bottom:1px solid #ffffff12}
+.topnav{gap:7px}.topnav a{padding:10px 16px;border-radius:999px;color:#acb8b0}
+.topnav a.active{background:#eef4ec;color:#17211b;box-shadow:0 6px 18px #0005}
+.topnav a.active:after{display:none}.topnav a:hover:not(.active){background:#ffffff0c}
+.top-action{padding:10px 17px;border-color:#b8dc9b52;border-radius:999px}
+.hero{min-height:525px;padding-top:48px;padding-bottom:66px;grid-template-columns:minmax(0,1.05fr) minmax(330px,.95fr);background:radial-gradient(ellipse at 77% 45%,#1a493a 0%,#13251d 26%,#0a1110 67%,#080c0b 100%)}
+.hero h1{font-size:clamp(3.4rem,6.2vw,5.75rem)}
+.hero-copy{max-width:450px}
+.hero-world{min-height:360px}.world-globe{width:clamp(245px,28vw,355px)}
+.hero-backdrop{inset:0 0 0 42%;opacity:.38}
+.hero-side-note{display:none}
+.featured-section{padding-top:35px;padding-bottom:42px;max-width:none;background:linear-gradient(180deg,#0b100e 0%,#0a0e0c 100%);border-bottom:1px solid #ffffff12}
+.featured-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
+.featured-heading .eyebrow{margin-bottom:8px}
+.featured-heading h2{font:650 clamp(1.7rem,3vw,2.55rem)/1.08 var(--display);letter-spacing:-.065em;margin:0}
+.featured-heading h2 em{font-style:normal;color:#c8f28a}
+.featured-subtitle{font-size:.7rem;color:#91a096;margin:9px 0 17px}
+.featured-link{font-size:.65rem;color:#c6d9c9;white-space:nowrap}
+.featured-link:hover{color:#c8f28a}
+.featured-rail{display:flex;gap:13px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;padding:4px 2px 12px;scrollbar-width:thin;scrollbar-color:#637763 transparent}
+.featured-rail::-webkit-scrollbar{height:5px}.featured-rail::-webkit-scrollbar-thumb{background:#657b68;border-radius:9px}
+.featured-channel{position:relative;flex:0 0 clamp(170px,17.5vw,230px);min-height:190px;display:flex;flex-direction:column;align-items:stretch;gap:0;padding:8px;border:1px solid #ffffff15;border-radius:12px;background:linear-gradient(150deg,#1b2821,#101714);scroll-snap-align:start;text-align:left}
+.featured-channel:hover{transform:translateY(-3px);border-color:#b9e59b74;box-shadow:0 15px 30px #0004}
+.featured-channel[aria-current=true]{border-color:#c8f28a;box-shadow:0 0 0 1px #c8f28a2b,0 15px 32px #0005}
+.featured-channel .channel-logo{position:relative;width:100%;height:122px;flex:none;margin-bottom:9px;border-radius:8px;border-color:#ffffff0e;background:radial-gradient(ellipse at 50% 30%,#344b3c,#18231c 60%,#111815);box-shadow:inset 0 1px #ffffff0d}
+.featured-channel .channel-logo img{padding:20px 30px;object-fit:contain}
+.featured-channel .logo-fallback{font-size:2rem;letter-spacing:-.06em}
+.featured-channel .channel-info{display:block;padding:0 4px 3px}
+.featured-channel .channel-name{font-size:.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.featured-channel .channel-meta{margin-top:5px;font-size:.5rem}
+.featured-channel .channel-tag{border-radius:999px}
+.featured-channel .channel-play{position:absolute;right:15px;top:91px;width:30px;height:30px;display:grid;place-items:center;border:1px solid #ffffff44;border-radius:50%;background:#08100dcc;color:#d9f5bb;opacity:0;transform:translateY(3px);transition:.2s}
+.featured-channel:hover .channel-play,.featured-channel:focus-visible .channel-play,.featured-channel[aria-current=true] .channel-play{opacity:1;transform:none}
+.rail-loading{min-height:130px;display:flex;align-items:center;gap:12px;color:#89998f;font-size:.72rem}
+.rail-loading[hidden]{display:none}
+.player-section{padding-top:58px;padding-bottom:62px}
+.player-intro{margin-bottom:18px}
+.player-frame{border-radius:15px}
+.channels-section{padding-top:62px}
+.toolbar{border-radius:12px}
+.category-bar{margin-top:17px}
+.channel-card{border-radius:10px}
+@media(max-width:900px){
+ .hero{min-height:490px;padding-top:55px;grid-template-columns:minmax(0,1fr) minmax(260px,.8fr)}
+ .hero-world{min-height:320px}
+}
+@media(max-width:680px){
+ .topbar{height:66px;padding-inline:15px}.topnav{gap:1px}.topnav a{padding:8px 10px;font-size:.58rem}
+ .top-action{font-size:.56rem;padding:8px 10px}.brand{gap:8px;font-size:1.16rem}
+ .hero{min-height:0;padding:42px 20px 35px}
+ .hero-world{min-height:245px;margin-top:-3px}.world-globe{width:min(62vw,260px)}
+ .featured-section{padding:28px 0 31px}.featured-heading h2{font-size:1.8rem}
+ .featured-subtitle{font-size:.64rem}
+ .featured-rail{gap:10px;margin-right:-20px;padding-right:20px}
+ .featured-channel{flex-basis:158px;min-height:168px;padding:7px}
+ .featured-channel .channel-logo{height:104px}
+ .featured-channel .channel-logo img{padding:18px 25px}
+ .featured-channel .channel-play{top:74px;right:13px}
+ .player-section{padding-top:45px}
+}
+@media(max-width:420px){
+ .topnav a:last-child{display:none}.topnav{margin-left:auto;margin-right:9px}
+ .featured-channel{flex-basis:145px}
+}
+@media(prefers-reduced-motion:reduce){.featured-channel{scroll-behavior:auto}}

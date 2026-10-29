@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/streams/";
+  const PLAYLIST_BASE = "https://iptv-org.github.io/iptv/";
   const PAGE_SIZE = 48;
   const $ = (id) => document.getElementById(id);
   const els = {
@@ -11,7 +11,7 @@
     title: $("now-title"), subtitle: $("now-subtitle"), region: $("player-region"),
     state: $("playback-state"), message: $("player-message"), retry: $("retry-button"),
     clear: $("clear-search"), categories: $("category-chips"),
-    categorySummary: $("category-summary"), visibleSummary: $("visible-summary")
+    categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading")
   };
 
   let channels = [];
@@ -25,6 +25,8 @@
   let requestNumber = 0;
   let playbackTimer = 0;
   let isLoadingPlaylist = false;
+  let networkRecoveryAttempts = 0;
+  let mediaRecoveryAttempts = 0;
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -140,12 +142,17 @@
     return PLAYLIST_BASE + encodeURIComponent(code) + ".m3u";
   }
 
-  async function fetchPlaylistText(code, signal) {
+  async function fetchPlaylistText(code, signal, kind = "public") {
     const encoded = encodeURIComponent(code);
-    const sources = [
-      PLAYLIST_BASE + encoded + ".m3u",
-      "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
-    ];
+    const sources = kind === "public"
+      ? [
+          PLAYLIST_BASE + "countries/" + encoded + ".m3u",
+          "https://raw.githubusercontent.com/iptv-org/iptv/gh-pages/countries/" + encoded + ".m3u"
+        ]
+      : [
+          PLAYLIST_BASE + "streams/" + encoded + ".m3u",
+          "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
+        ];
     let lastError = null;
     for (const source of sources) {
       try {
@@ -163,7 +170,44 @@
         lastError = error;
       }
     }
-    throw lastError || new Error("All channel-list sources were unavailable.");
+    throw lastError || new Error("All " + kind + " playlist sources were unavailable.");
+  }
+
+  function mergePlaylistSources(primary, alternatives) {
+    const merged = [];
+    const byName = new Map();
+    const byId = new Map();
+    const add = (channel) => {
+      const nameKey = channel.key || normalise(channel.name);
+      const idKey = (channel.idKey || "").toLowerCase();
+      const current = (idKey && byId.get(idKey)) || (nameKey && byName.get(nameKey));
+      if (!current) {
+        const entry = {...channel, urls: [...(channel.urls || [channel.url]).filter(Boolean)]};
+        merged.push(entry);
+        if (nameKey) byName.set(nameKey, entry);
+        if (idKey) byId.set(idKey, entry);
+        return;
+      }
+      const incomingUrls = channel.urls || [channel.url];
+      for (const url of incomingUrls) {
+        if (url && !current.urls.includes(url)) current.urls.push(url);
+      }
+      // Public playlist entries are added first, so their logo and preferred URL win.
+      if (!current.logo && channel.logo) current.logo = channel.logo;
+      if (!current.group && channel.group) current.group = channel.group;
+      if (!current.id && channel.id) current.id = channel.id;
+      if (!current.idKey && channel.idKey) current.idKey = channel.idKey;
+      if (nameKey) byName.set(nameKey, current);
+      if (idKey) byId.set(idKey, current);
+    };
+    primary.forEach(add);
+    alternatives.forEach(add);
+    return merged.map((channel, index) => ({
+      ...channel,
+      id: (channel.idKey || channel.key || "channel") + "-" + index,
+      category: categoryFor(channel.name, channel.group),
+      url: channel.urls[0]
+    })).sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async function loadCountry(code) {
@@ -176,20 +220,37 @@
     els.more.hidden = true;
     channels = [];
     filtered = [];
+    if (els.featured) els.featured.replaceChildren();
+    if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
-      const text = await fetchPlaylistText(code, loadController.signal);
+      // Public playlists are generated for viewers and select the preferred stream per channel.
+      // The internal streams playlist is merged in as fallback URLs, not used as the primary list.
+      const results = await Promise.allSettled([
+        fetchPlaylistText(code, loadController.signal, "public"),
+        fetchPlaylistText(code, loadController.signal, "streams")
+      ]);
       if (currentRequest !== requestNumber) return;
-      const result = parsePlaylist(text);
-      if (!result.length) throw new Error("The playlist did not contain readable channel entries.");
+      const publicText = results[0].status === "fulfilled" ? results[0].value : "";
+      const streamsText = results[1].status === "fulfilled" ? results[1].value : "";
+      if (!publicText && !streamsText) {
+        const reason = results.find(result => result.status === "rejected");
+        throw (reason && reason.reason) || new Error("All channel-list sources were unavailable.");
+      }
+      const publicChannels = publicText ? parsePlaylist(publicText) : [];
+      const alternateChannels = streamsText ? parsePlaylist(streamsText) : [];
+      const result = mergePlaylistSources(publicChannels, alternateChannels);
+      if (!result.length) throw new Error("The playlists did not contain readable channel entries.");
       channels = result;
+      renderFeaturedChannels();
       renderCategories();
       applyFilters();
       setLoading(false);
     } catch (error) {
       if (error.name === "AbortError" || currentRequest !== requestNumber) return;
       setLoading(false);
+      if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Channel picks will appear when the guide is available."; }
       els.grid.replaceChildren();
       els.empty.hidden = false;
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
@@ -279,6 +340,19 @@
     return button;
   }
 
+  function renderFeaturedChannels() {
+    if (!els.featured) return;
+    const withLogos = channels.filter(channel => channel.logo);
+    const picks = (withLogos.length >= 6 ? withLogos : channels).slice(0, 12);
+    els.featured.replaceChildren();
+    picks.forEach((channel, index) => {
+      const card = makeCard(channel, index);
+      card.classList.add("featured-channel");
+      els.featured.append(card);
+    });
+    if (els.featuredLoading) els.featuredLoading.hidden = true;
+  }
+
   function renderNextPage() {
     const start = page * PAGE_SIZE;
     const batch = filtered.slice(start, start + PAGE_SIZE);
@@ -292,12 +366,12 @@
   }
 
   function updateSelectedCard() {
-    els.grid.querySelectorAll(".channel-card").forEach(card => {
+    [els.grid, els.featured].filter(Boolean).forEach(container => container.querySelectorAll(".channel-card").forEach(card => {
       const selected = !!activeChannel && card.dataset.channelId === activeChannel.id;
       card.setAttribute("aria-current", selected ? "true" : "false");
       const play = card.querySelector(".channel-play");
       if (play) play.textContent = selected ? "●" : "▶";
-    });
+    }));
   }
 
   function showPlayerPlaceholder(show) {
@@ -327,6 +401,8 @@
       return;
     }
     fallbackIndex = index;
+    networkRecoveryAttempts = 0;
+    mediaRecoveryAttempts = 0;
     destroyPlayer();
     setMessage(index > 0 ? "Trying another available source…" : "");
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
@@ -373,13 +449,16 @@
       });
       hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (activeChannel !== channel || !data.fatal) return;
-        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR) {
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
+          networkRecoveryAttempts++;
           setPlaybackState("Reconnecting…");
           try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); }
-        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR) {
+        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) {
+          mediaRecoveryAttempts++;
           setPlaybackState("Recovering playback…");
           try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); }
         } else {
+          // Avoid looping forever on a fatal offline, blocked, or incompatible source.
           tryNextSource(channel, index);
         }
       });
@@ -400,8 +479,22 @@
       setMessage("");
       showPlayerPlaceholder(false);
     };
-    els.video.onwaiting = () => setPlaybackState("Buffering…");
-    els.video.onstalled = () => setPlaybackState("Connection stalled…");
+    els.video.onwaiting = () => {
+      setPlaybackState("Buffering…");
+      window.clearTimeout(playbackTimer);
+      playbackTimer = window.setTimeout(() => {
+        if (activeChannel === channel && fallbackIndex === index && els.video.readyState < 3) {
+          tryNextSource(channel, index);
+        }
+      }, 15000);
+    };
+    els.video.onstalled = () => {
+      setPlaybackState("Connection stalled…");
+      window.clearTimeout(playbackTimer);
+      playbackTimer = window.setTimeout(() => {
+        if (activeChannel === channel && fallbackIndex === index) tryNextSource(channel, index);
+      }, 15000);
+    };
     els.video.onerror = () => {
       if (activeChannel === channel) tryNextSource(channel, index);
     };
