@@ -8,7 +8,7 @@
     {
       "binding": "DB",
       "database_name": "yocare-live-registry",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "9ac3e964-ddf9-4ce1-bccb-be11a4136f2a",
       "migrations_dir": "migrations"
     }
   ],
