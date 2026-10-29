@@ -72,6 +72,23 @@
   const categoryLabel = (category) => CATEGORY_LABELS[category] || "General";
   const safeText = (value) => String(value || "").replace(/[<>]/g, "");
 
+  const isUnstableSource = (value) => {
+    try {
+      const url = new URL(value);
+      if (/ythls\.onrender\.com$/i.test(url.hostname)) return true;
+      // Exclude raw-IP endpoints on common home-server ports; these are poor public playback candidates.
+      if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(url.hostname) && /^(?:8080|3000|8000|8888|25461)$/.test(url.port)) return true;
+      return false;
+    } catch (_) { return true; }
+  };
+  const sourcePriority = (value) => {
+    try {
+      const host = new URL(value).hostname.toLowerCase();
+      if (/pluto|samsung|distro|rakuten|plex|amagi/.test(host)) return 0;
+      return 1;
+    } catch (_) { return 2; }
+  };
+
   function parsePlaylist(text) {
     const lines = text.replace(/^\uFEFF/, "").split(/\r?
 /);
@@ -102,6 +119,7 @@
         try {
           const url = new URL(line);
           if (["http:", "https:", "rtmp:", "rtmps:", "rtsp:", "udp:", "rtp:", "mms:", "mmsh:"].includes(url.protocol)) {
+            if (isUnstableSource(url.href)) { pending = null; continue; }
             pending.url = url.href;
             pending.key = normalise(pending.name);
             pending.category = categoryFor(pending.name, pending.group);
@@ -117,9 +135,11 @@
     const grouped = new Map();
     for (const item of parsed) {
       if (!item.key || !item.url) continue;
-      if (!grouped.has(item.key)) grouped.set(item.key, {...item, urls: []});
-      const channel = grouped.get(item.key);
+      const groupKey = item.tvgId ? "id:" + item.tvgId.toLowerCase() : "name:" + item.key;
+      if (!grouped.has(groupKey)) grouped.set(groupKey, {...item, urls: []});
+      const channel = grouped.get(groupKey);
       if (!channel.urls.includes(item.url)) channel.urls.push(item.url);
+      channel.urls.sort((a, b) => sourcePriority(a) - sourcePriority(b));
       if (!channel.logo && item.logo) channel.logo = item.logo;
       if (!channel.group && item.group) channel.group = item.group;
     }
