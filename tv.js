@@ -72,7 +72,8 @@
   const safeText = (value) => String(value || "").replace(/[<>]/g, "");
 
   function parsePlaylist(text) {
-    const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
+    const lines = text.replace(/^\uFEFF/, "").split(/\r?
+/);
     const parsed = [];
     let pending = null;
     for (const rawLine of lines) {
@@ -129,18 +130,21 @@
   }
 
   function setLoading(isLoading, message = "Loading the channel guide…") {
+    if (!els.loading) return;
     els.loading.hidden = !isLoading;
-    els.loading.querySelector("span:last-child").textContent = message;
+    const label = els.loading.querySelector("span:last-child");
+    if (label) label.textContent = message;
     isLoadingPlaylist = isLoading;
   }
 
   function setMessage(message) {
+    if (!els.message) return;
     els.message.textContent = message;
     els.message.hidden = !message;
   }
 
   function setPlaybackState(message) {
-    els.state.textContent = message;
+    if (els.state) els.state.textContent = message;
   }
 
   function isCurrentSource(channel, index, attemptId) {
@@ -175,8 +179,7 @@
     window.clearTimeout(playbackTimer);
     setPlaybackState("Waiting for your tap");
     setMessage("Your browser blocked automatic playback. Select Play to start this channel.");
-    els.playStart.hidden = false;
-    els.playStart.disabled = false;
+    if (els.playStart) { els.playStart.hidden = false; els.playStart.disabled = false; }
   }
 
   function handlePlaybackRejection(channel, index, attemptId, error) {
@@ -186,7 +189,7 @@
       return;
     }
     if (error && error.name === "AbortError") {
-      els.playStart.disabled = false;
+      if (els.playStart) els.playStart.disabled = false;
       return;
     }
     const category = error && error.name === "NotSupportedError" ? "unsupported" :
@@ -202,8 +205,7 @@
       if (!playback || typeof playback.then !== "function") return;
       playback.then(() => {
         if (!isCurrentSource(channel, index, attemptId)) return;
-        els.playStart.hidden = true;
-        els.playStart.disabled = false;
+        if (els.playStart) { els.playStart.hidden = true; els.playStart.disabled = false; }
         setMessage("");
       }).catch(error => handlePlaybackRejection(channel, index, attemptId, error));
     } catch (error) {
@@ -227,8 +229,7 @@
     els.video.onwaiting = null;
     els.video.onstalled = null;
     els.video.onerror = null;
-    els.playStart.hidden = true;
-    els.playStart.disabled = false;
+    if (els.playStart) { els.playStart.hidden = true; els.playStart.disabled = false; }
     if (hls) {
       try { hls.destroy(); } catch (_) {}
       hls = null;
@@ -342,17 +343,17 @@
     loadController = new AbortController();
     const currentRequest = ++requestNumber;
     setLoading(true, "Loading channels for " + countryName() + "…");
-    els.grid.replaceChildren();
-    els.empty.hidden = true;
-    els.more.hidden = true;
+    if (els.grid) els.grid.replaceChildren();
+    if (els.empty) els.empty.hidden = true;
+    if (els.more) els.more.hidden = true;
     channels = [];
     filtered = [];
     if (els.featured) els.featured.replaceChildren();
     if (els.genreRails) els.genreRails.replaceChildren();
     if (els.spotlightName || els.spotlightLogo) renderSpotlight(null);
     if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
-    els.count.textContent = "—";
-    els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
+    if (els.count) els.count.textContent = "—";
+    if (els.region) els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     if (els.homeRegion) els.homeRegion.textContent = countryName().toUpperCase();
     if (els.spotlightRegion) els.spotlightRegion.textContent = countryName().toUpperCase();
     try {
@@ -429,14 +430,18 @@
       if (error.name === "AbortError" || currentRequest !== requestNumber) return;
       setLoading(false);
       if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Channel picks will appear when the guide is available."; }
-      els.grid.replaceChildren();
-      els.empty.hidden = false;
-      els.empty.querySelector("h3").textContent = "Channel guide unavailable";
-      els.empty.querySelector("p").textContent = "We couldn’t load this country’s channel list. Check your connection, then retry. (" + (error.message || "Network error") + ")";
-      els.clear.textContent = "Retry channel guide";
-      els.spotlightName.textContent = "Channel guide unavailable";
-      els.spotlightDetail.textContent = "Retry the guide to find available channels";
-      els.count.textContent = "0";
+      if (els.grid) els.grid.replaceChildren();
+      if (els.empty) {
+        els.empty.hidden = false;
+        const heading = els.empty.querySelector("h3");
+        const detail = els.empty.querySelector("p");
+        if (heading) heading.textContent = "Channel guide unavailable";
+        if (detail) detail.textContent = "We couldn’t load this country’s channel list. Check your connection, then retry. (" + (error.message || "Network error") + ")";
+      }
+      if (els.clear) els.clear.textContent = "Retry channel guide";
+      if (els.spotlightName) els.spotlightName.textContent = "Channel guide unavailable";
+      if (els.spotlightDetail) els.spotlightDetail.textContent = "Retry the guide to find available channels";
+      if (els.count) els.count.textContent = "0";
       console.warn("Yocare Live playlist load failed:", error);
     }
   }
@@ -449,8 +454,8 @@
       return matchesQuery && matchesCategory;
     });
     page = 0;
-    els.grid.replaceChildren();
-    els.count.textContent = String(filtered.length);
+    if (els.grid) els.grid.replaceChildren();
+    if (els.count) els.count.textContent = String(filtered.length);
     if (els.visibleSummary) {
       els.visibleSummary.textContent = activeFilter === "all"
         ? filtered.length + " of " + channels.length + " channels shown"
@@ -459,11 +464,15 @@
     if (els.categorySummary) {
       els.categorySummary.textContent = activeFilter === "all" ? "Every available genre" : categoryLabel(activeFilter);
     }
-    els.empty.hidden = filtered.length > 0 || isLoadingPlaylist;
-    if (filtered.length === 0 && !isLoadingPlaylist) {
-      els.empty.querySelector("h3").textContent = "No channels found";
-      els.empty.querySelector("p").textContent = "Try a different search or select another country.";
-      els.clear.textContent = "Clear search";
+    if (els.empty) {
+      els.empty.hidden = filtered.length > 0 || isLoadingPlaylist;
+      if (filtered.length === 0 && !isLoadingPlaylist) {
+        const heading = els.empty.querySelector("h3");
+        const detail = els.empty.querySelector("p");
+        if (heading) heading.textContent = "No channels found";
+        if (detail) detail.textContent = "Try a different search or select another country.";
+        if (els.clear) els.clear.textContent = "Clear search";
+      }
     }
     renderNextPage();
   }
@@ -529,24 +538,22 @@
       els.spotlightCard.setAttribute("aria-label", candidate ? "Watch " + candidate.name + " live" : "No live channel is available");
     }
     if (!candidate) {
-      els.spotlightName.textContent = channels.length ? "Choose a live channel" : "Finding channels…";
-      els.spotlightDetail.textContent = channels.length ? "Browse the channel rows below" : "Loading the channel guide";
-      els.spotlightLogo.replaceChildren();
+      if (els.spotlightName) els.spotlightName.textContent = channels.length ? "Choose a live channel" : "Finding channels…";
+      if (els.spotlightDetail) els.spotlightDetail.textContent = channels.length ? "Browse the channel rows below" : "Loading the channel guide";
+      if (els.spotlightLogo) els.spotlightLogo.replaceChildren();
       const fallback = document.createElement("span");
       fallback.className = "spotlight-fallback";
       fallback.textContent = "YL";
-      els.spotlightLogo.append(fallback);
-      els.spotlightLogo.classList.remove("has-logo");
+      if (els.spotlightLogo) { els.spotlightLogo.append(fallback); els.spotlightLogo.classList.remove("has-logo"); }
       return;
     }
-    els.spotlightName.textContent = candidate.name;
-    els.spotlightDetail.textContent = [categoryLabel(candidate.category), countryName()].filter(Boolean).join(" · ");
-    els.spotlightLogo.replaceChildren();
-    els.spotlightLogo.classList.remove("has-logo");
+    if (els.spotlightName) els.spotlightName.textContent = candidate.name;
+    if (els.spotlightDetail) els.spotlightDetail.textContent = [categoryLabel(candidate.category), countryName()].filter(Boolean).join(" · ");
+    if (els.spotlightLogo) { els.spotlightLogo.replaceChildren(); els.spotlightLogo.classList.remove("has-logo"); }
     const fallback = document.createElement("span");
     fallback.className = "spotlight-fallback";
     fallback.textContent = initialsFor(candidate.name);
-    els.spotlightLogo.append(fallback);
+    if (els.spotlightLogo) els.spotlightLogo.append(fallback);
     if (candidate.logo && /^https?:\/\//i.test(candidate.logo)) {
       const image = document.createElement("img");
       image.alt = "";
@@ -611,8 +618,9 @@
   function renderNextPage() {
     const start = page * PAGE_SIZE;
     const batch = filtered.slice(start, start + PAGE_SIZE);
-    batch.forEach((channel, i) => els.grid.append(makeCard(channel, start + i)));
+    batch.forEach((channel, i) => { if (els.grid) els.grid.append(makeCard(channel, start + i)); });
     page++;
+    if (!els.more) return;
     els.more.hidden = page * PAGE_SIZE >= filtered.length;
     if (!els.more.hidden) {
       const remaining = filtered.length - page * PAGE_SIZE;
@@ -630,6 +638,7 @@
   }
 
   function showPlayerPlaceholder(show) {
+    if (!els.placeholder) return;
     els.placeholder.classList.toggle("is-hidden", !show);
     els.placeholder.setAttribute("aria-hidden", show ? "false" : "true");
   }
@@ -640,9 +649,9 @@
     fallbackIndex = 0;
     waitingForAlternateSource = null;
     lastSourceFailure = null;
-    els.title.textContent = channel.name;
-    els.subtitle.textContent = channel.group || (countryName() + " · Live television");
-    els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
+    if (els.title) els.title.textContent = channel.name;
+    if (els.subtitle) els.subtitle.textContent = channel.group || (countryName() + " · Live television");
+    if (els.region) els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     setMessage("");
     showPlayerPlaceholder(false);
     updateSelectedCard();
@@ -715,7 +724,8 @@
       keepalive: true
     }).catch(() => {});
   }
-\n  function startSource(channel, index) {
+
+  function startSource(channel, index) {
     window.clearTimeout(playbackTimer);
     els.playStart.hidden = true;
     els.playStart.disabled = false;
@@ -907,7 +917,9 @@
       acc[channel.category] = (acc[channel.category] || 0) + 1;
       return acc;
     }, {});
-    if (!els.categories) return;\n    els.categories.replaceChildren();
+    if (!els.categories) return;
+    if (!els.categories) return;
+    els.categories.replaceChildren();
     CATEGORY_ORDER.forEach(category => {
       const button = document.createElement("button");
       button.type = "button";
@@ -935,20 +947,21 @@
     applyFilters();
   }
 
-  els.country.addEventListener("change", () => {
+  if (els.country) els.country.addEventListener("change", () => {
     // Keep the current video playing while the channel guide changes only if the viewer wants;
     // a country change stops playback to avoid a misleading region label.
     activeChannel = null;
     destroyPlayer();
     showPlayerPlaceholder(true);
-    els.title.textContent = "Select a channel";
-    els.subtitle.textContent = "Your channel will appear here";
+    if (els.title) els.title.textContent = "Select a channel";
+    if (els.subtitle) els.subtitle.textContent = "Your channel will appear here";
     setPlaybackState("Ready when you are");
     setMessage("");
     loadCountry(els.country.value);
   });
-  els.search.addEventListener("input", applyFilters);
-  els.searchAction.addEventListener("click", () => {
+  if (els.search) els.search.addEventListener("input", applyFilters);
+  if (els.searchAction) els.searchAction.addEventListener("click", () => {
+    if (!els.search) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     els.search.scrollIntoView({behavior: reducedMotion ? "auto" : "smooth", block: "center"});
     window.setTimeout(() => els.search.focus({preventScroll:true}), reducedMotion ? 0 : 420);
@@ -965,8 +978,8 @@
     setCategory(button.dataset.guideCategory);
     $("channels").scrollIntoView({behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
   });
-  els.more.addEventListener("click", renderNextPage);
-  els.categories.addEventListener("click", (event) => {
+  if (els.more) els.more.addEventListener("click", renderNextPage);
+  if (els.categories) els.categories.addEventListener("click", (event) => {
     const button = event.target.closest(".category-chip");
     if (button && !button.disabled) setCategory(button.dataset.category);
   });
@@ -986,6 +999,7 @@
   if (els.retry) els.retry.addEventListener("click", () => {
     if (activeChannel) {
       waitingForAlternateSource = null;
+      registryRefreshAttempted.delete(activeChannel);
       fallbackIndex = 0;
       lastSourceFailure = null;
       startSource(activeChannel, 0);
