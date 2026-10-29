@@ -131,6 +131,32 @@
     return PLAYLIST_BASE + encodeURIComponent(code) + ".m3u";
   }
 
+  async function fetchPlaylistText(code, signal) {
+    const encoded = encodeURIComponent(code);
+    const sources = [
+      PLAYLIST_BASE + encoded + ".m3u",
+      "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/" + encoded + ".m3u"
+    ];
+    let lastError = null;
+    for (const source of sources) {
+      try {
+        const response = await fetch(source, {
+          signal,
+          cache: "no-cache",
+          headers: {"Accept": "application/vnd.apple.mpegurl, audio/x-mpegurl, text/plain, */*"}
+        });
+        if (!response.ok) throw new Error("Playlist source returned HTTP " + response.status + ".");
+        const text = await response.text();
+        if (!text.includes("#EXTINF:")) throw new Error("Playlist source returned no channel entries.");
+        return text;
+      } catch (error) {
+        if (error.name === "AbortError") throw error;
+        lastError = error;
+      }
+    }
+    throw lastError || new Error("All channel-list sources were unavailable.");
+  }
+
   async function loadCountry(code) {
     if (loadController) loadController.abort();
     loadController = new AbortController();
@@ -144,13 +170,7 @@
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
-      const response = await fetch(playlistUrl(code), {
-        signal: loadController.signal,
-        cache: "no-cache",
-        headers: {"Accept": "application/vnd.apple.mpegurl, audio/x-mpegurl, text/plain, */*"}
-      });
-      if (!response.ok) throw new Error("The channel guide returned HTTP " + response.status + ".");
-      const text = await response.text();
+      const text = await fetchPlaylistText(code, loadController.signal);
       if (currentRequest !== requestNumber) return;
       const result = parsePlaylist(text);
       if (!result.length) throw new Error("The playlist did not contain readable channel entries.");
@@ -163,7 +183,7 @@
       els.grid.replaceChildren();
       els.empty.hidden = false;
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
-      els.empty.querySelector("p").textContent = "The playlist could not be reached. Check your connection or try again in a moment.";
+      els.empty.querySelector("p").textContent = "We couldn’t load this country’s channel list. Check your connection, then retry. (" + (error.message || "Network error") + ")";
       els.clear.textContent = "Retry channel guide";
       els.count.textContent = "0";
       console.warn("Yocare Live playlist load failed:", error);
