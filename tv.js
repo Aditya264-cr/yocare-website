@@ -662,7 +662,7 @@
 
   function canonicalRegistryId(channel) {
     const candidate = String(channel && (channel.idKey || channel.id || channel.key) || "").trim();
-    return /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/.test(candidate) ? candidate : "";
+    return /^[a-zA-Z0-9][a-zA-Z0-9._:@-]{0,119}$/.test(candidate) ? candidate : "";
   }
 
   async function refreshRegistrySources(channel) {

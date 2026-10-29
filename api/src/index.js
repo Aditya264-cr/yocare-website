@@ -16,7 +16,7 @@ function cors(request, env) {
     "vary": "Origin"
   } : {};
 }
-function validId(value) { return typeof value === "string" && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,119}$/.test(value); }
+function validId(value) { return typeof value === "string" && /^[a-zA-Z0-9][a-zA-Z0-9._:@-]{0,119}$/.test(value); }
 function safeSourceUrl(value) {
   try {
     const url = new URL(value);
