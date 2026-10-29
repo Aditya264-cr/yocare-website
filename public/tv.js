@@ -1081,7 +1081,7 @@
       showPlayerPlaceholder(false);
     };
     const startStallTimer = (state) => {
-      if (!isCurrentSource(channel, index, attemptId) || els.video.readyState < 2) return;
+      if (!isCurrentSource(channel, index, attemptId)) return;
       setPlaybackState(state);
       window.clearTimeout(playbackTimer);
       playbackTimer = window.setTimeout(() => {
