@@ -21,6 +21,7 @@
   let activeChannel = null;
   let fallbackIndex = 0;
   let hls = null;
+  let dashPlayer = null;
   let loadController = null;
   let requestNumber = 0;
   let playbackTimer = 0;
@@ -132,6 +133,10 @@
     if (hls) {
       try { hls.destroy(); } catch (_) {}
       hls = null;
+    }
+    if (dashPlayer) {
+      try { dashPlayer.reset(); } catch (_) {}
+      dashPlayer = null;
     }
     els.video.pause();
     els.video.removeAttribute("src");
@@ -445,67 +450,62 @@
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
     const url = channel.urls[index];
 
-    // Some broadcasters provide native HLS; others require hls.js in Chromium browsers.
-    if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
-      els.video.src = url;
-      els.video.load();
-      els.video.play().catch(() => {
-        setPlaybackState("Ready to play");
-        setMessage("Press play in the video controls if playback did not start automatically.");
+    let parsedUrl;
+    try { parsedUrl = new URL(url); } catch (_) {
+      setPlaybackState("Invalid stream URL");
+      setMessage("This channel has a malformed stream URL. Try another channel.");
+      showPlayerPlaceholder(true); return;
+    }
+    if (["rtsp:", "rtmp:", "rtmps:", "udp:", "rtp:", "mms:", "mmsh:"].includes(parsedUrl.protocol)) {
+      setPlaybackState("Source needs a compatible stream");
+      setMessage("This broadcaster uses " + parsedUrl.protocol.replace(":", "").toUpperCase() + ", which browsers cannot play directly. Yocare needs a browser-compatible HLS/DASH/MP4 URL or an authorized streaming gateway. Access restrictions are not bypassed.");
+      showPlayerPlaceholder(true); return;
+    }
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      setPlaybackState("Unsupported stream protocol");
+      setMessage("This URL scheme is not supported for browser playback.");
+      showPlayerPlaceholder(true); return;
+    }
+    const path = parsedUrl.pathname.toLowerCase();
+    const isDash = path.endsWith(".mpd");
+    const isDirectMedia = /\.(mp4|m4v|webm|ogv|ogg|mov|mp3|m4a|aac|wav)$/.test(path);
+    if (isDash) {
+      if (!window.dashjs || !window.dashjs.MediaPlayer) {
+        setPlaybackState("DASH player unavailable");
+        setMessage("The DASH playback component did not load. Check your connection and refresh.");
+        showPlayerPlaceholder(true); return;
+      }
+      dashPlayer = window.dashjs.MediaPlayer().create();
+      dashPlayer.initialize(els.video, url, true);
+      dashPlayer.on(window.dashjs.MediaPlayer.events.ERROR, () => {
+        if (activeChannel === channel) tryNextSource(channel, index);
       });
+    } else if (isDirectMedia) {
+      els.video.src = url; els.video.load();
+      els.video.play().catch(() => { setPlaybackState("Ready to play"); setMessage("Press Play if playback does not start automatically."); });
+    } else if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
+      els.video.src = url; els.video.load();
+      els.video.play().catch(() => { setPlaybackState("Ready to play"); setMessage("Press Play if playback does not start automatically."); });
     } else if (window.Hls && window.Hls.isSupported()) {
-      hls = new window.Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-        backBufferLength: 30,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
-        manifestLoadingTimeOut: 15000,
-        levelLoadingTimeOut: 20000,
-        fragLoadingTimeOut: 25000,
-        manifestLoadingMaxRetry: 2,
-        levelLoadingMaxRetry: 2,
-        fragLoadingMaxRetry: 3,
-        manifestLoadingRetryDelay: 800,
-        levelLoadingRetryDelay: 800,
-        fragLoadingRetryDelay: 800
-      });
+      hls = new window.Hls({ enableWorker: true, lowLatencyMode: false, backBufferLength: 30, maxBufferLength: 30, maxMaxBufferLength: 60, manifestLoadingTimeOut: 15000, levelLoadingTimeOut: 20000, fragLoadingTimeOut: 25000, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, manifestLoadingRetryDelay: 800, levelLoadingRetryDelay: 800, fragLoadingRetryDelay: 800 });
       hls.attachMedia(els.video);
-      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
-        if (activeChannel !== channel) return;
-        hls.loadSource(url);
-      });
+      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => { if (activeChannel === channel) hls.loadSource(url); });
       hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
         if (activeChannel !== channel) return;
-        setPlaybackState("Stream ready");
-        setMessage("");
-        els.video.play().catch(() => {
-          setPlaybackState("Ready to play");
-          setMessage("Your browser needs a tap on Play to start this stream.");
-        });
+        setPlaybackState("Stream ready"); setMessage("");
+        els.video.play().catch(() => { setPlaybackState("Ready to play"); setMessage("Your browser needs a tap on Play to start this stream."); });
       });
       hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (activeChannel !== channel || !data.fatal) return;
-        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
-          networkRecoveryAttempts++;
-          setPlaybackState("Reconnecting…");
-          try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); }
-        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) {
-          mediaRecoveryAttempts++;
-          setPlaybackState("Recovering playback…");
-          try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); }
-        } else {
-          // Avoid looping forever on a fatal offline, blocked, or incompatible source.
-          tryNextSource(channel, index);
-        }
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) { networkRecoveryAttempts++; setPlaybackState("Reconnecting…"); try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); } }
+        else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) { mediaRecoveryAttempts++; setPlaybackState("Recovering playback…"); try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); } }
+        else tryNextSource(channel, index);
       });
     } else {
       setPlaybackState("Playback unsupported");
-      setMessage("This browser does not support HLS playback. Try a current version of Safari, Chrome, Edge, or Firefox.");
-      showPlayerPlaceholder(true);
-      return;
+      setMessage("This browser cannot play this stream format. Try a browser-compatible HLS, DASH or MP4 source.");
+      showPlayerPlaceholder(true); return;
     }
-
     // If a stream never becomes playable, move to its next available URL.
     playbackTimer = window.setTimeout(() => {
       if (activeChannel === channel && els.video.readyState < 2) tryNextSource(channel, index);
