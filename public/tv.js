@@ -638,7 +638,7 @@
       applyFilters();
       setLoading(false);
       loadProgramGuide(loadController.signal, currentRequest);
-        } catch (error) {
+    } catch (error) {
       if (error.name === "AbortError" || currentRequest !== requestNumber) return;
       setLoading(false);
       if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Channel picks will appear when the guide is available."; }
@@ -947,7 +947,8 @@
     fallbackIndex = index;
     if (index === 0) lastSourceFailure = null;
     if (index >= channel.urls.length) {
-      tryNextSource(channel, index, sourceAttemptId);
+      const attemptId = destroyPlayer();
+      tryNextSource(channel, index, attemptId);
       return;
     }
 
