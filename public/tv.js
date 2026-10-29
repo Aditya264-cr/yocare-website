@@ -1040,19 +1040,22 @@
       try {
         player = new window.Hls({
           enableWorker: true,
-          lowLatencyMode: false,
-          backBufferLength: 30,
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60,
-          manifestLoadingTimeOut: 12000,
-          levelLoadingTimeOut: 15000,
-          fragLoadingTimeOut: 20000,
-          manifestLoadingMaxRetry: 2,
-          levelLoadingMaxRetry: 2,
-          fragLoadingMaxRetry: 2,
-          manifestLoadingRetryDelay: 800,
-          levelLoadingRetryDelay: 800,
-          fragLoadingRetryDelay: 800
+          lowLatencyMode: true,
+          startLevel: 0,
+          maxBufferLength: 15,
+          maxMaxBufferLength: 30,
+          backBufferLength: 10,
+          manifestLoadingTimeOut: 8000,
+          manifestLoadingMaxRetry: 3,
+          manifestLoadingRetryDelay: 500,
+          levelLoadingTimeOut: 8000,
+          levelLoadingMaxRetry: 3,
+          levelLoadingRetryDelay: 500,
+          fragLoadingTimeOut: 10000,
+          fragLoadingMaxRetry: 4,
+          fragLoadingRetryDelay: 500,
+          maxBufferHole: 0.5,
+          nudgeMaxRetry: 5
         });
       } catch (_) {
         return false;
@@ -1076,7 +1079,7 @@
           fail("denied", status);
         } else if ([404, 410].includes(status)) {
           fail("missing", status);
-        } else if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
+        } else if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 2) {
           networkRecoveryAttempts++;
           setPlaybackState("Reconnecting…");
           try { player.startLoad(); } catch (_) { fail("network", status || undefined); }
@@ -1196,7 +1199,7 @@
           fail("missing", status);
           return;
         }
-        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 2) {
           networkRecoveryAttempts++;
           setPlaybackState("Reconnecting…");
           try { player.startLoad(); } catch (_) { fail("network", status || undefined); }
