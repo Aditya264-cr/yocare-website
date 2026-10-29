@@ -805,6 +805,7 @@
     setMessage(index > 0 ? "Trying another available source…" : "");
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
     const url = channel.urls[index];
+    let hasPlayed = false;
 
     const fail = (category, status) => {
       if (!isCurrentSource(channel, index, attemptId)) return;
@@ -834,6 +835,7 @@
 
     els.video.onplaying = () => {
       if (!isCurrentSource(channel, index, attemptId)) return;
+      hasPlayed = true;
       window.clearTimeout(playbackTimer);
       setPlaybackState("Playing live");
       setMessage("");
@@ -843,6 +845,8 @@
     const startStallTimer = (state) => {
       if (!isCurrentSource(channel, index, attemptId)) return;
       setPlaybackState(state);
+      // Do not classify startup buffering as a stall; the startup timeout owns this phase.
+      if (!hasPlayed) return;
       window.clearTimeout(playbackTimer);
       playbackTimer = window.setTimeout(() => {
         if (isCurrentSource(channel, index, attemptId) && els.video.readyState < 3) fail("stalled");
