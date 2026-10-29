@@ -8,7 +8,7 @@
   const PLAYLIST_FETCH_TIMEOUT_MS = 15000;
   const DIRECT_STARTUP_TIMEOUT_MS = 25000;
   const STREAM_STARTUP_TIMEOUT_MS = 50000;
-  const BUFFER_STALL_TIMEOUT_MS = 30000;
+  const BUFFER_STALL_TIMEOUT_MS = 6000;
   const $ = (id) => document.getElementById(id);
   const els = {
     video: $("video"), placeholder: $("player-placeholder"), grid: $("channel-grid"),
