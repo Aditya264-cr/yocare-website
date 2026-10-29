@@ -22,7 +22,7 @@ An HTTP check reads only a small response prefix and can confirm a recognizable 
 4. Set an admin secret: `npx wrangler secret put REGISTRY_ADMIN_TOKEN --config api/wrangler.jsonc`.
 5. Deploy: `npx wrangler deploy --config api/wrangler.jsonc`.
 6. Add an API origin custom domain or use the Worker URL initially. Add the exact website origin to `ALLOWED_ORIGINS` (or configure `DEV_ORIGIN` for local testing).
-7. In the deployed app at `public/index.html`, set the `content` of the `meta[name="yocare-live-registry-url"]` element to the registry base URL, without a trailing slash. The production player checks this registry after its listed playlist candidates fail. Keep it empty until the API is deployed and CORS is configured.
+7. Confirm the registry URL in `public/index.html` matches the deployed Worker. Verify that CORS allows the exact production website origin before relying on the registry. If the Worker is unavailable, the player keeps trying its existing playlist candidates and reports that no registry fallback was available.
 
 The database ID is deliberately a placeholder. Do not deploy until it has been replaced with the real ID. Never commit the admin token.
 
@@ -45,7 +45,6 @@ The production player reads the registry URL configured in `public/index.html`; 
 - Source URLs must be HTTP(S); local/private address patterns are rejected. Register only playback URLs Yocare is authorized to use. Do not place broadcaster passwords, API keys or expiring secrets in source URLs returned by the public source endpoint.
 - Health checks do not follow redirects, reducing redirect-based SSRF exposure.
 - Add Cloudflare rate limiting and request-size limits before public production exposure.
-
 
 ## Delivery pipeline boundary
 
