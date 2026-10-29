@@ -196,7 +196,7 @@ async function checkSource(env, source) {
   await env.DB.prepare(
     "INSERT INTO source_checks (source_id, checked_at, ok, http_status, latency_ms, note, probe_depth) " +
     "VALUES (?, datetime('now'), ?, ?, ?, ?, ?)"
-  ).bind(source.id, result.ok ? 1 : 0, result.status, result.latency_ms, result.note, result.probe_depth).run();
+  ).bind(source.id, result.ok ? 1 : 0, result.status, result.ttfb_ms ?? result.latency_ms, result.note, result.probe_depth).run();
   await env.DB.prepare(
     "UPDATE sources SET last_checked_at = datetime('now'), last_status = ?, last_latency_ms = ?, latency_ms = ?, " +
     "reliability_score = CASE WHEN ? = 1 THEN MIN(100, reliability_score + 5) ELSE MAX(0, reliability_score - 20) END, " +
