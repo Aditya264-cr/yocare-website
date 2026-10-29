@@ -59,6 +59,137 @@ async function getSources(env, channelId, country) {
   ).bind(channelId).all();
   return results.filter(source => territoryAllows(parseRegions(source.rights_regions), country));
 }
+
+function proxySafeUrl(value, allowedHost) {
+  try {
+    const target = new URL(value);
+    const host = target.hostname.toLowerCase().replace(/\.$/, "");
+    if (!["https:", "http:"].includes(target.protocol) || target.username || target.password ||
+        host !== allowedHost || host === "localhost" || host.endsWith(".localhost") ||
+        host.endsWith(".local") || host.endsWith(".internal") ||
+        /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host) || host.includes(":")) return null;
+    return target;
+  } catch {
+    return null;
+  }
+}
+function proxyResponse(body, status, originHeaders, contentType, cacheControl = "no-store") {
+  return new Response(body, {
+    status,
+    headers: {
+      ...originHeaders,
+      "content-type": contentType || "application/octet-stream",
+      "cache-control": cacheControl,
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET,HEAD,OPTIONS",
+      "access-control-expose-headers": "Content-Length,Content-Range,Accept-Ranges",
+      "x-content-type-options": "nosniff"
+    }
+  });
+}
+function rewriteHlsManifest(text, manifestUrl, sourceId, allowedHost) {
+  const rewrite = raw => {
+    const value = raw.trim();
+    if (!value || value.startsWith("#")) return raw;
+    const absolute = new URL(value, manifestUrl);
+    const safe = proxySafeUrl(absolute.href, allowedHost);
+    if (!safe) throw new Error("external_hls_host_not_allowed");
+    return "/api/proxy?source_id=" + encodeURIComponent(sourceId) + "&url=" + encodeURIComponent(safe.href);
+  };
+  return text.split(/\r?\n/).map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return line;
+    if (trimmed.startsWith("#")) {
+      return line.replace(/URI="([^"]+)"/g, (_match, uri) => {
+        const absolute = new URL(uri, manifestUrl);
+        const safe = proxySafeUrl(absolute.href, allowedHost);
+        if (!safe) throw new Error("external_hls_host_not_allowed");
+        return 'URI="/api/proxy?source_id=' + encodeURIComponent(sourceId) + "&url=" + encodeURIComponent(safe.href) + '"';
+      });
+    }
+    return rewrite(line);
+  }).join("\n");
+}
+async function proxyAuthorizedStream(request, env, requestUrl) {
+  if (!["GET", "HEAD"].includes(request.method)) {
+    return new Response("Method not allowed", { status: 405, headers: { Allow: "GET, HEAD, OPTIONS" } });
+  }
+  const sourceId = requestUrl.searchParams.get("source_id") || "";
+  const targetValue = requestUrl.searchParams.get("url") || "";
+  if (!validId(sourceId) || !targetValue || targetValue.length > 4096) {
+    return new Response("Invalid proxy request", { status: 400 });
+  }
+  const source = await env.DB.prepare(
+    "SELECT s.id, s.url, s.rights_regions, s.rights_verified_at, s.authorization_reference, s.rights_expires_at " +
+    "FROM sources s JOIN channels c ON c.id = s.channel_id WHERE s.id = ? AND s.enabled = 1 AND c.enabled = 1 " +
+    "AND s.rights_verified_at IS NOT NULL AND length(trim(s.authorization_reference)) > 0 " +
+    "AND (s.rights_expires_at IS NULL OR datetime(s.rights_expires_at) > datetime('now'))"
+  ).bind(sourceId).first();
+  const country = requestCountry(request, env);
+  if (!source || !country || !territoryAllows(parseRegions(source.rights_regions), country)) {
+    return new Response("Authorized source unavailable in this region", { status: 403 });
+  }
+  let registered;
+  try { registered = new URL(source.url); } catch { return new Response("Invalid registered source", { status: 403 }); }
+  const target = proxySafeUrl(targetValue, registered.hostname.toLowerCase().replace(/\.$/, ""));
+  if (!target) return new Response("Target host is not authorized for this source", { status: 403 });
+
+  const isManifest = /\.m3u8?$/i.test(target.pathname) || /mpegurl/i.test(request.headers.get("accept") || "");
+  const cacheSeconds = isManifest ? 2 : 60;
+  const range = request.headers.get("Range");
+  const cacheKey = new Request(new URL("/__yocare_edge_cache?source_id=" + encodeURIComponent(sourceId) + "&country=" + encodeURIComponent(country) + "&url=" + encodeURIComponent(target.href), request.url).href, { method: "GET" });
+  if (request.method === "GET" && !range) {
+    try {
+      const cached = await caches.default.match(cacheKey);
+      if (cached) return cached;
+    } catch { /* Cache API may be unavailable in local development. */ }
+  }
+  let current = target;
+  let upstream;
+  for (let redirects = 0; redirects <= 3; redirects += 1) {
+    upstream = await fetch(current.href, {
+      method: request.method,
+      redirect: "manual",
+      headers: {
+        ...(range ? { Range: range } : {}),
+        "User-Agent": "YocareLive/1.0",
+        "Accept": request.headers.get("Accept") || "*/*"
+      },
+    });
+    if (![301, 302, 303, 307, 308].includes(upstream.status)) break;
+    const location = upstream.headers.get("location");
+    await upstream.body?.cancel();
+    if (!location || redirects === 3) return new Response("Upstream redirect limit reached", { status: 502 });
+    const next = proxySafeUrl(new URL(location, current).href, registered.hostname.toLowerCase().replace(/\.$/, ""));
+    if (!next) return new Response("Cross-host redirects are not allowed", { status: 502 });
+    current = next;
+  }
+  const contentType = upstream.headers.get("content-type") || "application/octet-stream";
+  const headers = cors(request, env);
+  if (!upstream.ok) {
+    return proxyResponse(request.method === "HEAD" ? null : upstream.body, upstream.status, headers, contentType, "no-store");
+  }
+  if (isManifest || /mpegurl/i.test(contentType)) {
+    const manifestText = await upstream.text();
+    try {
+      const rewritten = rewriteHlsManifest(manifestText, current.href, sourceId, registered.hostname.toLowerCase().replace(/\.$/, ""));
+      const response = proxyResponse(rewritten, 200, headers, "application/vnd.apple.mpegurl; charset=utf-8", "public, max-age=2");
+      if (request.method === "GET" && !range) {
+        try { await caches.default.put(cacheKey, response.clone()); } catch { /* Keep playback working if edge cache is unavailable. */ }
+      }
+      return response;
+    } catch {
+      return proxyResponse("Manifest references an unapproved host", 502, headers, "text/plain; charset=utf-8", "no-store");
+    }
+  }
+  const response = proxyResponse(request.method === "HEAD" ? null : upstream.body, upstream.status, headers, contentType,
+    range || upstream.status !== 200 ? "no-store" : "public, max-age=60");
+  if (request.method === "GET" && !range && upstream.status === 200) {
+    try { await caches.default.put(cacheKey, response.clone()); } catch { /* Keep playback working if edge cache is unavailable. */ }
+  }
+  return response;
+}
+
 async function checkSource(env, source) {
   const result = await inspectSource(source);
   await env.DB.prepare(
@@ -81,7 +212,7 @@ export default {
     const headers = cors(request, env);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
     try {
-      if (url.pathname === "/api/health" && request.method === "GET") {
+      if (url.pathname === "/api/proxy" && (request.method === "GET" || request.method === "HEAD")) {\n        return await proxyAuthorizedStream(request, env, url);\n      }\n      if (url.pathname === "/api/health" && request.method === "GET") {
         const result = await env.DB.prepare("SELECT 1 AS ok").first();
         return response({ ok: result?.ok === 1, service: "yocare-live-registry", version: 2 }, 200, headers);
       }
