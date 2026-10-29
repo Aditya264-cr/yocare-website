@@ -344,6 +344,8 @@
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
       els.empty.querySelector("p").textContent = "We couldn’t load this country’s channel list. Check your connection, then retry. (" + (error.message || "Network error") + ")";
       els.clear.textContent = "Retry channel guide";
+      els.spotlightName.textContent = "Channel guide unavailable";
+      els.spotlightDetail.textContent = "Retry the guide to find available channels";
       els.count.textContent = "0";
       console.warn("Yocare Live playlist load failed:", error);
     }
@@ -788,7 +790,7 @@
   function focusableTvControls() {
     return [...document.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),[tabindex]:not([tabindex="-1"])')]
       .filter(element => {
-        if (element.closest("[hidden], [aria-hidden='true']")) return false;
+        if (element.classList.contains("skip-link") || element.closest("[hidden], [aria-hidden='true']")) return false;
         const style = window.getComputedStyle(element);
         return style.display !== "none" && style.visibility !== "hidden" && element.getClientRects().length > 0;
       });
@@ -798,11 +800,19 @@
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     const target = event.target instanceof Element ? event.target : null;
     const editing = target ? target.closest("input, textarea, select, video, [contenteditable='true']") : null;
-    if (event.key === "Escape" && !editing && !document.fullscreenElement) {
+    if (["Escape", "Back", "BrowserBack"].includes(event.key) && !editing && !document.fullscreenElement) {
       const home = document.querySelector('.topnav a[href="#discover"]');
       if (home) {
         home.focus();
         home.scrollIntoView({block:"start"});
+        event.preventDefault();
+      }
+      return;
+    }
+    if (event.key === "Accept" && !editing) {
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && focused.matches('a[href],button:not(:disabled)')) {
+        focused.click();
         event.preventDefault();
       }
       return;
