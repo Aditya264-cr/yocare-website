@@ -49,13 +49,14 @@ function admin(request, env) {
 async function getSources(env, channelId, country) {
   const { results = [] } = await env.DB.prepare(
     "SELECT s.id, s.url, s.source_type, s.priority, s.last_checked_at, s.last_ok_at, " +
-    "s.last_status, s.consecutive_failures, s.last_probe_depth, s.last_probe_note, s.rights_regions, " +
+    "s.last_status, s.last_latency_ms, s.latency_ms, s.reliability_score, s.consecutive_failures, s.last_probe_depth, s.last_probe_note, s.rights_regions, " +
     "CASE WHEN s.last_checked_at >= datetime('now','-15 minutes') AND s.consecutive_failures = 0 THEN 1 ELSE 0 END AS healthy " +
     "FROM sources s JOIN channels c ON c.id = s.channel_id " +
     "WHERE s.channel_id = ? AND s.enabled = 1 AND c.enabled = 1 " +
     "AND s.rights_verified_at IS NOT NULL AND length(trim(s.authorization_reference)) > 0 " +
     "AND (s.rights_expires_at IS NULL OR datetime(s.rights_expires_at) > datetime('now')) " +
-    "ORDER BY healthy DESC, s.priority ASC, s.consecutive_failures ASC, s.last_ok_at DESC"
+    "ORDER BY healthy DESC, CASE WHEN s.latency_ms IS NULL THEN 1 WHEN s.latency_ms > 2500 THEN 2 ELSE 0 END ASC, " +
+    "s.latency_ms ASC, s.reliability_score DESC, s.priority ASC, s.consecutive_failures ASC, s.last_ok_at DESC"
   ).bind(channelId).all();
   return results.filter(source => territoryAllows(parseRegions(source.rights_regions), country));
 }
@@ -195,14 +196,16 @@ async function checkSource(env, source) {
   await env.DB.prepare(
     "INSERT INTO source_checks (source_id, checked_at, ok, http_status, latency_ms, note, probe_depth) " +
     "VALUES (?, datetime('now'), ?, ?, ?, ?, ?)"
-  ).bind(source.id, result.ok ? 1 : 0, result.status, result.latency_ms, result.note, result.probe_depth).run();
+  ).bind(source.id, result.ok ? 1 : 0, result.status, result.ttfb_ms ?? result.latency_ms, result.note, result.probe_depth).run();
   await env.DB.prepare(
-    "UPDATE sources SET last_checked_at = datetime('now'), last_status = ?, last_latency_ms = ?, " +
+    "UPDATE sources SET last_checked_at = datetime('now'), last_status = ?, last_latency_ms = ?, latency_ms = ?, " +
+    "reliability_score = CASE WHEN ? = 1 THEN MIN(100, reliability_score + 5) ELSE MAX(0, reliability_score - 20) END, " +
     "last_probe_depth = ?, last_probe_note = ?, " +
     "last_ok_at = CASE WHEN ? = 1 THEN datetime('now') ELSE last_ok_at END, " +
     "consecutive_failures = CASE WHEN ? = 1 THEN 0 ELSE consecutive_failures + 1 END " +
     "WHERE id = ?"
-  ).bind(result.status, result.latency_ms, result.probe_depth, result.note, result.ok ? 1 : 0, result.ok ? 1 : 0, source.id).run();
+  ).bind(result.status, result.ttfb_ms ?? result.latency_ms, result.ttfb_ms ?? result.latency_ms, result.ok ? 1 : 0,
+    result.probe_depth, result.note, result.ok ? 1 : 0, result.ok ? 1 : 0, source.id).run();
   return result;
 }
 
@@ -234,6 +237,9 @@ export default {
             type: s.source_type,
             priority: s.priority,
             health: s.healthy ? "recently-reachable" : s.last_checked_at ? "unknown-or-unhealthy" : "untested",
+            latency_ms: s.latency_ms ?? s.last_latency_ms ?? null,
+            latency_tier: s.latency_ms == null ? "unknown" : s.latency_ms > 2500 ? "slow" : "fast",
+            reliability_score: s.reliability_score ?? 50,
             probe: s.last_probe_depth || "none",
             note: s.last_probe_note || ""
           })),

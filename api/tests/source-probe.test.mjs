@@ -48,6 +48,8 @@ test("HLS probe checks a master playlist, media playlist, and first segment", as
   assert.equal(result.ok, true);
   assert.equal(result.probe_depth, "segment");
   assert.equal(result.note, "manifest-and-first-segment-reachable");
+  assert.equal(typeof result.ttfb_ms, "number");
+  assert.equal(result.latency_tier, "fast");
   assert.deepEqual(calls, [
     "https://cdn.example.org/master.m3u8",
     "https://cdn.example.org/variant.m3u8",
@@ -79,4 +81,24 @@ test("HLS probe rejects unsafe redirect destinations", async () => {
 
   assert.equal(result.ok, false);
   assert.equal(result.note, "unsafe-or-excessive-redirect");
+});
+
+
+test("probe classifies a source with TTFB above 2500ms as slow", async () => {
+  const result = await inspectSource(
+    { id: "channel-slow", source_type: "direct", url: "https://cdn.example.org/live.ts" },
+    {
+      fetchImpl: async () => {
+        await new Promise(resolve => setTimeout(resolve, 2510));
+        return new Response(new Uint8Array([0x47, 0x40, 0x00]), {
+          headers: { ...corsHeaders, "content-type": "video/mp2t" }
+        });
+      },
+      origin
+    }
+  );
+
+  assert.equal(result.ok, true);
+  assert.ok(result.ttfb_ms > 2500);
+  assert.equal(result.latency_tier, "slow");
 });
