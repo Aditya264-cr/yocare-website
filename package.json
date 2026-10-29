@@ -5,6 +5,7 @@
   "description": "Static Yocare Live TV website",
   "scripts": {
     "build": "node -e \"console.log('Yocare is a static HTML/CSS/JS site; no compilation required.')\"",
-    "deploy:retry": "node scripts/deploy-with-retry.mjs"
+    "deploy:retry": "node scripts/deploy-with-retry.mjs",
+    "check": "node --check tv.js && node --check api/src/index.js"
   }
 }
