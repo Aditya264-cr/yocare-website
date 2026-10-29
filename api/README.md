@@ -1,6 +1,6 @@
 # Yocare Live source registry (v1)
 
-This is a separate Cloudflare Worker for source discovery and health monitoring. It does not replace the existing static website Worker or its live player.
+This is a separate Cloudflare Worker for source discovery and health monitoring. It does not replace the existing static website Worker. The `tv.js` player has optional registry integration: when the endpoint is configured, it queries approved alternatives after its current public playlist candidates fail and reports failures for registry-managed sources.
 
 ## Responsibilities
 
@@ -21,7 +21,8 @@ An HTTP check cannot prove a stream is watchable end-to-end, that it contains th
 3. From the repository root, run `npx wrangler d1 migrations apply yocare-live-registry --remote --config api/wrangler.jsonc`.
 4. Set an admin secret: `npx wrangler secret put REGISTRY_ADMIN_TOKEN --config api/wrangler.jsonc`.
 5. Deploy: `npx wrangler deploy --config api/wrangler.jsonc`.
-6. Add an API origin custom domain or use the Worker URL initially. Add that exact origin to `ALLOWED_ORIGINS` (or configure `DEV_ORIGIN` for local testing).
+6. Add an API origin custom domain or use the Worker URL initially. Add the exact website origin to `ALLOWED_ORIGINS` (or configure `DEV_ORIGIN` for local testing).
+7. In `tv.html`, set the `content` of the `meta[name="yocare-live-registry-url"]` element to the deployed registry base URL, without a trailing slash. Leave it empty until the API is deployed and CORS is configured.
 
 The database ID is deliberately a placeholder. Do not deploy until it has been replaced with the real ID. Never commit the admin token.
 
@@ -35,7 +36,7 @@ The database ID is deliberately a placeholder. Do not deploy until it has been r
 
 ## Current scope and next milestones
 
-v1 is the registry/monitoring foundation. The existing frontend has not yet been wired to this API, no production source records are seeded, and no live EPG feed is configured. The next change should add client failover against this API and map the existing channel IDs to stable canonical IDs. Then add an authorized provider/EPG integration, rate limits and retention/cleanup for health logs, and integration tests.
+The player integration is present but opt-in: it remains disabled while the registry URL meta value is empty. Channel IDs must exactly match the stable IDs inserted in D1; the playlist's `tvg-id` is preferred, with normalized channel identity as a fallback. No production source records are seeded and no live EPG feed is configured. Next, seed and verify canonical IDs and approved feeds, deploy the API, configure CORS and the frontend meta value, then run browser-level failover tests. Add an authorized provider/EPG integration, rate limits and retention/cleanup for health logs before production.
 
 ## Security notes
 
