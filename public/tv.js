@@ -258,7 +258,10 @@
               (previousActive.idKey && channel.idKey === previousActive.idKey) ||
               (previousActive.key && channel.key === previousActive.key)
             );
-            if (updatedActive) previousActive.urls = updatedActive.urls;
+            if (updatedActive) {
+              previousActive.urls = updatedActive.urls;
+              previousActive.id = updatedActive.id;
+            }
           }
           renderFeaturedChannels();
           renderCategories();
