@@ -11,7 +11,7 @@
     title: $("now-title"), subtitle: $("now-subtitle"), region: $("player-region"),
     state: $("playback-state"), message: $("player-message"), retry: $("retry-button"),
     clear: $("clear-search"), categories: $("category-chips"),
-    categorySummary: $("category-summary"), visibleSummary: $("visible-summary")
+    categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading")
   };
 
   let channels = [];
@@ -220,6 +220,8 @@
     els.more.hidden = true;
     channels = [];
     filtered = [];
+    if (els.featured) els.featured.replaceChildren();
+    if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
@@ -241,12 +243,14 @@
       const result = mergePlaylistSources(publicChannels, alternateChannels);
       if (!result.length) throw new Error("The playlists did not contain readable channel entries.");
       channels = result;
+      renderFeaturedChannels();
       renderCategories();
       applyFilters();
       setLoading(false);
     } catch (error) {
       if (error.name === "AbortError" || currentRequest !== requestNumber) return;
       setLoading(false);
+      if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Channel picks will appear when the guide is available."; }
       els.grid.replaceChildren();
       els.empty.hidden = false;
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
@@ -336,6 +340,19 @@
     return button;
   }
 
+  function renderFeaturedChannels() {
+    if (!els.featured) return;
+    const withLogos = channels.filter(channel => channel.logo);
+    const picks = (withLogos.length >= 6 ? withLogos : channels).slice(0, 12);
+    els.featured.replaceChildren();
+    picks.forEach((channel, index) => {
+      const card = makeCard(channel, index);
+      card.classList.add("featured-channel");
+      els.featured.append(card);
+    });
+    if (els.featuredLoading) els.featuredLoading.hidden = true;
+  }
+
   function renderNextPage() {
     const start = page * PAGE_SIZE;
     const batch = filtered.slice(start, start + PAGE_SIZE);
@@ -349,12 +366,12 @@
   }
 
   function updateSelectedCard() {
-    els.grid.querySelectorAll(".channel-card").forEach(card => {
+    [els.grid, els.featured].filter(Boolean).forEach(container => container.querySelectorAll(".channel-card").forEach(card => {
       const selected = !!activeChannel && card.dataset.channelId === activeChannel.id;
       card.setAttribute("aria-current", selected ? "true" : "false");
       const play = card.querySelector(".channel-play");
       if (play) play.textContent = selected ? "●" : "▶";
-    });
+    }));
   }
 
   function showPlayerPlaceholder(show) {
