@@ -9,7 +9,7 @@
     country: $("country-select"), search: $("search-input"), count: $("channel-count"),
     loading: $("load-state"), empty: $("empty-state"), more: $("load-more"),
     title: $("now-title"), subtitle: $("now-subtitle"), region: $("player-region"),
-    state: $("playback-state"), message: $("player-message"), retry: $("retry-button"),
+    state: $("playback-state"), message: $("player-message"), retry: $("retry-button"), playStart: $("play-start"),
     clear: $("clear-search"), categories: $("category-chips"),
     categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading")
   };
@@ -21,10 +21,13 @@
   let activeChannel = null;
   let fallbackIndex = 0;
   let hls = null;
+  let dashPlayer = null;
   let loadController = null;
   let requestNumber = 0;
   let playbackTimer = 0;
   let isLoadingPlaylist = false;
+  let alternatePlaylistPending = false;
+  let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
 
@@ -79,10 +82,10 @@
         };
       } else if (line.startsWith("#") || !pending) {
         continue;
-      } else if (/^https?:\/\//i.test(line)) {
+      } else if (/^(https?|rtmps?|rtsp|udp|rtp|mms|mmsh):\/\//i.test(line)) {
         try {
           const url = new URL(line);
-          if (url.protocol === "http:" || url.protocol === "https:") {
+          if (["http:", "https:", "rtmp:", "rtmps:", "rtsp:", "udp:", "rtp:", "mms:", "mmsh:"].includes(url.protocol)) {
             pending.url = url.href;
             pending.key = normalise(pending.name);
             pending.category = categoryFor(pending.name, pending.group);
@@ -127,11 +130,42 @@
     els.state.textContent = message;
   }
 
+  function showPlayPrompt(channel, index) {
+    if (activeChannel !== channel || fallbackIndex !== index) return;
+    window.clearTimeout(playbackTimer);
+    setPlaybackState("Waiting for your tap");
+    setMessage("Your browser blocked automatic playback. Select Play to start this channel.");
+    els.playStart.hidden = false;
+    els.playStart.disabled = false;
+  }
+
+  function handlePlaybackRejection(channel, index, error) {
+    if (activeChannel !== channel || fallbackIndex !== index) return;
+    if (error && error.name === "NotAllowedError") {
+      showPlayPrompt(channel, index);
+      return;
+    }
+    if (error && error.name === "AbortError") return;
+    tryNextSource(channel, index);
+  }
+
+  function resumePendingAlternateFallback() {
+    const waiting = waitingForAlternateSource;
+    waitingForAlternateSource = null;
+    if (waiting && activeChannel === waiting.channel) {
+      tryNextSource(waiting.channel, waiting.index);
+    }
+  }
+
   function destroyPlayer() {
     window.clearTimeout(playbackTimer);
     if (hls) {
       try { hls.destroy(); } catch (_) {}
       hls = null;
+    }
+    if (dashPlayer) {
+      try { dashPlayer.reset(); } catch (_) {}
+      dashPlayer = null;
     }
     els.video.pause();
     els.video.removeAttribute("src");
@@ -212,6 +246,8 @@
 
   async function loadCountry(code) {
     if (loadController) loadController.abort();
+    alternatePlaylistPending = false;
+    waitingForAlternateSource = null;
     loadController = new AbortController();
     const currentRequest = ++requestNumber;
     setLoading(true, "Loading channels for " + countryName() + "…");
@@ -225,24 +261,71 @@
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
     try {
-      // Public playlists are generated for viewers and select the preferred stream per channel.
-      // The internal streams playlist is merged in as fallback URLs, not used as the primary list.
-      const results = await Promise.allSettled([
-        fetchPlaylistText(code, loadController.signal, "public"),
-        fetchPlaylistText(code, loadController.signal, "streams")
-      ]);
-      if (currentRequest !== requestNumber) return;
-      const publicText = results[0].status === "fulfilled" ? results[0].value : "";
-      const streamsText = results[1].status === "fulfilled" ? results[1].value : "";
-      if (!publicText && !streamsText) {
-        const reason = results.find(result => result.status === "rejected");
-        throw (reason && reason.reason) || new Error("All channel-list sources were unavailable.");
+      // Load the public viewer playlist first so the guide can render without waiting
+      // for the much larger internal alternatives playlist.
+      let publicText = "";
+      try {
+        publicText = await fetchPlaylistText(code, loadController.signal, "public");
+      } catch (publicError) {
+        if (publicError.name === "AbortError") throw publicError;
+        console.warn("Yocare Live public playlist unavailable; trying internal streams:", publicError);
       }
-      const publicChannels = publicText ? parsePlaylist(publicText) : [];
-      const alternateChannels = streamsText ? parsePlaylist(streamsText) : [];
-      const result = mergePlaylistSources(publicChannels, alternateChannels);
-      if (!result.length) throw new Error("The playlists did not contain readable channel entries.");
-      channels = result;
+      if (currentRequest !== requestNumber) return;
+
+      if (publicText) {
+        channels = parsePlaylist(publicText);
+        if (!channels.length) throw new Error("The public playlist did not contain readable channel entries.");
+        renderFeaturedChannels();
+        renderCategories();
+        applyFilters();
+        setLoading(false);
+
+        // Fetch alternate URLs after the first channels are already visible.
+        // Hold a failed playback result until this fallback list has had a chance to arrive.
+        alternatePlaylistPending = true;
+        fetchPlaylistText(code, loadController.signal, "streams").then(streamsText => {
+          if (currentRequest !== requestNumber) return;
+          const alternatives = parsePlaylist(streamsText);
+          alternatePlaylistPending = false;
+          if (!alternatives.length) {
+            resumePendingAlternateFallback();
+            return;
+          }
+          const previousActive = activeChannel;
+          const merged = mergePlaylistSources(channels, alternatives);
+          channels = merged;
+          if (previousActive) {
+            const updatedActive = channels.find(channel =>
+              (previousActive.idKey && channel.idKey === previousActive.idKey) ||
+              (previousActive.key && channel.key === previousActive.key)
+            );
+            if (updatedActive) {
+              previousActive.urls = updatedActive.urls;
+              previousActive.id = updatedActive.id;
+            }
+          }
+          renderFeaturedChannels();
+          renderCategories();
+          applyFilters();
+          updateSelectedCard();
+          resumePendingAlternateFallback();
+        }).catch(error => {
+          if (currentRequest === requestNumber) {
+            alternatePlaylistPending = false;
+            if (error.name !== "AbortError") {
+              console.warn("Yocare Live alternate stream list unavailable:", error);
+            }
+            resumePendingAlternateFallback();
+          }
+        });
+        return;
+      }
+
+      // If the public playlist fails, use the internal list as a recovery path.
+      const streamsText = await fetchPlaylistText(code, loadController.signal, "streams");
+      if (currentRequest !== requestNumber) return;
+      channels = parsePlaylist(streamsText);
+      if (!channels.length) throw new Error("The playlists did not contain readable channel entries.");
       renderFeaturedChannels();
       renderCategories();
       applyFilters();
@@ -382,6 +465,7 @@
   function playChannel(channel) {
     activeChannel = channel;
     fallbackIndex = 0;
+    waitingForAlternateSource = null;
     els.title.textContent = channel.name;
     els.subtitle.textContent = channel.group || (countryName() + " · Live television");
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
@@ -394,6 +478,8 @@
 
   function startSource(channel, index) {
     window.clearTimeout(playbackTimer);
+    els.playStart.hidden = true;
+    els.playStart.disabled = false;
     if (index >= channel.urls.length) {
       setPlaybackState("Stream unavailable");
       setMessage("This channel’s available links did not start. Try another channel or come back later; broadcaster links can go offline or block playback.");
@@ -408,67 +494,67 @@
     setPlaybackState(index > 0 ? "Switching source…" : "Connecting to broadcaster…");
     const url = channel.urls[index];
 
-    // Some broadcasters provide native HLS; others require hls.js in Chromium browsers.
-    if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
-      els.video.src = url;
-      els.video.load();
-      els.video.play().catch(() => {
-        setPlaybackState("Ready to play");
-        setMessage("Press play in the video controls if playback did not start automatically.");
+    let parsedUrl;
+    try { parsedUrl = new URL(url); } catch (_) {
+      setPlaybackState("Invalid stream URL");
+      setMessage("This channel has a malformed stream URL. Try another channel.");
+      showPlayerPlaceholder(true); return;
+    }
+    if (["rtsp:", "rtmp:", "rtmps:", "udp:", "rtp:", "mms:", "mmsh:"].includes(parsedUrl.protocol)) {
+      setPlaybackState("Source needs a compatible stream");
+      setMessage("This broadcaster uses " + parsedUrl.protocol.replace(":", "").toUpperCase() + ", which browsers cannot play directly. Yocare needs a browser-compatible HLS/DASH/MP4 URL or an authorized streaming gateway. Access restrictions are not bypassed.");
+      showPlayerPlaceholder(true); return;
+    }
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      setPlaybackState("Unsupported stream protocol");
+      setMessage("This URL scheme is not supported for browser playback.");
+      showPlayerPlaceholder(true); return;
+    }
+    const path = parsedUrl.pathname.toLowerCase();
+    const isDash = path.endsWith(".mpd");
+    const isDirectMedia = /\.(mp4|m4v|webm|ogv|ogg|mov|mp3|m4a|aac|wav)$/.test(path);
+    if (isDash) {
+      if (!window.dashjs || !window.dashjs.MediaPlayer) {
+        setPlaybackState("DASH player unavailable");
+        setMessage("The DASH playback component did not load. Check your connection and refresh.");
+        showPlayerPlaceholder(true); return;
+      }
+      dashPlayer = window.dashjs.MediaPlayer().create();
+      dashPlayer.initialize(els.video, url, false);
+      els.video.oncanplay = () => {
+        if (activeChannel === channel && fallbackIndex === index) {
+          els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
+        }
+      };
+      dashPlayer.on(window.dashjs.MediaPlayer.events.ERROR, () => {
+        if (activeChannel === channel) tryNextSource(channel, index);
       });
+    } else if (isDirectMedia) {
+      els.video.src = url; els.video.load();
+      els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
+    } else if (els.video.canPlayType("application/vnd.apple.mpegurl")) {
+      els.video.src = url; els.video.load();
+      els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
     } else if (window.Hls && window.Hls.isSupported()) {
-      hls = new window.Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-        backBufferLength: 30,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 60,
-        manifestLoadingTimeOut: 15000,
-        levelLoadingTimeOut: 20000,
-        fragLoadingTimeOut: 25000,
-        manifestLoadingMaxRetry: 2,
-        levelLoadingMaxRetry: 2,
-        fragLoadingMaxRetry: 3,
-        manifestLoadingRetryDelay: 800,
-        levelLoadingRetryDelay: 800,
-        fragLoadingRetryDelay: 800
-      });
+      hls = new window.Hls({ enableWorker: true, lowLatencyMode: false, backBufferLength: 30, maxBufferLength: 30, maxMaxBufferLength: 60, manifestLoadingTimeOut: 15000, levelLoadingTimeOut: 20000, fragLoadingTimeOut: 25000, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, manifestLoadingRetryDelay: 800, levelLoadingRetryDelay: 800, fragLoadingRetryDelay: 800 });
       hls.attachMedia(els.video);
-      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
-        if (activeChannel !== channel) return;
-        hls.loadSource(url);
-      });
+      hls.on(window.Hls.Events.MEDIA_ATTACHED, () => { if (activeChannel === channel) hls.loadSource(url); });
       hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
         if (activeChannel !== channel) return;
-        setPlaybackState("Stream ready");
-        setMessage("");
-        els.video.play().catch(() => {
-          setPlaybackState("Ready to play");
-          setMessage("Your browser needs a tap on Play to start this stream.");
-        });
+        setPlaybackState("Stream ready"); setMessage("");
+        els.video.play().catch(error => handlePlaybackRejection(channel, index, error));
       });
       hls.on(window.Hls.Events.ERROR, (_event, data) => {
         if (activeChannel !== channel || !data.fatal) return;
-        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) {
-          networkRecoveryAttempts++;
-          setPlaybackState("Reconnecting…");
-          try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); }
-        } else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) {
-          mediaRecoveryAttempts++;
-          setPlaybackState("Recovering playback…");
-          try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); }
-        } else {
-          // Avoid looping forever on a fatal offline, blocked, or incompatible source.
-          tryNextSource(channel, index);
-        }
+        if (data.type === window.Hls.ErrorTypes.NETWORK_ERROR && networkRecoveryAttempts < 1) { networkRecoveryAttempts++; setPlaybackState("Reconnecting…"); try { hls.startLoad(); } catch (_) { tryNextSource(channel, index); } }
+        else if (data.type === window.Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveryAttempts < 1) { mediaRecoveryAttempts++; setPlaybackState("Recovering playback…"); try { hls.recoverMediaError(); } catch (_) { tryNextSource(channel, index); } }
+        else tryNextSource(channel, index);
       });
     } else {
       setPlaybackState("Playback unsupported");
-      setMessage("This browser does not support HLS playback. Try a current version of Safari, Chrome, Edge, or Firefox.");
-      showPlayerPlaceholder(true);
-      return;
+      setMessage("This browser cannot play this stream format. Try a browser-compatible HLS, DASH or MP4 source.");
+      showPlayerPlaceholder(true); return;
     }
-
     // If a stream never becomes playable, move to its next available URL.
     playbackTimer = window.setTimeout(() => {
       if (activeChannel === channel && els.video.readyState < 2) tryNextSource(channel, index);
@@ -477,6 +563,8 @@
       window.clearTimeout(playbackTimer);
       setPlaybackState("Playing live");
       setMessage("");
+      els.playStart.hidden = true;
+      els.playStart.disabled = false;
       showPlayerPlaceholder(false);
     };
     els.video.onwaiting = () => {
@@ -505,6 +593,11 @@
     window.clearTimeout(playbackTimer);
     if (currentIndex + 1 < channel.urls.length) {
       startSource(channel, currentIndex + 1);
+    } else if (alternatePlaylistPending) {
+      waitingForAlternateSource = {channel, index: currentIndex};
+      setPlaybackState("Checking alternate links…");
+      setMessage("The first link did not start. Checking for another available channel link.");
+      showPlayerPlaceholder(false);
     } else {
       setPlaybackState("Stream unavailable");
       setMessage("The broadcaster did not provide a playable stream. Try another channel. Yocare cannot repair an offline or access-restricted broadcaster link.");
@@ -570,6 +663,21 @@
     }
     els.search.value = "";
     setCategory("all");
+  });
+  els.playStart.addEventListener("click", () => {
+    const channel = activeChannel;
+    const index = fallbackIndex;
+    if (!channel || !els.video.src) return;
+    els.playStart.disabled = true;
+    els.video.play().then(() => {
+      if (activeChannel === channel && fallbackIndex === index) {
+        els.playStart.hidden = true;
+        setMessage("");
+      }
+    }).catch(error => {
+      els.playStart.disabled = false;
+      handlePlaybackRejection(channel, index, error);
+    });
   });
   els.retry.addEventListener("click", () => {
     if (activeChannel) {

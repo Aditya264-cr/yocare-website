@@ -247,3 +247,12 @@ body:before{background:linear-gradient(90deg,#02070630,transparent 18%,transpare
  .featured-channel{flex-basis:145px}
 }
 @media(prefers-reduced-motion:reduce){.featured-channel{scroll-behavior:auto}}
+
+
+/* Accessible manual start for browsers that block sound-on autoplay. */
+.player-start{position:absolute;z-index:6;left:50%;bottom:104px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:13px;padding:12px 18px;border:1px solid #d9f5b477;border-radius:999px;background:linear-gradient(110deg,#d6f5a2,#9edeb4);color:#111b13;font:700 .72rem/1 "DM Sans",sans-serif;box-shadow:0 8px 30px #0008,0 0 24px #c8f28a26;cursor:pointer;transition:transform .18s,box-shadow .18s,background .18s}
+.player-start:hover{transform:translate(-50%,-2px);background:#e4f8c4;box-shadow:0 11px 34px #0009,0 0 30px #c8f28a33}
+.player-start:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.player-start span{font-size:.67rem}
+.player-start[hidden]{display:none}
+@media(max-width:680px){.player-start{bottom:92px;padding:11px 16px;font-size:.68rem}}
