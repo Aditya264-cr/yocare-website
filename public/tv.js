@@ -80,10 +80,10 @@
         };
       } else if (line.startsWith("#") || !pending) {
         continue;
-      } else if (/^https?:\/\//i.test(line)) {
+      } else if (/^(https?|rtmps?|rtsp|udp|rtp|mms|mmsh):\/\//i.test(line)) {
         try {
           const url = new URL(line);
-          if (url.protocol === "http:" || url.protocol === "https:") {
+          if (["http:", "https:", "rtmp:", "rtmps:", "rtsp:", "udp:", "rtp:", "mms:", "mmsh:"].includes(url.protocol)) {
             pending.url = url.href;
             pending.key = normalise(pending.name);
             pending.category = categoryFor(pending.name, pending.group);
