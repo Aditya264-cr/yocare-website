@@ -256,3 +256,82 @@ body:before{background:linear-gradient(90deg,#02070630,transparent 18%,transpare
 .player-start span{font-size:.67rem}
 .player-start[hidden]{display:none}
 @media(max-width:680px){.player-start{bottom:92px;padding:11px 16px;font-size:.68rem}}
+
+
+/* Yocare Live TV home screen and remote-first navigation */
+.skip-link{position:fixed;z-index:100;top:12px;left:12px;transform:translateY(-160%);padding:12px 16px;border-radius:8px;background:#d6f5a2;color:#111b13;font-weight:700}
+.skip-link:focus{transform:none}
+.topnav-search{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border:0;border-radius:999px;background:transparent;color:#acb8b0;font:inherit;cursor:pointer;transition:background .18s,color .18s}
+.topnav-search span{font-size:1.25rem;line-height:.7}
+.topnav-search:hover,.topnav-search:focus-visible{background:#ffffff0c;color:#f2f6ef}
+.topbar a:focus-visible,.topbar button:focus-visible,.hero button:focus-visible,.featured-section button:focus-visible,.channels-section button:focus-visible,.channels-section input:focus-visible,.channels-section select:focus-visible,.player-section button:focus-visible{outline:3px solid #d8f6a5;outline-offset:4px;box-shadow:0 0 0 7px #c8f28a24}
+.hero{min-height:500px;grid-template-columns:minmax(0,1fr) minmax(390px,.92fr);align-items:center;gap:clamp(40px,7vw,110px);padding:62px clamp(28px,7vw,112px) 68px;background:radial-gradient(ellipse at 78% 48%,#1a4938 0%,#12251c 27%,#0a1110 68%,#080c0b 100%)}
+.hero-content{max-width:680px}
+.hero h1{max-width:720px;font-size:clamp(3.4rem,6.1vw,6.1rem)}
+.hero-copy{max-width:490px;font-size:.98rem}
+.hero-meta{align-items:center}
+.hero-actions .primary-cta{border:0;font:inherit;font-weight:700;cursor:pointer}
+.hero-actions .primary-cta:disabled{opacity:.55;cursor:wait}
+.hero-spotlight{position:relative;isolation:isolate;overflow:hidden;width:100%;min-height:365px;display:flex;flex-direction:column;justify-content:space-between;gap:25px;padding:22px;border:1px solid #d3efcd30;border-radius:18px;background:radial-gradient(ellipse at 50% 30%,#2c5540 0%,#1a3228 38%,#111a16 78%);color:#f3f5ef;text-align:left;cursor:pointer;box-shadow:0 25px 70px #0007,inset 0 1px #ffffff12;transition:transform .25s,border-color .25s,box-shadow .25s}
+.hero-spotlight:hover:not(:disabled){transform:translateY(-3px);border-color:#c8f28a85;box-shadow:0 30px 78px #0008,0 0 35px #c8f28a15,inset 0 1px #ffffff18}
+.hero-spotlight:disabled{cursor:default}
+.spotlight-halo{position:absolute;z-index:-1;width:380px;height:280px;left:50%;top:27%;transform:translate(-50%,-50%);border-radius:50%;background:#b7e69a22;filter:blur(55px);pointer-events:none}
+.spotlight-card-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.spotlight-region,.spotlight-label{color:#b4c4b8;font-size:.56rem;font-weight:700;letter-spacing:.16em}
+.spotlight-logo{position:relative;align-self:center;width:min(58%,270px);height:180px;display:grid;place-items:center;overflow:hidden;border:1px solid #ffffff18;border-radius:16px;background:linear-gradient(145deg,#ffffff10,#070c0a50);box-shadow:inset 0 1px #ffffff16,0 22px 45px #0004}
+.spotlight-fallback{font:800 clamp(2rem,4vw,4rem)/1 var(--display);letter-spacing:-.08em;color:#d9f4b6;text-shadow:0 0 36px #c8f28a44}
+.spotlight-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:20px 26px}
+.spotlight-logo.has-logo .spotlight-fallback{opacity:0}
+.spotlight-info{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 3px 1px;border-top:1px solid #ffffff18}
+.spotlight-copy{display:grid;gap:7px;min-width:0}
+.spotlight-label{color:#d4efa9;font-size:.5rem}
+.spotlight-name{overflow:hidden;color:#f3f5ef;font:700 clamp(1.15rem,2.2vw,1.85rem)/1.15 var(--display);letter-spacing:-.05em;text-overflow:ellipsis;white-space:nowrap}
+.spotlight-detail{color:#a3b1a7;font-size:.67rem}
+.spotlight-arrow{flex:none;width:40px;height:40px;display:grid;place-items:center;border:1px solid #ffffff2a;border-radius:50%;color:#d6f5a2;font-size:1.05rem}
+.featured-section{padding-top:34px;padding-bottom:44px}
+.featured-heading h2{font-size:clamp(1.9rem,3vw,2.7rem)}
+.featured-subtitle{max-width:700px}
+.genre-rails{display:grid;gap:28px;margin-top:17px}
+.genre-row{min-width:0}
+.genre-row-heading{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.genre-row-heading h3{margin:0;color:#f0f4ef;font:650 clamp(1rem,1.5vw,1.3rem)/1.2 var(--display);letter-spacing:-.035em}
+.genre-row-heading>span{color:#84948a;font-size:.58rem}
+.genre-see-all{margin-left:auto;padding:4px 0;border:0;background:transparent;color:#aab9ae;font-size:.62rem;cursor:pointer}
+.genre-see-all:hover,.genre-see-all:focus-visible{color:#d6f5a2}
+.genre-rail{padding-top:2px}
+.featured-rail{scroll-padding-inline:8px}
+.featured-channel{flex-basis:clamp(185px,18vw,245px);min-height:202px}
+.channel-card:focus-visible{transform:scale(1.035);border-color:#d6f5a2;box-shadow:0 0 0 2px #d6f5a2,0 16px 34px #0008;z-index:4}
+.player-section{scroll-margin-top:20px}
+.featured-section,.channels-section{scroll-margin-top:24px}
+@media(min-width:1500px){
+ .hero{min-height:555px;padding-inline:clamp(60px,8vw,150px)}
+ .hero-spotlight{min-height:410px;padding:26px}
+ .spotlight-logo{height:205px}
+ .featured-section,.page-section{max-width:1680px}
+ .featured-channel{flex-basis:250px;min-height:216px}
+ .topbar{height:88px;padding-inline:clamp(40px,7vw,140px)}
+}
+@media(max-width:900px){
+ .hero{grid-template-columns:minmax(0,1fr) minmax(300px,.9fr);gap:28px;padding:54px 6vw}
+ .hero-spotlight{min-height:330px;padding:18px}
+}
+@media(max-width:680px){
+ .topnav-search{padding:8px 9px;font-size:.58rem}
+ .hero{display:flex;flex-direction:column;align-items:stretch;gap:26px;padding:38px 20px 36px}
+ .hero-content{max-width:590px}
+ .hero h1{font-size:clamp(3rem,11vw,4.5rem)}
+ .hero-copy{font-size:.84rem}
+ .hero-spotlight{min-height:285px;padding:15px;border-radius:13px}
+ .spotlight-logo{width:58%;height:125px;border-radius:11px}
+ .spotlight-info{padding-top:12px}
+ .featured-section{padding-top:26px;padding-bottom:33px}
+ .genre-rails{gap:23px;margin-top:14px}
+ .genre-row-heading{gap:8px}
+ .genre-row-heading>span{font-size:.53rem}
+ .featured-channel{flex-basis:158px;min-height:168px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hero-spotlight,.channel-card,.featured-channel{transition:none}
+ .hero-spotlight:hover:not(:disabled),.channel-card:focus-visible{transform:none}
+}

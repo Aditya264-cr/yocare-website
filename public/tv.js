@@ -11,7 +11,7 @@
     title: $("now-title"), subtitle: $("now-subtitle"), region: $("player-region"),
     state: $("playback-state"), message: $("player-message"), retry: $("retry-button"), playStart: $("play-start"),
     clear: $("clear-search"), categories: $("category-chips"),
-    categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading")
+    categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading"), genreRails: $("genre-rails"), spotlightPlay: $("spotlight-play"), spotlightCard: $("spotlight-card"), spotlightLogo: $("spotlight-logo"), spotlightName: $("spotlight-name"), spotlightDetail: $("spotlight-detail"), spotlightRegion: $("spotlight-region"), homeRegion: $("home-region"), searchAction: $("search-action")
   };
 
   let channels = [];
@@ -19,6 +19,7 @@
   let page = 0;
   let activeFilter = "all";
   let activeChannel = null;
+  let spotlightChannel = null;
   let fallbackIndex = 0;
   let hls = null;
   let dashPlayer = null;
@@ -257,9 +258,13 @@
     channels = [];
     filtered = [];
     if (els.featured) els.featured.replaceChildren();
+    if (els.genreRails) els.genreRails.replaceChildren();
+    renderSpotlight(null);
     if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
     els.count.textContent = "—";
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
+    if (els.homeRegion) els.homeRegion.textContent = countryName().toUpperCase();
+    if (els.spotlightRegion) els.spotlightRegion.textContent = countryName().toUpperCase();
     try {
       // Load the public viewer playlist first so the guide can render without waiting
       // for the much larger internal alternatives playlist.
@@ -339,6 +344,8 @@
       els.empty.querySelector("h3").textContent = "Channel guide unavailable";
       els.empty.querySelector("p").textContent = "We couldn’t load this country’s channel list. Check your connection, then retry. (" + (error.message || "Network error") + ")";
       els.clear.textContent = "Retry channel guide";
+      els.spotlightName.textContent = "Channel guide unavailable";
+      els.spotlightDetail.textContent = "Retry the guide to find available channels";
       els.count.textContent = "0";
       console.warn("Yocare Live playlist load failed:", error);
     }
@@ -423,6 +430,79 @@
     return button;
   }
 
+  function renderSpotlight(channel) {
+    const candidate = channel || activeChannel || channels.find(item => item.logo) || channels[0] || null;
+    spotlightChannel = candidate;
+    if (els.spotlightPlay) els.spotlightPlay.disabled = !candidate;
+    if (els.spotlightCard) {
+      els.spotlightCard.disabled = !candidate;
+      els.spotlightCard.setAttribute("aria-label", candidate ? "Watch " + candidate.name + " live" : "No live channel is available");
+    }
+    if (!candidate) {
+      els.spotlightName.textContent = channels.length ? "Choose a live channel" : "Finding channels…";
+      els.spotlightDetail.textContent = channels.length ? "Browse the channel rows below" : "Loading the channel guide";
+      els.spotlightLogo.replaceChildren();
+      const fallback = document.createElement("span");
+      fallback.className = "spotlight-fallback";
+      fallback.textContent = "YL";
+      els.spotlightLogo.append(fallback);
+      els.spotlightLogo.classList.remove("has-logo");
+      return;
+    }
+    els.spotlightName.textContent = candidate.name;
+    els.spotlightDetail.textContent = [categoryLabel(candidate.category), countryName()].filter(Boolean).join(" · ");
+    els.spotlightLogo.replaceChildren();
+    els.spotlightLogo.classList.remove("has-logo");
+    const fallback = document.createElement("span");
+    fallback.className = "spotlight-fallback";
+    fallback.textContent = initialsFor(candidate.name);
+    els.spotlightLogo.append(fallback);
+    if (candidate.logo && /^https?:\/\//i.test(candidate.logo)) {
+      const image = document.createElement("img");
+      image.alt = "";
+      image.setAttribute("aria-hidden", "true");
+      image.loading = "lazy";
+      image.referrerPolicy = "no-referrer";
+      image.src = candidate.logo;
+      image.addEventListener("load", () => els.spotlightLogo.classList.add("has-logo"), {once:true});
+      image.addEventListener("error", () => image.remove(), {once:true});
+      els.spotlightLogo.append(image);
+    }
+  }
+
+  function renderGenreRails() {
+    if (!els.genreRails) return;
+    els.genreRails.replaceChildren();
+    CATEGORY_ORDER.slice(1).forEach(category => {
+      const matches = channels.filter(channel => channel.category === category);
+      if (matches.length < 3) return;
+      const row = document.createElement("section");
+      row.className = "genre-row";
+      const heading = document.createElement("div");
+      heading.className = "genre-row-heading";
+      const title = document.createElement("h3");
+      title.textContent = categoryLabel(category);
+      const count = document.createElement("span");
+      count.textContent = matches.length + (matches.length === 1 ? " channel" : " channels");
+      const seeAll = document.createElement("button");
+      seeAll.type = "button";
+      seeAll.className = "genre-see-all";
+      seeAll.dataset.guideCategory = category;
+      seeAll.textContent = "See all";
+      heading.append(title, count, seeAll);
+      const rail = document.createElement("div");
+      rail.className = "featured-rail genre-rail";
+      rail.setAttribute("aria-label", categoryLabel(category) + " channels");
+      matches.slice(0, 12).forEach((channel, index) => {
+        const card = makeCard(channel, index);
+        card.classList.add("featured-channel");
+        rail.append(card);
+      });
+      row.append(heading, rail);
+      els.genreRails.append(row);
+    });
+  }
+
   function renderFeaturedChannels() {
     if (!els.featured) return;
     const withLogos = channels.filter(channel => channel.logo);
@@ -433,6 +513,8 @@
       card.classList.add("featured-channel");
       els.featured.append(card);
     });
+    renderGenreRails();
+    renderSpotlight(activeChannel || picks[0] || channels[0] || null);
     if (els.featuredLoading) els.featuredLoading.hidden = true;
   }
 
@@ -449,7 +531,7 @@
   }
 
   function updateSelectedCard() {
-    [els.grid, els.featured].filter(Boolean).forEach(container => container.querySelectorAll(".channel-card").forEach(card => {
+    [els.grid, els.featured, els.genreRails].filter(Boolean).forEach(container => container.querySelectorAll(".channel-card").forEach(card => {
       const selected = !!activeChannel && card.dataset.channelId === activeChannel.id;
       card.setAttribute("aria-current", selected ? "true" : "false");
       const play = card.querySelector(".channel-play");
@@ -464,6 +546,7 @@
 
   function playChannel(channel) {
     activeChannel = channel;
+    renderSpotlight(channel);
     fallbackIndex = 0;
     waitingForAlternateSource = null;
     els.title.textContent = channel.name;
@@ -651,6 +734,23 @@
     loadCountry(els.country.value);
   });
   els.search.addEventListener("input", applyFilters);
+  els.searchAction.addEventListener("click", () => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    els.search.scrollIntoView({behavior: reducedMotion ? "auto" : "smooth", block: "center"});
+    window.setTimeout(() => els.search.focus({preventScroll:true}), reducedMotion ? 0 : 420);
+  });
+  els.spotlightPlay.addEventListener("click", () => {
+    if (spotlightChannel) playChannel(spotlightChannel);
+  });
+  els.spotlightCard.addEventListener("click", () => {
+    if (spotlightChannel) playChannel(spotlightChannel);
+  });
+  els.genreRails.addEventListener("click", event => {
+    const button = event.target.closest("[data-guide-category]");
+    if (!button) return;
+    setCategory(button.dataset.guideCategory);
+    $("channels").scrollIntoView({behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
+  });
   els.more.addEventListener("click", renderNextPage);
   els.categories.addEventListener("click", (event) => {
     const button = event.target.closest(".category-chip");
@@ -687,6 +787,70 @@
       loadCountry(els.country.value);
     }
   });
+  function focusableTvControls() {
+    return [...document.querySelectorAll('a[href],button:not(:disabled),input:not(:disabled),select:not(:disabled),[tabindex]:not([tabindex="-1"])')]
+      .filter(element => {
+        if (element.classList.contains("skip-link") || element.closest("[hidden], [aria-hidden='true']")) return false;
+        const style = window.getComputedStyle(element);
+        return style.display !== "none" && style.visibility !== "hidden" && element.getClientRects().length > 0;
+      });
+  }
+
+  function handleTvRemoteKeys(event) {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    const target = event.target instanceof Element ? event.target : null;
+    const editing = target ? target.closest("input, textarea, select, video, [contenteditable='true']") : null;
+    if (["Escape", "Back", "BrowserBack"].includes(event.key) && !editing && !document.fullscreenElement) {
+      const home = document.querySelector('.topnav a[href="#discover"]');
+      if (home) {
+        home.focus();
+        home.scrollIntoView({block:"start"});
+        event.preventDefault();
+      }
+      return;
+    }
+    if (event.key === "Accept" && !editing) {
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && focused.matches('a[href],button:not(:disabled)')) {
+        focused.click();
+        event.preventDefault();
+      }
+      return;
+    }
+    const direction = {ArrowLeft:"left", ArrowRight:"right", ArrowUp:"up", ArrowDown:"down"}[event.key];
+    if (!direction || editing) return;
+    const controls = focusableTvControls();
+    const current = document.activeElement;
+    if (!controls.includes(current)) {
+      const first = document.querySelector('.topnav a[href="#discover"]');
+      if (first) first.focus();
+      event.preventDefault();
+      return;
+    }
+    const source = current.getBoundingClientRect();
+    const sx = source.left + source.width / 2;
+    const sy = source.top + source.height / 2;
+    let best = null;
+    let bestScore = Infinity;
+    controls.forEach(candidate => {
+      if (candidate === current) return;
+      const rect = candidate.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const primary = direction === "left" ? sx - x : direction === "right" ? x - sx : direction === "up" ? sy - y : y - sy;
+      if (primary <= 8) return;
+      const cross = direction === "left" || direction === "right" ? Math.abs(y - sy) : Math.abs(x - sx);
+      const score = primary + cross * 1.65;
+      if (score < bestScore) { best = candidate; bestScore = score; }
+    });
+    if (best) {
+      best.focus({preventScroll:true});
+      best.scrollIntoView({block:"nearest", inline:"nearest"});
+      event.preventDefault();
+    }
+  }
+
+  window.addEventListener("keydown", handleTvRemoteKeys);
   window.addEventListener("pagehide", () => {
     if (loadController) loadController.abort();
     destroyPlayer();
