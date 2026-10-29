@@ -18,3 +18,5 @@ jobs:
           node-version: 24
       - name: Check JavaScript syntax
         run: npm run check
+      - name: Verify registry source probes
+        run: npm test

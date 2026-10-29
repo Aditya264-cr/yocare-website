@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node -e \"console.log('Yocare is a static HTML/CSS/JS site; no compilation required.')\"",
     "deploy:retry": "node scripts/deploy-with-retry.mjs",
-    "check": "node --check tv.js && node --check api/src/index.js"
+    "check": "node --check public/tv.js && node --check api/src/index.js && node --check api/src/source-probe.mjs",
+    "test": "node --test api/tests/source-probe.test.mjs"
   }
 }

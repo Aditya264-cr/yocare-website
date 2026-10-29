@@ -122,10 +122,10 @@
         };
       } else if (line.startsWith("#") || !pending) {
         continue;
-      } else if (/^(https?|rtmps?|rtsp|udp|rtp|mms|mmsh):\/\//i.test(line)) {
+      } else if (/^https:\/\//i.test(line)) {
         try {
           const url = new URL(line);
-          if (["http:", "https:", "rtmp:", "rtmps:", "rtsp:", "udp:", "rtp:", "mms:", "mmsh:"].includes(url.protocol)) {
+          if (url.protocol === "https:" && !url.username && !url.password) {
             pending.url = url.href;
             pending.key = normalise(pending.name);
             pending.category = categoryFor(pending.name, pending.group);
@@ -141,9 +141,9 @@
     const grouped = new Map();
     for (const item of parsed) {
       if (!item.key || !item.url) continue;
-      if (!grouped.has(item.key)) grouped.set(item.key, {...item, urls: []});
+      if (!grouped.has(item.key)) grouped.set(item.key, {...item, catalogSourceCount: 0});
       const channel = grouped.get(item.key);
-      if (!channel.urls.includes(item.url)) channel.urls.push(item.url);
+      channel.catalogSourceCount += 1;
       if (!channel.logo && item.logo) channel.logo = item.logo;
       if (!channel.group && item.group) channel.group = item.group;
     }
@@ -151,7 +151,8 @@
       ...channel,
       id: channel.idKey + "-" + index,
       category: categoryFor(channel.name, channel.group),
-      url: channel.urls[0]
+      urls: [],
+      url: ""
     })).sort((a, b) => a.name.localeCompare(b.name));
   }
 
@@ -179,8 +180,9 @@
       invalid: "a source URL was malformed",
       protocol: "a source used a protocol this browser cannot play",
       player: "the required browser playback library did not load",
-      unsupported: "this browser could not play the source format",
-      denied: "the provider denied browser access",
+      unsupported: "the browser could not decode the feed or the source server did not allow browser playback",
+      cors: "the source server did not allow cross-origin playback from Yocare, or the network/provider blocked the request",
+      denied: "the provider denied browser access or restricted this region",
       missing: "the provider reported that the stream was missing",
       decode: "the browser could not decode the stream",
       network: "the source did not deliver playable media",
@@ -220,16 +222,21 @@
           signal: controller.signal,
           cache: "no-store"
         });
-        if (!response.ok) return false;
-        const payload = await response.json();
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          channel.registryUnavailableReason = payload?.error || "registry-unavailable";
+          return false;
+        }
         if (!payload || !Array.isArray(payload.sources)) return false;
+        channel.registryUnavailableReason = payload.unavailable_reason || null;
+        channel.registryRegion = payload.region || "";
         channel.registrySourceIds = channel.registrySourceIds || Object.create(null);
         let added = false;
         for (const source of payload.sources) {
           if (!source || typeof source.id !== "string" || typeof source.url !== "string") continue;
           let parsed;
           try { parsed = new URL(source.url); } catch (_) { continue; }
-          if (!["https:", "http:"].includes(parsed.protocol) || parsed.username || parsed.password) continue;
+          if (parsed.protocol !== "https:" || parsed.username || parsed.password) continue;
           const playbackUrl = parsed.href;
           if (!channel.urls.includes(playbackUrl)) {
             channel.urls.push(playbackUrl);
@@ -587,6 +594,10 @@
 
   async function loadCountry(code) {
     if (loadController) loadController.abort();
+    if (activeChannel) {
+      destroyPlayer();
+      activeChannel = null;
+    }
     alternatePlaylistPending = false;
     waitingForAlternateSource = null;
     lastSourceFailure = null;
@@ -617,73 +628,11 @@
     if (els.homeRegion) els.homeRegion.textContent = countryName().toUpperCase();
     if (els.spotlightRegion) els.spotlightRegion.textContent = countryName().toUpperCase();
     try {
-      // Load the public viewer playlist first so the guide can render without waiting
-      // for the much larger internal alternatives playlist.
-      let publicText = "";
-      try {
-        publicText = await fetchPlaylistText(code, loadController.signal, "public");
-      } catch (publicError) {
-        if (publicError.name === "AbortError") throw publicError;
-        console.warn("Yocare Live public playlist unavailable; trying internal streams:", publicError);
-      }
+      // Public playlists supply catalog metadata. Their stream URLs are never played directly.
+      const publicText = await fetchPlaylistText(code, loadController.signal, "public");
       if (currentRequest !== requestNumber) return;
-
-      if (publicText) {
-        channels = parsePlaylist(publicText);
-        if (!channels.length) throw new Error("The public playlist did not contain readable channel entries.");
-        renderFeaturedChannels();
-        renderCategories();
-        applyFilters();
-        setLoading(false);
-        loadProgramGuide(loadController.signal, currentRequest);
-
-        // Fetch alternate URLs after the first channels are already visible.
-        // Hold a failed playback result until this fallback list has had a chance to arrive.
-        alternatePlaylistPending = true;
-        fetchPlaylistText(code, loadController.signal, "streams").then(streamsText => {
-          if (currentRequest !== requestNumber) return;
-          const alternatives = parsePlaylist(streamsText);
-          alternatePlaylistPending = false;
-          if (!alternatives.length) {
-            resumePendingAlternateFallback();
-            return;
-          }
-          const previousActive = activeChannel;
-          const merged = mergePlaylistSources(channels, alternatives);
-          channels = merged;
-          renderProgramGuide();
-          if (previousActive) {
-            const updatedActive = channels.find(channel =>
-              (previousActive.idKey && channel.idKey === previousActive.idKey) ||
-              (previousActive.key && channel.key === previousActive.key)
-            );
-            if (updatedActive) {
-              previousActive.urls = updatedActive.urls;
-              previousActive.id = updatedActive.id;
-            }
-          }
-          renderFeaturedChannels();
-          renderCategories();
-          applyFilters();
-          updateSelectedCard();
-          resumePendingAlternateFallback();
-        }).catch(error => {
-          if (currentRequest === requestNumber) {
-            alternatePlaylistPending = false;
-            if (error.name !== "AbortError") {
-              console.warn("Yocare Live alternate stream list unavailable:", error);
-            }
-            resumePendingAlternateFallback();
-          }
-        });
-        return;
-      }
-
-      // If the public playlist fails, use the internal list as a recovery path.
-      const streamsText = await fetchPlaylistText(code, loadController.signal, "streams");
-      if (currentRequest !== requestNumber) return;
-      channels = parsePlaylist(streamsText);
-      if (!channels.length) throw new Error("The playlists did not contain readable channel entries.");
+      channels = parsePlaylist(publicText);
+      if (!channels.length) throw new Error("The public playlist did not contain readable channel entries.");
       renderFeaturedChannels();
       renderCategories();
       applyFilters();
@@ -772,7 +721,9 @@
     tag.textContent = categoryLabel(channel.category);
     meta.append(tag);
     const sourceCount = document.createElement("span");
-    sourceCount.textContent = channel.urls.length > 1 ? channel.urls.length + " sources" : "Live stream";
+    sourceCount.textContent = channel.urls.length > 0
+      ? (channel.urls.length === 1 ? "1 verified feed" : channel.urls.length + " verified feeds")
+      : "Verified feed required";
     meta.append(sourceCount);
     info.append(name, meta);
 
@@ -996,7 +947,8 @@
     fallbackIndex = index;
     if (index === 0) lastSourceFailure = null;
     if (index >= channel.urls.length) {
-      tryNextSource(channel, index, sourceAttemptId);
+      const attemptId = destroyPlayer();
+      tryNextSource(channel, index, attemptId);
       return;
     }
 
@@ -1023,7 +975,7 @@
       fail("protocol");
       return;
     }
-    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+    if (parsedUrl.protocol !== "https:" || parsedUrl.username || parsedUrl.password) {
       fail("protocol");
       return;
     }
@@ -1085,7 +1037,7 @@
           setPlaybackState("Recovering playback…");
           try { player.recoverMediaError(); } catch (_) { fail("decode", status || undefined); }
         } else {
-          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : "network", status || undefined);
+          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : status === 0 ? "cors" : "network", status || undefined);
         }
       });
       try {
@@ -1205,7 +1157,7 @@
           setPlaybackState("Recovering playback…");
           try { player.recoverMediaError(); } catch (_) { fail("decode", status || undefined); }
         } else {
-          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : "network", status || undefined);
+          fail(data.type === window.Hls.ErrorTypes.MEDIA_ERROR ? "decode" : status === 0 ? "cors" : "network", status || undefined);
         }
       });
       try { player.attachMedia(els.video); } catch (_) { fail("player"); return; }
@@ -1233,21 +1185,28 @@
       setMessage("The current stream did not start. Checking for another available channel link.");
       showPlayerPlaceholder(false);
     } else if (REGISTRY_BASE && !registryRefreshAttempted.has(channel)) {
+      const hadCurrentSource = currentIndex < channel.urls.length;
       const failedAttemptId = sourceAttemptId;
       setPlaybackState("Finding approved alternatives…");
       setMessage("Checking Yocare’s approved source registry for another available feed.");
       refreshRegistrySources(channel).then(added => {
         if (activeChannel !== channel || sourceAttemptId !== failedAttemptId) return;
-        if (added && channel.urls.length > currentIndex + 1) {
-          startSource(channel, currentIndex + 1);
+        const nextIndex = hadCurrentSource ? currentIndex + 1 : currentIndex;
+        if (added && nextIndex < channel.urls.length) {
+          startSource(channel, nextIndex);
           return;
         }
         destroyPlayer();
         setPlaybackState("Stream unavailable");
         const cause = lastSourceFailure
           ? sourceFailureMessage(lastSourceFailure)
-          : "no playable source was listed";
-        setMessage("Yocare could not start this channel because " + cause + ". No alternate configured feed was available. Retry later or choose another channel.");
+          : "no authorized feed was registered";
+        const detail = channel.registryUnavailableReason === "no-authorized-feed-in-region"
+          ? "No authorized feed is registered for your region."
+          : channel.registryUnavailableReason === "viewer_region_unavailable"
+            ? "Yocare could not verify your region to apply feed rights."
+            : "No alternate authorized feed was available.";
+        setMessage("Yocare could not start this channel because " + cause + ". " + detail + " Retry later, choose another channel, or use the broadcaster’s official service.");
         showPlayerPlaceholder(true);
       });
     } else {
@@ -1255,8 +1214,13 @@
       setPlaybackState("Stream unavailable");
       const cause = lastSourceFailure
         ? sourceFailureMessage(lastSourceFailure)
-        : "no playable source was listed";
-      setMessage("Yocare could not start this channel because " + cause + ". No alternate configured feed was available. Retry later or choose another channel.");
+        : "no authorized feed was registered";
+      const detail = channel.registryUnavailableReason === "no-authorized-feed-in-region"
+        ? "No authorized feed is registered for your region."
+        : channel.registryUnavailableReason === "viewer_region_unavailable"
+          ? "Yocare could not verify your region to apply feed rights."
+          : "No alternate authorized feed was available.";
+      setMessage("Yocare could not start this channel because " + cause + ". " + detail + " Retry later, choose another channel, or use the broadcaster’s official service.");
       showPlayerPlaceholder(true);
     }
   }

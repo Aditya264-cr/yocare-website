@@ -21,11 +21,18 @@ CREATE TABLE IF NOT EXISTS sources (
   last_status INTEGER,
   last_latency_ms INTEGER,
   consecutive_failures INTEGER NOT NULL DEFAULT 0,
+  authorization_reference TEXT,
+  rights_regions TEXT NOT NULL DEFAULT '[]',
+  rights_expires_at TEXT,
+  rights_verified_at TEXT,
+  last_probe_depth TEXT,
+  last_probe_note TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_sources_channel_enabled_priority ON sources(channel_id, enabled, priority);
 CREATE INDEX IF NOT EXISTS idx_sources_health ON sources(enabled, last_checked_at, last_ok_at);
+CREATE INDEX IF NOT EXISTS idx_sources_authorization ON sources(enabled, rights_verified_at, rights_expires_at);
 
 CREATE TABLE IF NOT EXISTS source_checks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,7 +41,8 @@ CREATE TABLE IF NOT EXISTS source_checks (
   ok INTEGER NOT NULL CHECK(ok IN (0,1)),
   http_status INTEGER,
   latency_ms INTEGER,
-  note TEXT NOT NULL
+  note TEXT NOT NULL,
+  probe_depth TEXT NOT NULL DEFAULT 'none'
 );
 CREATE INDEX IF NOT EXISTS idx_source_checks_source_time ON source_checks(source_id, checked_at DESC);
 
