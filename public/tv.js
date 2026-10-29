@@ -15,7 +15,10 @@
     title: $("now-title"), subtitle: $("now-subtitle"), region: $("player-region"),
     state: $("playback-state"), message: $("player-message"), retry: $("retry-button"), playStart: $("play-start"),
     clear: $("clear-search"), categories: $("category-chips"),
-    categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading"), genreRails: $("genre-rails"), spotlightPlay: $("spotlight-play"), spotlightCard: $("spotlight-card"), spotlightLogo: $("spotlight-logo"), spotlightName: $("spotlight-name"), spotlightDetail: $("spotlight-detail"), spotlightRegion: $("spotlight-region"), homeRegion: $("home-region"), searchAction: $("search-action")
+    categorySummary: $("category-summary"), visibleSummary: $("visible-summary"), featured: $("featured-channels"), featuredLoading: $("featured-loading"), genreRails: $("genre-rails"), spotlightPlay: $("spotlight-play"), spotlightCard: $("spotlight-card"), spotlightLogo: $("spotlight-logo"), spotlightName: $("spotlight-name"), spotlightDetail: $("spotlight-detail"), spotlightRegion: $("spotlight-region"), homeRegion: $("home-region"), searchAction: $("search-action"),
+    spotlightBackdrop: $("spotlight-backdrop"), spotlightStatus: $("spotlight-status"), spotlightLabel: $("spotlight-label"),
+    spotlightControls: $("spotlight-controls"), spotlightPrev: $("spotlight-prev"), spotlightNext: $("spotlight-next"), spotlightPosition: $("spotlight-position"),
+    programRail: $("program-rail"), programEmpty: $("program-empty"), guideStatus: $("guide-status")
   };
 
   let channels = [];
@@ -37,6 +40,9 @@
   let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
+  let programGuide = {channels:{}};
+  let programEntries = [];
+  let carouselIndex = 0;
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -64,6 +70,28 @@
   const CATEGORY_ORDER = ["all", "news", "sports", "entertainment", "music", "kids", "religion", "general"];
   const categoryLabel = (category) => CATEGORY_LABELS[category] || "General";
   const safeText = (value) => String(value || "").replace(/[<>]/g, "");
+  const safeImageUrl = (value) => {
+    try {
+      const url = new URL(String(value || ""), document.baseURI);
+      return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+    } catch (_) {
+      return "";
+    }
+  };
+  const guideChannels = () => programGuide && programGuide.channels && typeof programGuide.channels === "object" ? programGuide.channels : {};
+  const guideProgramsFor = (channel) => {
+    if (!channel || !channel.idKey) return [];
+    const id = String(channel.idKey).toLowerCase();
+    const key = Object.keys(guideChannels()).find(candidate => candidate.toLowerCase() === id);
+    if (!key) return [];
+    const entry = guideChannels()[key];
+    return Array.isArray(entry) ? entry : (entry && Array.isArray(entry.programs) ? entry.programs : []);
+  };
+  const formatClock = (value) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+  };
+  const formatProgramTime = (program) => formatClock(program.start) + " – " + formatClock(program.end);
 
   function parsePlaylist(text) {
     const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -291,6 +319,159 @@
     throw lastError || new Error("All " + kind + " playlist sources were unavailable.");
   }
 
+
+  async function loadProgramGuide(signal, expectedRequest) {
+    try {
+      const response = await fetch(new URL("data/guide.json", document.baseURI), {
+        signal,
+        cache: "no-cache",
+        headers: {"Accept":"application/json"}
+      });
+      if (!response.ok) throw new Error("Program guide returned HTTP " + response.status + ".");
+      const data = await response.json();
+      if (!data || !data.channels || typeof data.channels !== "object" || Array.isArray(data.channels)) {
+        throw new Error("Program guide has an invalid format.");
+      }
+      if (expectedRequest !== requestNumber) return;
+      programGuide = data;
+    } catch (error) {
+      if (signal && signal.aborted || expectedRequest !== requestNumber) return;
+      programGuide = {channels:{}};
+      console.info("Yocare Live program schedule is not configured:", error.message || error);
+    }
+    if (expectedRequest === requestNumber) renderProgramGuide();
+  }
+
+  function collectProgramEntries() {
+    const now = Date.now();
+    const horizon = now + 12 * 60 * 60 * 1000;
+    const entries = [];
+    channels.forEach(channel => {
+      guideProgramsFor(channel).forEach(program => {
+        const start = Date.parse(program.start);
+        const end = Date.parse(program.end);
+        const title = safeText(program.title).trim();
+        if (!title || !Number.isFinite(start) || !Number.isFinite(end) || end <= start || end <= now || start > horizon) return;
+        entries.push({
+          channel,
+          title,
+          description: safeText(program.description),
+          image: safeImageUrl(program.image || program.icon),
+          start,
+          end,
+          isCurrent: start <= now && now < end
+        });
+      });
+    });
+    return entries.sort((a, b) => {
+      if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+      return a.start - b.start || a.channel.name.localeCompare(b.channel.name);
+    });
+  }
+
+  function updateGuideStatus() {
+    const updated = programGuide && programGuide.updatedAt ? Date.parse(programGuide.updatedAt) : NaN;
+    if (Number.isFinite(updated)) {
+      els.guideStatus.textContent = "Program guide updated " + new Date(updated).toLocaleString([], {dateStyle:"medium", timeStyle:"short"}) + " · broadcast times may vary";
+    } else if (Object.keys(guideChannels()).length) {
+      els.guideStatus.textContent = "Schedules from the connected guide · broadcast times may vary";
+    } else {
+      els.guideStatus.textContent = "Show schedules are not connected for this region yet.";
+    }
+  }
+
+  function makeProgramCard(item, index) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "program-card";
+    button.dataset.programKey = item.channel.id + "-" + item.start;
+    button.style.animationDelay = Math.min(index, 8) * 25 + "ms";
+    button.setAttribute("aria-label", (item.isCurrent ? "Watch now: " : "Watch next: ") + item.title + " on " + item.channel.name);
+
+    const art = document.createElement("span");
+    art.className = "program-art";
+    const fallback = document.createElement("span");
+    fallback.className = "program-art-fallback";
+    fallback.textContent = "YL";
+    fallback.setAttribute("aria-hidden", "true");
+    art.append(fallback);
+    const imageUrl = item.image || safeImageUrl(item.channel.logo);
+    if (imageUrl) {
+      const image = document.createElement("img");
+      image.loading = "lazy";
+      image.alt = "";
+      image.referrerPolicy = "no-referrer";
+      image.src = imageUrl;
+      if (!item.image) art.classList.add("is-channel-logo");
+      image.addEventListener("load", () => { fallback.hidden = true; }, {once:true});
+      image.addEventListener("error", () => image.remove(), {once:true});
+      art.append(image);
+    }
+    const liveLabel = document.createElement("span");
+    liveLabel.className = "program-live-label";
+    liveLabel.textContent = item.isCurrent ? "ON NOW" : "UP NEXT";
+    art.append(liveLabel);
+
+    const copy = document.createElement("span");
+    copy.className = "program-copy";
+    const title = document.createElement("span");
+    title.className = "program-title";
+    title.textContent = item.title;
+    const channel = document.createElement("span");
+    channel.className = "program-channel";
+    channel.textContent = item.channel.name;
+    const time = document.createElement("span");
+    time.className = "program-time";
+    time.textContent = formatProgramTime(item);
+    copy.append(title, channel, time);
+    if (item.isCurrent) {
+      const progress = document.createElement("span");
+      progress.className = "program-progress";
+      progress.setAttribute("aria-hidden", "true");
+      const fill = document.createElement("span");
+      fill.style.width = Math.max(2, Math.min(100, ((Date.now() - item.start) / (item.end - item.start)) * 100)) + "%";
+      progress.append(fill);
+      copy.append(progress);
+    }
+    button.append(art, copy);
+    button.addEventListener("click", () => playChannel(item.channel));
+    return button;
+  }
+
+  function renderProgramGuide() {
+    if (!els.programRail || !els.programEmpty || !els.guideStatus) return;
+    const focusedKey = els.programRail.contains(document.activeElement) ? document.activeElement.dataset.programKey : "";
+    programEntries = collectProgramEntries();
+    const current = programEntries.filter(item => item.isCurrent);
+    const upcoming = programEntries.filter(item => !item.isCurrent);
+    const visible = (current.length ? current : upcoming).slice(0, 16);
+    updateGuideStatus();
+    els.programRail.replaceChildren();
+    visible.forEach((item, index) => els.programRail.append(makeProgramCard(item, index)));
+    els.programRail.hidden = visible.length === 0;
+    els.programEmpty.hidden = visible.length > 0;
+    if (!visible.length) {
+      const configured = Object.keys(guideChannels()).length > 0;
+      els.programEmpty.querySelector("strong").textContent = configured ? "No matching on-air listings yet." : "Show schedules aren’t connected yet.";
+      els.programEmpty.querySelector("p").textContent = configured
+        ? "The guide has no current listings matched to channels in this region."
+        : "Connect a program guide to see real on-air times and show artwork here.";
+    }
+    if (current.length) {
+      $("program-title").innerHTML = 'On now, <em>around the world.</em>';
+    } else if (upcoming.length) {
+      $("program-title").innerHTML = 'Coming up <em>next.</em>';
+    } else {
+      $("program-title").innerHTML = 'On now, <em>around the world.</em>';
+    }
+    if (focusedKey) {
+      const replacement = [...els.programRail.querySelectorAll(".program-card")].find(card => card.dataset.programKey === focusedKey);
+      if (replacement) replacement.focus({preventScroll:true});
+    }
+    carouselIndex = programEntries.length ? carouselIndex % programEntries.length : 0;
+    if (!activeChannel) renderSpotlight(null);
+  }
+
   function mergePlaylistSources(primary, alternatives) {
     const merged = [];
     const byName = new Map();
@@ -343,6 +524,13 @@
     filtered = [];
     if (els.featured) els.featured.replaceChildren();
     if (els.genreRails) els.genreRails.replaceChildren();
+    if (els.programRail) els.programRail.replaceChildren();
+    programGuide = {channels:{}};
+    programEntries = [];
+    carouselIndex = 0;
+    if (els.programRail) els.programRail.hidden = true;
+    if (els.programEmpty) els.programEmpty.hidden = false;
+    if (els.guideStatus) els.guideStatus.textContent = "Checking the program guide…";
     renderSpotlight(null);
     if (els.featuredLoading) { els.featuredLoading.hidden = false; els.featuredLoading.textContent = "Finding channels in your region…"; }
     els.count.textContent = "—";
@@ -368,6 +556,7 @@
         renderCategories();
         applyFilters();
         setLoading(false);
+        loadProgramGuide(loadController.signal, currentRequest);
 
         // Fetch alternate URLs after the first channels are already visible.
         // Hold a failed playback result until this fallback list has had a chance to arrive.
@@ -383,6 +572,7 @@
           const previousActive = activeChannel;
           const merged = mergePlaylistSources(channels, alternatives);
           channels = merged;
+          renderProgramGuide();
           if (previousActive) {
             const updatedActive = channels.find(channel =>
               (previousActive.idKey && channel.idKey === previousActive.idKey) ||
@@ -419,6 +609,7 @@
       renderCategories();
       applyFilters();
       setLoading(false);
+      loadProgramGuide(loadController.signal, currentRequest);
     } catch (error) {
       if (error.name === "AbortError" || currentRequest !== requestNumber) return;
       setLoading(false);
@@ -515,13 +706,26 @@
   }
 
   function renderSpotlight(channel) {
-    const candidate = channel || activeChannel || channels.find(item => item.logo) || channels[0] || null;
+    const item = channel
+      ? programEntries.find(entry => entry.channel.key === channel.key && entry.isCurrent)
+      : (programEntries[carouselIndex] || null);
+    const candidate = channel || (item && item.channel) || activeChannel || channels.find(entry => entry.logo) || channels[0] || null;
     spotlightChannel = candidate;
     if (els.spotlightPlay) els.spotlightPlay.disabled = !candidate;
     if (els.spotlightCard) {
       els.spotlightCard.disabled = !candidate;
-      els.spotlightCard.setAttribute("aria-label", candidate ? "Watch " + candidate.name + " live" : "No live channel is available");
+      els.spotlightCard.setAttribute("aria-label", candidate
+        ? (item ? "Watch " + item.title + " on " + candidate.name : "Watch " + candidate.name + " live")
+        : "No live channel is available");
     }
+    els.spotlightControls.hidden = programEntries.length < 2;
+    els.spotlightPosition.textContent = programEntries.length ? (carouselIndex + 1) + " / " + programEntries.length : "1 / 1";
+    els.spotlightStatus.textContent = item ? (item.isCurrent ? "ON NOW" : "UP NEXT") : "LIVE CHANNEL";
+    els.spotlightLabel.textContent = item ? (item.isCurrent ? "NOW SHOWING" : "COMING UP") : "FEATURED CHANNEL";
+    els.spotlightBackdrop.hidden = true;
+    els.spotlightBackdrop.removeAttribute("src");
+    els.spotlightCard.classList.remove("has-program-art");
+    els.spotlightLogo.hidden = false;
     if (!candidate) {
       els.spotlightName.textContent = channels.length ? "Choose a live channel" : "Finding channels…";
       els.spotlightDetail.textContent = channels.length ? "Browse the channel rows below" : "Loading the channel guide";
@@ -533,21 +737,29 @@
       els.spotlightLogo.classList.remove("has-logo");
       return;
     }
-    els.spotlightName.textContent = candidate.name;
-    els.spotlightDetail.textContent = [categoryLabel(candidate.category), countryName()].filter(Boolean).join(" · ");
+    els.spotlightName.textContent = item ? item.title : candidate.name;
+    els.spotlightDetail.textContent = item
+      ? candidate.name + " · " + formatProgramTime(item)
+      : [categoryLabel(candidate.category), countryName()].filter(Boolean).join(" · ");
     els.spotlightLogo.replaceChildren();
     els.spotlightLogo.classList.remove("has-logo");
     const fallback = document.createElement("span");
     fallback.className = "spotlight-fallback";
     fallback.textContent = initialsFor(candidate.name);
     els.spotlightLogo.append(fallback);
-    if (candidate.logo && /^https?:\/\//i.test(candidate.logo)) {
+    const imageUrl = item ? item.image : safeImageUrl(candidate.logo);
+    if (item && imageUrl) {
+      els.spotlightBackdrop.src = imageUrl;
+      els.spotlightBackdrop.hidden = false;
+      els.spotlightCard.classList.add("has-program-art");
+      els.spotlightLogo.hidden = true;
+    } else if (candidate.logo && safeImageUrl(candidate.logo)) {
       const image = document.createElement("img");
       image.alt = "";
       image.setAttribute("aria-hidden", "true");
       image.loading = "lazy";
       image.referrerPolicy = "no-referrer";
-      image.src = candidate.logo;
+      image.src = safeImageUrl(candidate.logo);
       image.addEventListener("load", () => els.spotlightLogo.classList.add("has-logo"), {once:true});
       image.addEventListener("error", () => image.remove(), {once:true});
       els.spotlightLogo.append(image);
@@ -587,6 +799,12 @@
     });
   }
 
+  function moveSpotlight(offset) {
+    if (programEntries.length < 2) return;
+    carouselIndex = (carouselIndex + offset + programEntries.length) % programEntries.length;
+    renderSpotlight(null);
+  }
+
   function renderFeaturedChannels() {
     if (!els.featured) return;
     const withLogos = channels.filter(channel => channel.logo);
@@ -598,7 +816,7 @@
       els.featured.append(card);
     });
     renderGenreRails();
-    renderSpotlight(activeChannel || picks[0] || channels[0] || null);
+    renderSpotlight(activeChannel || null);
     if (els.featuredLoading) els.featuredLoading.hidden = true;
   }
 
@@ -888,6 +1106,8 @@
   els.spotlightCard.addEventListener("click", () => {
     if (spotlightChannel) playChannel(spotlightChannel);
   });
+  els.spotlightPrev.addEventListener("click", () => moveSpotlight(-1));
+  els.spotlightNext.addEventListener("click", () => moveSpotlight(1));
   els.genreRails.addEventListener("click", event => {
     const button = event.target.closest("[data-guide-category]");
     if (!button) return;
@@ -990,6 +1210,13 @@
     if (loadController) loadController.abort();
     destroyPlayer();
   });
+
+  window.setInterval(() => {
+    if (Object.keys(guideChannels()).length) renderProgramGuide();
+  }, 60_000);
+  window.setInterval(() => {
+    if (programEntries.length > 1 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) moveSpotlight(1);
+  }, 9_000);
 
   loadCountry(els.country.value);
 })();
