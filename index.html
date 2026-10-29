@@ -16,62 +16,46 @@
 </head>
 <body>
   <div class="film-grain" aria-hidden="true"></div>
+  <a class="skip-link" href="#channels">Skip to channel guide</a>
   <header class="topbar" id="top">
     <a class="brand" href="#top" aria-label="Yocare Live home"><span class="brand-symbol" aria-hidden="true"><i></i><i></i><i></i></span><span>yocare<span class="brand-light">.live</span></span></a>
-    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#discover">For you</a><a href="#player">Live</a><a href="#for-you">Channels</a><a href="#channels">Explore</a></nav>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#discover">For you</a><a href="#for-you">Live</a><a href="#channels">Guide</a><button class="topnav-search" id="search-action" type="button" aria-label="Search channels"><span aria-hidden="true">⌕</span> Search</button></nav>
     <a class="top-action" href="#channels"><span class="live-dot"></span> Browse channels <span aria-hidden="true">↗</span></a>
   </header>
 
   <main>
-    <section class="hero" id="discover">
-      <div class="hero-backdrop" aria-hidden="true"><div class="hero-glow"></div><div class="hero-ring ring-one"></div><div class="hero-ring ring-two"></div><div class="hero-ring ring-three"></div><div class="hero-orb"></div><div class="hero-stars"></div></div>
+    <section class="hero" id="discover" aria-labelledby="home-title">
       <div class="hero-content">
-        <p class="eyebrow"><span class="eyebrow-line"></span> A WINDOW INTO EVERYWHERE</p>
-        <h1>A new world<br><em>is always live.</em></h1>
-        <p class="hero-copy">From headlines to music and sport, find a live signal and see what’s happening beyond your usual horizon.</p>
-        <div class="hero-actions"><a class="primary-cta" href="#channels">Browse live channels <span aria-hidden="true">↗</span></a><a class="text-cta" href="#player"><span class="play-mini">▶</span> Enter the live room</a></div>
-        <div class="hero-meta"><span class="live-dot"></span><span>GLOBAL CHANNEL GUIDE</span><span class="meta-divider"></span><span>LIVE FROM EVERYWHERE</span></div>
-      </div>
-      <aside class="hero-world" aria-label="Yocare Live global signal artwork">
-        <div class="world-orbit world-orbit-one"></div><div class="world-orbit world-orbit-two"></div>
-        <div class="world-label world-label-top"><span class="world-pulse"></span> THE WORLD, RIGHT NOW</div>
-        <div class="world-globe">
-          <svg viewBox="0 0 320 320" role="presentation" aria-hidden="true">
-            <defs><radialGradient id="globeFill" cx="32%" cy="27%"><stop offset="0" stop-color="#d8f2be"/><stop offset=".34" stop-color="#648d72"/><stop offset=".72" stop-color="#183a34"/><stop offset="1" stop-color="#09110f"/></radialGradient><clipPath id="globeClip"><circle cx="160" cy="160" r="124"/></clipPath></defs>
-            <circle cx="160" cy="160" r="124" fill="url(#globeFill)"/>
-            <g clip-path="url(#globeClip)" fill="none" stroke="#d9f1cf" stroke-opacity=".16">
-              <ellipse cx="160" cy="160" rx="54" ry="124"/><ellipse cx="160" cy="160" rx="94" ry="124"/>
-              <ellipse cx="160" cy="160" rx="124" ry="44"/><ellipse cx="160" cy="160" rx="124" ry="84"/>
-            </g>
-            <g clip-path="url(#globeClip)" fill="#d1f0c7" fill-opacity=".83">
-              <path d="M69 82l20-15 24 5 12 13-8 12-20 3-9 17-12 4-5 21-12 5-12-17 7-26-3-13 9-9z"/>
-              <path d="M119 153l18-10 17 8 8 20-8 18-4 24-12 21-8-12-3-28-13-18z"/>
-              <path d="M166 72l18-12 29 6 14 13-5 14-19 3-8 17-16-3-5-14-14 1-8-12z"/>
-              <path d="M194 128l24-8 22 12 14 19-11 18-18 2-7 23-15 4-10-19-16-8 4-21-10-12z"/>
-            </g>
-            <circle cx="160" cy="160" r="124" fill="none" stroke="#e7f6dd" stroke-opacity=".44"/>
-          </svg>
-          <span class="globe-pin pin-one"></span><span class="globe-pin pin-two"></span><span class="globe-pin pin-three"></span>
+        <p class="eyebrow"><span class="eyebrow-line"></span> YOCARE LIVE · YOUR TV HOME</p>
+        <h1 id="home-title">Find something<br><em>live to watch.</em></h1>
+        <p class="hero-copy">Browse live news, sports, music and entertainment from the channels available in your region.</p>
+        <div class="hero-actions">
+          <button class="primary-cta" id="spotlight-play" type="button" disabled>Watch live <span aria-hidden="true">▶</span></button>
+          <a class="text-cta" href="#for-you"><span class="play-mini" aria-hidden="true">▤</span> Browse channels</a>
         </div>
-        <div class="world-label world-label-bottom"><span>01</span><i></i><span>OPEN A NEW WINDOW</span></div>
-        <div class="world-coordinate">20°N<br>77°E</div>
-      </aside>
-      <div class="hero-side-note" aria-hidden="true"><span>Y / L</span><span>01 — GLOBAL SIGNAL</span></div>
-      <a class="scroll-cue" href="#player" aria-label="Scroll to live player"><span></span> SCROLL TO DISCOVER</a>
+        <div class="hero-meta"><span class="live-dot"></span><span id="home-region">INDIA</span><span class="meta-divider"></span><span>LIVE CHANNEL GUIDE</span></div>
+      </div>
+      <button class="hero-spotlight" id="spotlight-card" type="button" disabled aria-label="Tune into a featured live channel">
+        <span class="spotlight-halo" aria-hidden="true"></span>
+        <span class="spotlight-card-top"><span class="live-pill"><i></i> LIVE CHANNEL</span><span class="spotlight-region" id="spotlight-region">INDIA</span></span>
+        <span class="spotlight-logo" id="spotlight-logo"><span class="spotlight-fallback">YL</span></span>
+        <span class="spotlight-info"><span class="spotlight-copy"><span class="spotlight-label">START WATCHING</span><span class="spotlight-name" id="spotlight-name">Finding channels…</span><span class="spotlight-detail" id="spotlight-detail">Loading the channel guide</span></span><span class="spotlight-arrow" aria-hidden="true">↗</span></span>
+      </button>
     </section>
 
     <section class="featured-section page-section" id="for-you" aria-labelledby="featured-title">
       <div class="featured-heading">
-        <div><p class="eyebrow"><span class="eyebrow-line"></span> A WORLD OF CHANNELS</p><h2 id="featured-title">Signals to <em>explore.</em></h2></div>
+        <div><p class="eyebrow"><span class="eyebrow-line"></span> AVAILABLE IN YOUR REGION</p><h2 id="featured-title">Live channels <em>to explore.</em></h2></div>
         <a class="featured-link" href="#channels">View full guide <span aria-hidden="true">↗</span></a>
       </div>
-      <p class="featured-subtitle">Browse live channel logos from the selected region. Choose one to start watching.</p>
-      <div class="featured-rail" id="featured-channels" aria-label="Featured live channels"></div>
+      <p class="featured-subtitle">Choose a channel logo to start watching, or browse a row by category.</p>
+      <div class="featured-rail" id="featured-channels" aria-label="Live channel picks"></div>
       <div class="rail-loading" id="featured-loading" role="status"><span class="spinner"></span><span>Finding channels in your region…</span></div>
+      <div class="genre-rails" id="genre-rails" aria-label="Channels by category"></div>
     </section>
 
     <section class="player-section page-section" id="player" aria-label="Live video player">
-      <div class="section-intro player-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> ON YOUR SCREEN</p><h2>Step into the <em>live room.</em></h2></div><p>Every channel opens a different window. Pick a signal below and settle in.</p></div>
+      <div class="section-intro player-intro"><div><p class="eyebrow"><span class="eyebrow-line"></span> ON YOUR SCREEN</p><h2>Now <em>playing.</em></h2></div><p>Every channel opens a different window. Pick a signal below and settle in.</p></div>
       <div class="player-frame">
         <video id="video" playsinline controls preload="none" aria-label="Live channel player"></video>
         <div class="player-placeholder" id="player-placeholder">
