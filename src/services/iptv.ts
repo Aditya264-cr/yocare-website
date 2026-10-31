@@ -226,8 +226,8 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
 export async function fetchCountryPlaylist(countryCode: string): Promise<Channel[]> {
   try {
     const streamsIndex = await loadIptvStreamsIndex();
-    // Use the same canonical master playlist URL users can load in VLC.
-    const url = 'https://iptv-org.github.io/iptv/index.m3u';
+    // Use the country-specific playlist so region selection never mixes countries.
+    const url = `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -242,7 +242,7 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
     const channels = parsePlaylist(text, countryCode, streamsIndex);
     if (channels.length > 0) return channels;
   } catch (err) {
-    console.warn('Failed fetching IPTV playlist; returning an empty channel catalogue for region:', countryCode, err);
+    console.warn('Failed fetching country playlist; returning an empty channel catalogue for region:', countryCode, err);
   }
 
   return [];
