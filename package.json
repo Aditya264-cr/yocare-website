@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "tsc && vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 3000"
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "deploy:retry": "node scripts/deploy-with-retry.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.32.0",
