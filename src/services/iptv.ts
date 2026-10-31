@@ -136,7 +136,10 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
 
   const commit = () => {
     if (!pending || !pending.name) return;
-    const key = normalise(pending.name);
+    const metadata = pending.tvgId ? channelMetadata?.get(pending.tvgId.toLowerCase()) : undefined;
+    const displayName = metadata?.name || pending.name;
+    const displayLogo = pending.logo || metadata?.logo || '';
+    const key = normalise(displayName);
     const idKey = pending.tvgId || key;
     const registryId = `${idKey}@${countryCode.toLowerCase()}`;
     const category = categoryFor(displayName, pending.group);
