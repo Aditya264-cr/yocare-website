@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface FooterProps {
-  activeTab: 'tv' | 'health';
+  activeTab: 'tv' | 'health' | 'youtube';
 }
 
 export const Footer: React.FC<FooterProps> = ({ activeTab }) => {
@@ -12,12 +12,13 @@ export const Footer: React.FC<FooterProps> = ({ activeTab }) => {
           <span className="brand-symbol">
             <i></i><i></i><i></i><i></i>
           </span>
-          <span>yocare<span className="brand-light">.{activeTab === 'tv' ? 'live' : 'health'}</span></span>
+          <span>yocare<span className="brand-light">.{activeTab === 'tv' ? 'live' : activeTab === 'youtube' ? 'youtube' : 'health'}</span></span>
         </a>
 
         <span className="footer-note text-[#8f9e94] text-center md:text-left">
           {activeTab === 'tv'
             ? 'A wider view of the world, one live signal at a time.'
+            : activeTab === 'youtube' ? 'Discover videos and live moments from creators around the world.'
             : 'Private evidence-aware wellness reflections. Encrypted locally on your device.'}
         </span>
 
