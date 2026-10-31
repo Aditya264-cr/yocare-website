@@ -52,7 +52,7 @@ export const App: React.FC = () => {
       .then((data) => {
         if (!isMounted) return;
         setChannels(data);
-        setActiveChannel(data.find((channel) => channel.url) || null);
+        setActiveChannel((current) => data.find((channel) => channel.id === current?.id) || data.find((channel) => channel.url) || null);
       })
       .catch((error) => {
         console.error('Unable to load regional channel catalogue:', error);
