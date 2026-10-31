@@ -1318,7 +1318,9 @@
       lastSourceFailure = null;
       registryRefreshAttempted.delete(activeChannel);
       registryRefreshes.delete(activeChannel);
-      activeChannel.urls = [];\n      activeChannel.registrySourceIds = Object.create(null);\n      playChannel(activeChannel);
+      activeChannel.urls = [];
+      activeChannel.registrySourceIds = Object.create(null);
+      playChannel(activeChannel);
     } else {
       loadCountry(els.country.value);
     }
