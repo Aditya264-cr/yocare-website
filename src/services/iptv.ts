@@ -36,7 +36,25 @@ export const CATEGORY_LABELS: Record<CategoryType, string> = {
 
 // IPTV-org is a public discovery playlist. Stream URLs are attempted directly in
 // the browser; catalogue membership is not a playback or redistribution guarantee.
-type IptvStreamRecord = { channel?: string; url?: string; referrer?: string; http_referrer?: string; user_agent?: string; status?: string };\ntype IptvChannelRecord = { id?: string; name?: string; logo?: string };\nlet channelMetadataPromise: Promise<Map<string, IptvChannelRecord>> | null = null;\nasync function loadChannelMetadata(): Promise<Map<string, IptvChannelRecord>> {\n  if (!channelMetadataPromise) channelMetadataPromise = fetch('https://iptv-org.github.io/api/channels.json').then(async (response) => {\n    if (!response.ok) throw new Error(\`HTTP \${response.status}\`);\n    const records = await response.json() as IptvChannelRecord[];\n    return new Map(records.filter((item) => item.id).map((item) => [item.id!.toLowerCase(), item]));\n  }).catch((error) => { console.warn('IPTV channel metadata unavailable:', error); return new Map<string, IptvChannelRecord>(); });\n  return channelMetadataPromise;\n}
+type IptvStreamRecord = { channel?: string; url?: string; referrer?: string; http_referrer?: string; user_agent?: string; status?: string };
+type IptvChannelRecord = { id?: string; name?: string; logo?: string };
+let channelMetadataPromise: Promise<Map<string, IptvChannelRecord>> | null = null;
+
+async function loadChannelMetadata(): Promise<Map<string, IptvChannelRecord>> {
+  if (!channelMetadataPromise) {
+    channelMetadataPromise = fetch('https://iptv-org.github.io/api/channels.json')
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const records = await response.json() as IptvChannelRecord[];
+        return new Map(records.filter((item) => item.id).map((item) => [item.id!.toLowerCase(), item]));
+      })
+      .catch((error) => {
+        console.warn('IPTV channel metadata unavailable:', error);
+        return new Map<string, IptvChannelRecord>();
+      });
+  }
+  return channelMetadataPromise;
+}
 
 let iptvStreamsMap: Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>> | null = null;
 
