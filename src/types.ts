@@ -1,3 +1,11 @@
+export interface StreamInfo {
+  url: string;
+  proxiedUrl: string;
+  http_referrer?: string;
+  user_agent?: string;
+  status?: 'online' | 'offline' | 'untested';
+}
+
 export interface Channel {
   id: string;
   registryId: string;
@@ -9,6 +17,8 @@ export interface Channel {
   urls: string[];
   url: string;
   key: string;
+  streams?: StreamInfo[];
+  isAvailable?: boolean;
 }
 
 export interface Country {

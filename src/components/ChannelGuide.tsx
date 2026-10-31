@@ -353,8 +353,16 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
                   </div>
                 </div>
 
-                <div className="channel-play text-[#d5f477] flex-none">
-                  <Play className={`w-4 h-4 ${isPlaying ? 'fill-current' : ''}`} />
+                <div className="channel-play flex-none">
+                  {channel.isAvailable === false ? (
+                    <span className="text-[10px] text-red-400 font-semibold px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20">
+                      Offline
+                    </span>
+                  ) : (
+                    <div className="text-[#d5f477]">
+                      <Play className={`w-4 h-4 ${isPlaying ? 'fill-current' : ''}`} />
+                    </div>
+                  )}
                 </div>
               </button>
             );
