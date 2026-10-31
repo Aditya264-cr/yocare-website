@@ -611,14 +611,23 @@
         channel.registrySourceIds = channel.registrySourceIds || {};
         for (const source of payload.sources) {
           if (!source || typeof source.id !== "string" || typeof source.url !== "string") continue;
-          let parsed;
-          try { parsed = new URL(source.url); } catch (_) { continue; }
-          if (!["https:", "http:"].includes(parsed.protocol) || parsed.username || parsed.password) continue;
-          if (!channel.urls.includes(parsed.href)) {
-            channel.urls.push(parsed.href);
+          let registeredUrl;
+          try { registeredUrl = new URL(source.url); } catch (_) { continue; }
+          if (registeredUrl.protocol !== "https:" || registeredUrl.username || registeredUrl.password) continue;
+          // HLS is delivered through the rights-checking registry proxy. DASH/direct
+          // feeds remain direct and must provide browser CORS themselves.
+          let playbackUrl = registeredUrl.href;
+          if (String(source.type || "").toLowerCase() === "hls") {
+            const proxyUrl = new URL(REGISTRY_BASE + "/api/proxy");
+            proxyUrl.searchParams.set("source_id", source.id);
+            proxyUrl.searchParams.set("url", registeredUrl.href);
+            playbackUrl = proxyUrl.href;
+          }
+          if (!channel.urls.includes(playbackUrl)) {
+            channel.urls.push(playbackUrl);
             added = true;
           }
-          channel.registrySourceIds[parsed.href] = source.id;
+          channel.registrySourceIds[playbackUrl] = source.id;
         }
         if (added) {
           console.info("Yocare Live registry added approved fallback sources", {channel: channel.name, count: channel.urls.length});
