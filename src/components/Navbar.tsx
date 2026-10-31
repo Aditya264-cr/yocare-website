@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Radio, HeartPulse, Tv } from 'lucide-react';
+import { Search, Settings2 } from 'lucide-react';
 import { Country } from '../types';
 
 interface NavbarProps {
@@ -9,88 +9,31 @@ interface NavbarProps {
   onSearchClick: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  activeTab,
-  setActiveTab,
-  selectedCountry,
-  onSearchClick
-}) => {
-  return (
-    <header className="topbar" id="top">
-      <a
-        className="brand"
-        href="#top"
-        onClick={(e) => {
-          e.preventDefault();
-          setActiveTab('tv');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        aria-label="Yocare Home"
-      >
-        <span className="brand-symbol" aria-hidden="true">
-          <i></i><i></i><i></i><i></i>
-        </span>
-        <span>
-          yocare<span className="brand-light">.{activeTab === 'tv' ? 'live' : 'health'}</span>
-        </span>
-      </a>
-
-      <nav className="topnav" aria-label="Main navigation">
-        <button
-          type="button"
-          className={`flex items-center gap-1.5 cursor-pointer bg-transparent border-0 text-inherit ${activeTab === 'tv' ? 'active font-semibold text-white' : 'hover:text-white'}`}
-          onClick={() => setActiveTab('tv')}
-        >
-          <Tv className="w-4 h-4 text-[#d5f477]" />
-          <span>Live TV Guide</span>
-        </button>
-
-        <button
-          type="button"
-          className={`flex items-center gap-1.5 cursor-pointer bg-transparent border-0 text-inherit ${activeTab === 'health' ? 'active font-semibold text-white' : 'hover:text-white'}`}
-          onClick={() => setActiveTab('health')}
-        >
-          <HeartPulse className="w-4 h-4 text-[#7cddbd]" />
-          <span>Yocare Health</span>
-        </button>
-
-        {activeTab === 'tv' && (
-          <button
-            className="topnav-search cursor-pointer bg-transparent border-0 text-inherit hover:text-white flex items-center gap-1.5"
-            onClick={onSearchClick}
-            type="button"
-            aria-label="Search channels"
-          >
-            <Search className="w-3.5 h-3.5" /> Search
-          </button>
-        )}
-      </nav>
-
-      <div className="flex items-center gap-3">
-        {activeTab === 'tv' ? (
-          <a
-            className="top-action"
-            href="#channels"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('channels')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            <span className="live-dot"></span> {selectedCountry.flag} {selectedCountry.name} ↗
-          </a>
-        ) : (
-          <a
-            className="top-action"
-            href="#privacy"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('privacy')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            <span className="w-2 h-2 rounded-full bg-[#7cddbd] inline-block shadow-[0_0_10px_#7cddbd]"></span> Private Vault 🔒
-          </a>
-        )}
-      </div>
-    </header>
-  );
-};
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selectedCountry, onSearchClick }) => (
+  <header className="g-home-nav" id="top">
+    <a className="g-brand" href="#discover" onClick={(event) => { event.preventDefault(); setActiveTab('tv'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Yocare Live home">
+      <span className="g-brand-mark">Y</span><span>yocare<span className="g-brand-light"> live</span></span>
+    </a>
+    <nav className="g-nav-links" aria-label="Main navigation">
+      <a className="g-nav-active" href="#discover">For you</a>
+      <a href="#movies">Movies</a>
+      <a href="#shows">Shows</a>
+      <a href="#apps">Apps</a>
+      <a href="#channels">Library</a>
+    </nav>
+    <div className="g-nav-actions">
+      <button type="button" className="g-icon-button" onClick={onSearchClick} aria-label="Search channels"><Search size={18}/></button>
+      <label className="g-region-control" title="Choose your channel region">
+        <span>{selectedCountry.flag}</span>
+        <select aria-label="Channel region" value={selectedCountry.code} onChange={(e) => {
+          const event = new CustomEvent('yocare-region-change', { detail: e.target.value });
+          window.dispatchEvent(event);
+        }}>
+          <option value="in">India</option><option value="us">United States</option><option value="gb">United Kingdom</option><option value="ca">Canada</option><option value="au">Australia</option><option value="jp">Japan</option><option value="kr">South Korea</option><option value="de">Germany</option><option value="fr">France</option><option value="it">Italy</option><option value="br">Brazil</option><option value="za">South Africa</option><option value="sg">Singapore</option><option value="es">Spain</option><option value="nl">Netherlands</option><option value="mx">Mexico</option><option value="ph">Philippines</option><option value="pk">Pakistan</option><option value="bd">Bangladesh</option><option value="np">Nepal</option>
+        </select>
+      </label>
+      {activeTab === 'health' && <button type="button" className="g-icon-button" onClick={() => setActiveTab('tv')} aria-label="Return to live TV"><Settings2 size={18}/></button>}
+      <span className="g-region-name">{selectedCountry.name}</span>
+    </div>
+  </header>
+);
