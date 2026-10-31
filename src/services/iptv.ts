@@ -78,7 +78,7 @@ function isHttpStreamUrl(value: string): boolean {
 
 // Kept for compatibility with StreamInfo; deliberately returns the original URL.
 // No open proxy is used and submitted request headers are never forwarded.
-export function buildProxiedUrl(rawUrl: string): string {
+export function buildProxiedUrl(rawUrl: string, _referrer?: string, _userAgent?: string): string {
   return isHttpStreamUrl(rawUrl) ? rawUrl : '';
 }
 
@@ -144,7 +144,7 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
       streams.push({
         url: pending.rawUrl,
         proxiedUrl: buildProxiedUrl(pending.rawUrl),
-        status: 'online'
+        status: 'untested'
       });
     }
 
@@ -209,7 +209,11 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
       if (!current.logo && item.logo) current.logo = item.logo;
       if (!current.group && item.group) current.group = item.group;
       if (item.streams) {
-        current.streams = [...(current.streams || []), ...item.streams];
+        const uniqueStreams = new Map<string, StreamInfo>();
+        for (const stream of [...(current.streams || []), ...item.streams]) {
+          if (!uniqueStreams.has(stream.url)) uniqueStreams.set(stream.url, stream);
+        }
+        current.streams = [...uniqueStreams.values()];
         current.urls = current.streams.map(s => s.proxiedUrl);
         current.url = current.urls[0] || '';
       }
@@ -238,47 +242,8 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
     const channels = parsePlaylist(text, countryCode, streamsIndex);
     if (channels.length > 0) return channels;
   } catch (err) {
-    console.warn('Failed fetching IPTV playlist, generating fallback channels for region:', countryCode, err);
+    console.warn('Failed fetching IPTV playlist; returning an empty channel catalogue for region:', countryCode, err);
   }
 
   return [];
-}
-
-function getCuratedFallbackChannels(countryCode: string): Channel[] {
-  const cName = COUNTRIES.find(c => c.code === countryCode)?.name || countryCode.toUpperCase();
-  const samples = [
-    { name: `${cName} News 24/7`, cat: 'news', logo: '' },
-    { name: `${cName} Sports Live`, cat: 'sports', logo: '' },
-    { name: `${cName} Entertainment`, cat: 'entertainment', logo: '' },
-    { name: `${cName} Music Hits`, cat: 'music', logo: '' },
-    { name: `${cName} Kids Channel`, cat: 'kids', logo: '' },
-    { name: `${cName} Cultural & Spiritual`, cat: 'religion', logo: '' },
-    { name: `${cName} World Vision`, cat: 'general', logo: '' }
-  ];
-
-  return samples.map((s, idx) => {
-    const key = normalise(s.name);
-    const registryId = `${key}@${countryCode.toLowerCase()}`;
-    const categoryStreams = FALLBACK_STREAMS[s.cat] || FALLBACK_STREAMS.general;
-    const proxiedUrls = categoryStreams.map(u => buildProxiedUrl(u));
-
-    const streams: StreamInfo[] = categoryStreams.map(u => ({
-      url: u,
-      proxiedUrl: buildProxiedUrl(u),
-      status: 'online'
-    }));
-
-    return {
-      id: registryId,
-      registryId,
-      name: s.name,
-      category: s.cat,
-      logo: s.logo,
-      streams,
-      urls: proxiedUrls,
-      url: proxiedUrls[0] || '',
-      key,
-      isAvailable: true
-    };
-  });
 }
