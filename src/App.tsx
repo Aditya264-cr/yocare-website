@@ -8,6 +8,7 @@ import { LivePlayer } from './components/LivePlayer';
 import { ChannelGuide } from './components/ChannelGuide';
 import { ProgramSchedule } from './components/ProgramSchedule';
 import { HealthVault } from './components/HealthVault';
+import { AiStreamChat } from './components/AiStreamChat';
 import { Footer } from './components/Footer';
 
 export const App: React.FC = () => {
@@ -18,7 +19,6 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Fetch playlist whenever selected country changes
   useEffect(() => {
     let isMounted = true;
     setIsLoading(true);
@@ -40,7 +40,6 @@ export const App: React.FC = () => {
 
   const handleSelectChannel = (channel: Channel) => {
     setActiveChannel(channel);
-    // Smooth scroll to video player
     document.getElementById('player')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -103,6 +102,12 @@ export const App: React.FC = () => {
             <ProgramSchedule
               channels={channels}
               onSelectChannel={handleSelectChannel}
+            />
+
+            {/* AI Stream Radar Assistant with Google Search Grounding */}
+            <AiStreamChat
+              onSelectChannel={handleSelectChannel}
+              activeCountryName={selectedCountry.name}
             />
           </>
         ) : (
