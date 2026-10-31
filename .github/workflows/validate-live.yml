@@ -1,4 +1,4 @@
-name: Validate Yocare Live JavaScript
+name: Validate Yocare Live application
 
 on:
   pull_request:
@@ -9,14 +9,19 @@ permissions:
   contents: read
 
 jobs:
-  syntax:
+  build:
+    name: Type-check and build application
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - name: Check JavaScript syntax
-        run: npm run check
-      - name: Test deep HLS probes, TTFB and slow-source classification
-        run: npm test
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Type-check and build
+        run: bun run build
