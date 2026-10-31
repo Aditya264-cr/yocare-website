@@ -156,14 +156,16 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
     const results = await testChannelSubset(visibleChannels, 24);
     setDiagnosticsMap(results);
 
-    let onlineCount = 0;
-    let offlineCount = 0;
+    let reachableCount = 0;
+    let inconclusiveCount = 0;
+    let errorCount = 0;
     results.forEach((res) => {
-      if (res.isAvailable) onlineCount++;
-      else offlineCount++;
+      if (res.isAvailable) reachableCount++;
+      else if (res.status.toLowerCase().includes('inconclusive') || res.status.toLowerCase().includes('blocked')) inconclusiveCount++;
+      else errorCount++;
     });
 
-    setTestSummary(`URL checks complete: ${onlineCount} Live Stream Signals Verified (${offlineCount} Unavailable)`);
+    setTestSummary(`URL checks complete: ${reachableCount} responded, ${errorCount} returned an error, ${inconclusiveCount} inconclusive. No channel was started or modified; a response does not prove playback.`);
     setIsTesting(false);
   };
 
