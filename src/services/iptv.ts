@@ -130,6 +130,9 @@ export const initialsFor = (name: string): string => {
 };
 
 export function parsePlaylist(text: string, countryCode: string, streamsIndex?: Map<string, any[]>, channelMetadata?: Map<string, IptvChannelRecord>): Channel[] {
+export type ChannelMetadata = { id: string; name: string; country: string; logo?: string; categories?: string[]; closed?: string | null; replaced_by?: string | null };
+
+export function parsePlaylist(text: string, countryCode: string, streamsIndex?: Map<string, any[]>, metadata?: Map<string, ChannelMetadata>): Channel[] {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   const parsed: Channel[] = [];
   let pending: { name: string; group?: string; logo?: string; tvgId?: string; rawUrl?: string } | null = null;
@@ -143,6 +146,14 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
     const idKey = pending.tvgId || key;
     const registryId = `${idKey}@${countryCode.toLowerCase()}`;
     const category = categoryFor(displayName, pending.group);
+    const channelMeta = pending.tvgId ? metadata?.get(pending.tvgId.toLowerCase()) : undefined;
+    if (metadata && (!channelMeta || channelMeta.country.toLowerCase() !== countryCode.toLowerCase() || channelMeta.closed || channelMeta.replaced_by)) { pending = null; return; }
+    const displayName = channelMeta?.name || pending.name;
+    const displayLogo = channelMeta?.logo || pending.logo;
+    const key = normalise(displayName);
+    const idKey = pending.tvgId || key;
+    const registryId = `${idKey}@${countryCode.toLowerCase()}`;
+    const category = channelMeta?.categories?.[0] || categoryFor(displayName, pending.group);
 
     const streams: StreamInfo[] = [];
 
@@ -249,6 +260,31 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
     const [streamsIndex, channelMetadata] = await Promise.all([loadIptvStreamsIndex(), loadChannelMetadata()]);
     // Use the country-specific playlist so region selection never mixes countries.
     const url = `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
+    const streamsIndex = await loadIptvStreamsIndex();
+    let metadata: Map<string, ChannelMetadata> | undefined;
+    try {
+      const [metadataResponse, logosResponse] = await Promise.all([
+        fetch('https://iptv-org.github.io/api/channels.json', { signal: AbortSignal.timeout(15000) }),
+        fetch('https://iptv-org.github.io/api/logos.json', { signal: AbortSignal.timeout(15000) })
+      ]);
+      if (metadataResponse.ok) {
+        const records = await metadataResponse.json() as ChannelMetadata[];
+        const logos = logosResponse.ok ? await logosResponse.json() as Array<{ channel: string; url: string; in_use?: boolean }> : [];
+        const logoByChannel = new Map<string, string>();
+        for (const logo of logos) {
+          const key = logo.channel.toLowerCase();
+          if (logo.url && (logo.in_use || !logoByChannel.has(key))) logoByChannel.set(key, logo.url);
+        }
+        metadata = new Map(records.map((record) => [record.id.toLowerCase(), { ...record, logo: logoByChannel.get(record.id.toLowerCase()) }]));
+      }
+    } catch (metadataError) {
+      console.warn('Official channel metadata unavailable; falling back to country-scoped playlist:', metadataError);
+    }
+    // Use the master playlist only when official country metadata is available.
+    // Otherwise use the upstream country-scoped playlist; never show a mixed list.
+    const url = metadata
+      ? 'https://iptv-org.github.io/iptv/index.m3u'
+      : `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -261,7 +297,12 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
 
     const text = await res.text();
     const channels = parsePlaylist(text, countryCode, streamsIndex, channelMetadata);
+    const channels = parsePlaylist(text, countryCode, streamsIndex, metadata);
     if (channels.length > 0) return channels;
+    // If the metadata catalogue is temporarily unavailable, use the upstream
+    // country-scoped playlist rather than showing a mixed-country master list.
+    const regionalResponse = await fetch(`https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`, { signal: AbortSignal.timeout(15000) });
+    if (regionalResponse.ok) return parsePlaylist(await regionalResponse.text(), countryCode, streamsIndex);
   } catch (err) {
     console.warn('Failed fetching country playlist; returning an empty channel catalogue for region:', countryCode, err);
   }

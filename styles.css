@@ -204,3 +204,97 @@
 .statement-inner>p:not(.eyebrow){color:#d5dfd4}
 @media(max-width:900px){.statement-pattern{right:-110px;width:300px;height:300px;opacity:.16}}
 @media(max-width:720px){.statement-pattern{right:-130px;width:270px;height:270px;opacity:.13}}
+
+
+/* Yocare Live — TV-first home inspired by large-screen streaming interfaces */
+.g-tv-app{min-height:100vh;background:#08090b;color:#f7f7f7}
+.g-home-nav{height:76px;position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:clamp(18px,4vw,64px);padding:0 clamp(22px,5.8vw,76px);background:linear-gradient(180deg,rgba(5,5,6,.96),rgba(5,5,6,.82));backdrop-filter:blur(22px);border-bottom:1px solid rgba(255,255,255,.07)}
+.g-brand{display:flex;align-items:center;gap:10px;white-space:nowrap;color:#fff;font-size:21px;font-weight:800;letter-spacing:-1.1px}
+.g-brand-mark{display:grid;place-items:center;width:31px;height:31px;border-radius:10px;background:#fff;color:#08090b;font-size:17px;font-weight:900}
+.g-brand-light{color:#9a9a9a;font-weight:500}
+.g-nav-links{display:flex;align-items:center;gap:clamp(14px,2.5vw,34px);height:100%;flex:1;min-width:0}
+.g-nav-links a{display:inline-flex;align-items:center;min-height:40px;padding:0 15px;border-radius:999px;color:#b9b9bc;font-size:14px;white-space:nowrap;transition:background .18s,color .18s}
+.g-nav-links a:hover{color:#fff;background:#ffffff12}
+.g-nav-links a.g-nav-active{background:#f1f3f8;color:#17181b;font-weight:650}
+.g-nav-actions{display:flex;align-items:center;gap:10px}
+.g-icon-button{width:38px;height:38px;display:grid;place-items:center;border:1px solid #ffffff20;border-radius:50%;background:#ffffff0b;color:#fff;cursor:pointer}
+.g-icon-button:hover{background:#ffffff20}
+.g-region-control{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #ffffff22;border-radius:999px;background:#ffffff0a;color:#fff}
+.g-region-control select{max-width:110px;border:0;outline:0;background:transparent;color:#fff;font-size:12px;cursor:pointer}
+.g-region-control option{background:#17181c;color:#fff}
+.g-region-name{font-size:12px;color:#b7b7bc;white-space:nowrap}
+.g-hero{min-height:440px;position:relative;display:flex;align-items:center;overflow:hidden;padding:68px clamp(28px,6vw,82px) 76px;background:radial-gradient(ellipse at 76% 40%,#54402b 0%,#241b17 31%,#0a0a0c 73%)}
+.g-hero-backdrop{position:absolute;inset:-12% 0 -8% 40%;display:flex;align-items:center;justify-content:center;opacity:.42;pointer-events:none;mask-image:linear-gradient(90deg,transparent 0%,#000 25%,#000 78%,transparent 100%)}
+.g-hero-backdrop img{width:min(66%,640px);height:100%;object-fit:contain;filter:drop-shadow(0 25px 60px #000b);transform:scale(1.7)}
+.g-hero-shade{position:absolute;inset:0;background:linear-gradient(90deg,#09090bf5 0%,#09090bdc 33%,#09090b50 66%,#09090b20 100%),linear-gradient(0deg,#09090b 0%,transparent 30%,#09090b1a 100%)}
+.g-hero-copy{position:relative;z-index:2;width:min(650px,70%)}
+.g-eyebrow,.g-channel-kicker{display:flex;align-items:center;gap:9px;color:#d4d4d7;font-size:11px;letter-spacing:.13em;font-weight:700}
+.g-live-dot{width:7px;height:7px;border-radius:50%;background:#ee4d4d;box-shadow:0 0 12px #ee4d4d}
+.g-channel-kicker{margin:35px 0 8px;color:#c4c4c7;font-size:10px}
+.g-hero h1{margin:0;color:#fff;font-size:clamp(38px,5.2vw,68px);line-height:1.02;letter-spacing:-.055em;font-weight:750;text-wrap:balance}
+.g-hero-description{max-width:520px;margin:16px 0 0;color:#d0d0d2;font-size:15px;line-height:1.65}
+.g-hero-actions{display:flex;align-items:center;gap:12px;margin-top:25px;flex-wrap:wrap}
+.g-primary-button,.g-secondary-button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;border:0;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;transition:transform .18s,background .18s}
+.g-primary-button{background:#f2f3f6;color:#111216}
+.g-primary-button:hover{background:#fff;transform:translateY(-1px)}
+.g-primary-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.g-secondary-button{background:#ffffff20;color:#fff;border:1px solid #ffffff24}
+.g-secondary-button:hover{background:#ffffff32}
+.g-hero-meta{display:flex;gap:11px;align-items:center;margin-top:23px;color:#c0c0c4;font-size:12px}
+.g-hero-logo{position:absolute;z-index:3;right:clamp(36px,11vw,160px);top:50%;transform:translateY(-50%);width:clamp(110px,16vw,190px);height:clamp(110px,16vw,190px);display:grid;place-items:center;border-radius:28px;border:1px solid #ffffff35;background:#09090b9c;box-shadow:0 20px 70px #0008;backdrop-filter:blur(15px);cursor:pointer}
+.g-hero-logo img{width:82%;height:82%;object-fit:contain}
+.g-hero-logo span{font-size:38px;font-weight:800}
+.g-shelves{padding:2px clamp(22px,5.8vw,76px) 28px;background:#08090b}
+.g-shelf{padding:19px 0 12px;scroll-margin-top:90px}
+.g-shelf-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.g-shelf-heading h2{margin:0;color:#f4f4f5;font-size:18px;font-weight:650;letter-spacing:-.025em}
+.g-shelf-heading a{display:flex;align-items:center;gap:3px;color:#bfc0c4;font-size:12px}
+.g-shelf-heading a:hover{color:#fff}
+.g-channel-rail{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(145px,1fr);grid-auto-columns:clamp(145px,16vw,205px);gap:14px;overflow-x:auto;padding:2px 2px 12px;scrollbar-width:thin;scrollbar-color:#555 transparent;scroll-snap-type:x proximity}
+.g-channel-tile{position:relative;min-width:0;min-height:142px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:12px;border:1px solid #ffffff16;border-radius:13px;background:linear-gradient(145deg,#202126,#111216 78%);color:#fff;text-align:left;cursor:pointer;scroll-snap-align:start;transition:transform .2s,border-color .2s,background .2s}
+.g-channel-tile:hover{transform:translateY(-3px);border-color:#ffffff65;background:linear-gradient(145deg,#292a31,#15161a)}
+.g-channel-tile.is-active{border-color:#f2f3f6;box-shadow:0 0 0 1px #f2f3f633}
+.g-logo-stage{width:100%;height:76px;display:grid;place-items:center;overflow:hidden;border-radius:8px;background:radial-gradient(circle at 50% 40%,#ffffff18,#ffffff04 70%)}
+.g-logo-stage img{position:relative;z-index:1;max-width:90%;max-height:68px;object-fit:contain}
+.g-logo-stage b{font-size:22px;color:#fff}
+.g-tile-name{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:650}
+.g-tile-meta{font-size:10px;color:#a8a9ae;text-transform:capitalize}
+.g-tile-play{position:absolute;right:10px;bottom:10px;width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#f2f3f6;color:#111}
+.g-shelf-loading,.g-shelf-empty{padding:24px 0;color:#a6a6aa;font-size:13px}
+.g-tv-app .channels-section.page-section{max-width:none;padding:54px clamp(22px,5.8vw,76px);background:#0d0e11}
+.g-tv-app .channels-intro h2{font-size:clamp(28px,3vw,42px);letter-spacing:-.045em}
+.g-tv-app .toolbar{border:1px solid #ffffff1c!important;border-radius:16px!important;background:#15161b!important}
+.g-tv-app .channel-card{background:#191a20!important;border-color:#ffffff18!important;border-radius:14px!important;min-height:76px}
+.g-tv-app .channel-card:hover{background:#24252c!important;border-color:#ffffff55!important}
+.g-tv-app .channel-card.border-\[\#d5f477\]{border-color:#f2f3f6!important}
+.g-tv-app .channel-logo{position:relative;background:#f6f6f6!important;border-radius:11px!important;overflow:hidden}
+.g-tv-app .channel-logo img{position:relative;z-index:1;background:#fff}
+.g-tv-app .logo-fallback{position:absolute;inset:0;display:grid;place-items:center;z-index:0;color:#151515!important}
+.g-tv-app .channel-name{font-size:13px}
+.g-tv-app .category-chip{border-radius:999px!important}
+.g-tv-app .load-more{border-radius:999px!important}
+.g-tv-app .player-section{max-width:none;padding:48px clamp(22px,5.8vw,76px);background:#08090b}
+.g-tv-app .player-frame{border-radius:18px;border-color:#ffffff24}
+.g-tv-app .site-footer,.g-tv-app footer{background:#08090b}
+@media(max-width:760px){
+ .g-home-nav{height:66px;padding:0 16px;gap:12px;flex-wrap:wrap}
+ .g-brand{font-size:18px}.g-brand-mark{width:28px;height:28px}
+ .g-nav-links{order:3;flex:0 0 100%;height:42px;overflow-x:auto;gap:7px;padding-bottom:5px}
+ .g-home-nav{height:auto;min-height:66px;padding-top:10px;padding-bottom:7px}
+ .g-nav-links a{font-size:12px;min-height:34px;padding:0 12px}
+ .g-nav-actions{margin-left:auto}.g-region-name{display:none}
+ .g-region-control select{max-width:82px}
+ .g-hero{min-height:420px;padding:48px 22px 54px}
+ .g-hero-copy{width:100%}.g-hero-backdrop{inset:0 0 0 18%;opacity:.22}
+ .g-hero-logo{right:20px;top:26px;transform:none;width:68px;height:68px;border-radius:15px}
+ .g-hero-logo span{font-size:20px}
+ .g-hero h1{font-size:clamp(34px,10vw,52px);max-width:80%}
+ .g-hero-description{max-width:90%;font-size:13px}
+ .g-channel-kicker{margin-top:100px}
+ .g-shelves{padding:0 18px 20px}
+ .g-shelf-heading h2{font-size:16px}
+ .g-channel-rail{grid-auto-columns:150px;gap:10px}
+ .g-channel-tile{min-height:132px}
+ .g-tv-app .channels-section.page-section,.g-tv-app .player-section{padding:38px 18px}
+}
+@media(prefers-reduced-motion:reduce){.g-channel-tile,.g-primary-button{transition:none}}
