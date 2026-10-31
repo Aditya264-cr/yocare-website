@@ -222,6 +222,24 @@ export default {
         const result = await env.DB.prepare("SELECT 1 AS ok").first();
         return response({ ok: result?.ok === 1, service: "yocare-live-registry", version: 2 }, 200, headers);
       }
+      if (url.pathname === "/api/diagnostics" && request.method === "GET") {
+        const [channels, enabledSources, authorizedSources, reachableSources, discoveries] = await Promise.all([
+          env.DB.prepare("SELECT COUNT(*) AS count FROM channels WHERE enabled = 1").first(),
+          env.DB.prepare("SELECT COUNT(*) AS count FROM sources WHERE enabled = 1").first(),
+          env.DB.prepare("SELECT COUNT(*) AS count FROM sources WHERE enabled = 1 AND rights_verified_at IS NOT NULL AND length(trim(authorization_reference)) > 0 AND (rights_expires_at IS NULL OR datetime(rights_expires_at) > datetime('now'))").first(),
+          env.DB.prepare("SELECT COUNT(*) AS count FROM sources WHERE enabled = 1 AND rights_verified_at IS NOT NULL AND length(trim(authorization_reference)) > 0 AND (rights_expires_at IS NULL OR datetime(rights_expires_at) > datetime('now')) AND last_checked_at >= datetime('now','-15 minutes') AND consecutive_failures = 0").first(),
+          env.DB.prepare("SELECT COUNT(*) AS count FROM discovery_streams").first()
+        ]);
+        return response({
+          ok: true,
+          catalogue_channels: Number(channels?.count || 0),
+          enabled_sources: Number(enabledSources?.count || 0),
+          authorized_sources: Number(authorizedSources?.count || 0),
+          recently_reachable_authorized_sources: Number(reachableSources?.count || 0),
+          discovery_records: Number(discoveries?.count || 0),
+          playback_ready: Number(reachableSources?.count || 0) > 0
+        }, 200, headers);
+      }
       const sourceMatch = url.pathname.match(/^\/api\/channels\/([^/]+)\/sources$/);
       if (sourceMatch && request.method === "GET") {
         const channelId = decodeURIComponent(sourceMatch[1]);

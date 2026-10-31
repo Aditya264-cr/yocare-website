@@ -66,3 +66,14 @@ Use a non-secret internal reference. Do not put contracts, broadcaster passwords
 - Health is polled every five minutes in bounded batches. Viewers can still encounter ISP outages, device codec differences, blackouts, or provider restrictions.
 - The player never falls back to raw IPTV-org URLs. Existing/unverified entries are hidden from registry results because the migration leaves their rights reference empty.
 - Apply api/migrations/0002_authorized_delivery.sql before deploying this API version. Do not commit the admin token.
+
+
+## IPTV-org discovery catalogue sync
+
+The scheduled `.github/workflows/sync-iptv-discovery.yml` workflow imports IPTV-org channel metadata and stream records into the separate `discovery_streams` D1 table. It preserves the submitted URL, host, source type, `referrer`, and `user_agent` for diagnostics and manual review. It stores the IPTV-org channel ID and channel metadata alongside each discovery record. It deliberately does not create territory-qualified Yocare playback channel IDs: IPTV-org's channel country is not the same thing as proof that a channel belongs in a particular Yocare territory playlist.
+
+**Discovery records are not playback sources.** The importer never inserts into the `sources` table, never enables a feed for playback, and never forwards community-supplied request headers. The player and proxy continue to read only the authorized `sources` registry. A reviewer must separately establish permission and register a broadcaster/distributor-provided feed through the existing admin route before it can become playable.
+
+Run it manually from GitHub Actions using **Sync IPTV discovery catalogue**, or let the daily schedule run. The workflow requires the existing `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets. It applies D1 migrations before importing the latest catalogue. The sync is idempotent and records the latest observation time.
+
+The public `GET /api/diagnostics` endpoint reports aggregate counts for catalogue channels, enabled sources, authorized sources, recently reachable authorized sources, and discovery records. It does not expose source URLs or submitted headers. Use it to distinguish an empty playback registry from a player-side failure before debugging HLS.js.
