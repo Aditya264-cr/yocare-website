@@ -36,14 +36,10 @@
   let requestNumber = 0;
   let playbackTimer = 0;
   let isLoadingPlaylist = false;
-  let alternatePlaylistPending = false;
   let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
-  let registryRefreshInFlight = null;
-  const registrySourceIds = new Map();
   const registryRefreshAttempted = new WeakSet();
-  const upstreamRefreshAttempted = new WeakSet();
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -591,21 +587,20 @@
   }
 
 
-  function canonicalRegistryId(  function canonicalRegistryId(channel) {
-    const candidate = String(channel && (channel.idKey || channel.id || channel.key) || "").trim();
+  function canonicalRegistryId(channel) {
+    const candidate = String(channel && (channel.registryId || channel.idKey || channel.id || channel.key) || "").trim();
     return /^[a-zA-Z0-9][a-zA-Z0-9._:@-]{0,119}$/.test(candidate) ? candidate : "";
   }
 
   async function refreshRegistrySources(channel) {
     if (!REGISTRY_BASE || !channel || registryRefreshAttempted.has(channel)) return false;
-    if (registryRefreshInFlight) return registryRefreshInFlight;
     const channelId = canonicalRegistryId(channel);
     if (!channelId) return false;
     registryRefreshAttempted.add(channel);
-    registryRefreshInFlight = (async () => {
+    return (async () => {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
-      try {        const response = await fetch(REGISTRY_BASE + "/api/channels/" + encodeURIComponent(channelId) + "/sources", {
+      try {\n        const response = await fetch(REGISTRY_BASE + "/api/channels/" + encodeURIComponent(channelId) + "/sources", {
           method: "GET", headers: { "accept": "application/json" }, signal: controller.signal, cache: "no-store"
         });
         if (!response.ok) return false;
@@ -636,7 +631,6 @@
         return false;
       } finally {
         window.clearTimeout(timeout);
-        registryRefreshInFlight = null;
       }
     })();
     return registryRefreshInFlight;
@@ -865,7 +859,7 @@
   }
 
   function setCategory(category) {
-    activeFilter = category;    if (els.categories) els.categories.querySelectorAll(".category-chip").forEach(button => {
+    activeFilter = category;\n    if (els.categories) els.categories.querySelectorAll(".category-chip").forEach(button => {
       const selected = button.dataset.category === category;
       button.classList.toggle("selected", selected);
       button.setAttribute("aria-pressed", String(selected));
@@ -926,10 +920,11 @@
     if (activeChannel) {
       waitingForAlternateSource = null;
       registryRefreshAttempted.delete(activeChannel);
-      upstreamRefreshAttempted.delete(activeChannel);
       fallbackIndex = 0;
       lastSourceFailure = null;
-      startSource(activeChannel, 0);
+      activeChannel.urls = [];
+      activeChannel.registrySourceIds = {};
+      playChannel(activeChannel);
     } else {
       loadCountry(els.country.value);
     }
