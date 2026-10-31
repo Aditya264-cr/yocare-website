@@ -85,7 +85,7 @@ async function readMedia(url, options) {
   const response = result.response;
   if (!response.ok) {
     await response.body?.cancel();
-    return { ok: false, status: response.status, note: "media-request-failed" };
+    return { ok: false, status: response.status, note: "media-http-" + response.status };
   }
   if (!corsAllowed(response, options.origin)) {
     await response.body?.cancel();
@@ -144,13 +144,14 @@ export async function inspectSource(source, options = {}) {
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const requestOptions = { fetchImpl, origin, signal: controller.signal };
 
+  let phase = "manifest";
   try {
     const root = await safeFetch(source.url, requestOptions);
     lastTtfbMs = root.ttfb_ms;
     const response = root.response;
     if (!response.ok) {
       await response.body?.cancel();
-      return result(false, response.status, "manifest-request-failed", "none");
+      return result(false, response.status, "manifest-http-" + response.status, "manifest");
     }
     if (!corsAllowed(response, origin)) {
       await response.body?.cancel();
@@ -176,12 +177,13 @@ export async function inspectSource(source, options = {}) {
 
       let mediaPlaylistUrl = mediaUrl;
       if (first.kind === "variant") {
+        phase = "variant";
         const variant = await safeFetch(mediaUrl, requestOptions);
         lastTtfbMs = variant.ttfb_ms;
         if (!variant.response.ok || !corsAllowed(variant.response, origin)) {
           const status = variant.response.status;
           await variant.response.body?.cancel();
-          return result(false, status, variant.response.ok ? "cors-blocked" : "hls-variant-request-failed", "variant");
+          return result(false, status, variant.response.ok ? "cors-blocked" : "hls-variant-http-" + status, "variant");
         }
         const variantBody = await readPrefix(variant.response);
         if (!variantBody.trimStart().startsWith("#EXTM3U") || !/#EXT(?:INF|-X-PART):/.test(variantBody)) {
@@ -196,6 +198,7 @@ export async function inspectSource(source, options = {}) {
         if (!safeSourceUrl(mediaUrl)) return result(false, variant.response.status, "unsafe-hls-segment-uri", "variant");
       }
 
+      phase = "segment";
       const segmentResult = await readMedia(mediaUrl, requestOptions);
       lastTtfbMs = segmentResult.ttfb_ms ?? lastTtfbMs;
       if (!segmentResult.ok) return result(false, segmentResult.status, segmentResult.note, "segment");
@@ -220,8 +223,10 @@ export async function inspectSource(source, options = {}) {
         ? "cors-blocked"
         : error?.message === "redirect-limit" || error?.message === "unsafe-redirect"
           ? "unsafe-or-excessive-redirect"
-          : "network-error";
-    return result(false, null, note, "none");
+          : error?.name === "TypeError"
+            ? "upstream-fetch-rejected-typeerror"
+            : "probe-error";
+    return result(false, null, note, phase);
   } finally {
     clearTimeout(timeout);
   }
