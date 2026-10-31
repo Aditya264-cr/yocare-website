@@ -231,14 +231,25 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
 
 export async function fetchCountryPlaylist(countryCode: string): Promise<Channel[]> {
   try {
-    const [streamsIndex, metadataResponse] = await Promise.all([
-      loadIptvStreamsIndex(),
-      fetch('https://iptv-org.github.io/api/channels.json', { signal: AbortSignal.timeout(15000) })
-    ]);
+    const streamsIndex = await loadIptvStreamsIndex();
     let metadata: Map<string, ChannelMetadata> | undefined;
-    if (metadataResponse.ok) {
-      const records = await metadataResponse.json() as ChannelMetadata[];
-      metadata = new Map(records.map((record) => [record.id.toLowerCase(), record]));
+    try {
+      const [metadataResponse, logosResponse] = await Promise.all([
+        fetch('https://iptv-org.github.io/api/channels.json', { signal: AbortSignal.timeout(15000) }),
+        fetch('https://iptv-org.github.io/api/logos.json', { signal: AbortSignal.timeout(15000) })
+      ]);
+      if (metadataResponse.ok) {
+        const records = await metadataResponse.json() as ChannelMetadata[];
+        const logos = logosResponse.ok ? await logosResponse.json() as Array<{ channel: string; url: string; in_use?: boolean }> : [];
+        const logoByChannel = new Map<string, string>();
+        for (const logo of logos) {
+          const key = logo.channel.toLowerCase();
+          if (logo.url && (logo.in_use || !logoByChannel.has(key))) logoByChannel.set(key, logo.url);
+        }
+        metadata = new Map(records.map((record) => [record.id.toLowerCase(), { ...record, logo: logoByChannel.get(record.id.toLowerCase()) }]));
+      }
+    } catch (metadataError) {
+      console.warn('Official channel metadata unavailable; falling back to country-scoped playlist:', metadataError);
     }
     // Keep the master playlist source, but only expose channels whose official
     // metadata country exactly matches the selected region.
