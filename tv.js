@@ -91,7 +91,7 @@
 
   // IPTV-org is a metadata catalogue only. Never retain or play its submitted URLs.
   function parsePlaylist(text, countryCode) {
-    const lines = text.replace(/^\\uFEFF/, "").split(/\\r?\\n/);
+    const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
     const parsed = [];
     let pending = null;
     const commit = () => {
