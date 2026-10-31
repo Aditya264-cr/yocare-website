@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Channel, Country } from './types';
 import { COUNTRIES, fetchCountryPlaylist } from './services/iptv';
 import { Navbar } from './components/Navbar';
@@ -10,14 +10,17 @@ import { ProgramSchedule } from './components/ProgramSchedule';
 import { HealthVault } from './components/HealthVault';
 import { AiStreamChat } from './components/AiStreamChat';
 import { Footer } from './components/Footer';
+import { YouTubeDiscovery } from './components/YouTubeDiscovery';
+
+type ActiveTab = 'tv' | 'health' | 'youtube';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'tv' | 'health'>('tv');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('tv');
   const [selectedCountry, setSelectedCountry] = useState<Country>(COUNTRIES[0]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const handleRegionChange = (event: Event) => {
@@ -34,35 +37,19 @@ export const App: React.FC = () => {
     setIsLoading(true);
     setActiveChannel(null);
     setSearchQuery('');
-
     fetchCountryPlaylist(selectedCountry.code)
       .then((data) => {
         if (!isMounted) return;
         setChannels(data);
-        setIsLoading(false);
         setActiveChannel((current) => data.find((channel) => channel.id === current?.id) || data.find((channel) => channel.url) || null);
-      }
-    });
-        setActiveChannel(data[0] || null);
       })
       .catch((error) => {
         console.error('Unable to load regional channel catalogue:', error);
-        if (isMounted) {
-          setChannels([]);
-          setActiveChannel(null);
-        }
+        if (isMounted) { setChannels([]); setActiveChannel(null); }
       })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
+      .finally(() => { if (isMounted) setIsLoading(false); });
     return () => { isMounted = false; };
   }, [selectedCountry.code]);
-
-  useEffect(() => {
-    setActiveChannel(null);
-    setSearchQuery('');
-  }, [selectedCountry]);
 
   const handleSelectChannel = (channel: Channel) => {
     setActiveChannel(channel);
@@ -71,26 +58,26 @@ export const App: React.FC = () => {
 
   const handleSearchClick = () => {
     setActiveTab('tv');
-    document.getElementById('channels')?.scrollIntoView({ behavior: 'smooth' });
-    window.setTimeout(() => document.getElementById('channel-search')?.focus(), 250);
+    window.setTimeout(() => {
+      document.getElementById('channels')?.scrollIntoView({ behavior: 'smooth' });
+      window.setTimeout(() => document.getElementById('channel-search')?.focus(), 250);
+    }, 0);
   };
 
   const spotlightChannel = channels[0] || null;
-
   return (
     <div className="g-tv-app min-h-screen bg-[#08090c] text-white font-sans antialiased">
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} selectedCountry={selectedCountry} onSearchClick={handleSearchClick}/>
       <main id="main-content">
-        {activeTab === 'tv' ? (
-          <>
-            <HeroSection country={selectedCountry} spotlightChannel={spotlightChannel} onPlayChannel={handleSelectChannel} onBrowseChannelsClick={() => document.getElementById('channels')?.scrollIntoView({ behavior: 'smooth' })}/>
-            <TopPicksRail channels={channels} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} countryName={selectedCountry.name}/>
-            <LivePlayer channel={activeChannel} country={selectedCountry}/>
-            <ChannelGuide channels={channels} selectedCountry={selectedCountry} onCountryChange={setSelectedCountry} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery}/>
-            <ProgramSchedule channels={channels} onSelectChannel={handleSelectChannel}/>
-            <AiStreamChat onSelectChannel={handleSelectChannel} activeCountryName={selectedCountry.name}/>
-          </>
-        ) : <HealthVault/>}
+        {activeTab === 'tv' ? <>
+          <HeroSection country={selectedCountry} spotlightChannel={spotlightChannel} onPlayChannel={handleSelectChannel} onBrowseChannelsClick={() => document.getElementById('channels')?.scrollIntoView({ behavior: 'smooth' })}/>
+          <YouTubeDiscovery mode="rail" onOpen={() => setActiveTab('youtube')} regionCode={selectedCountry.code.toUpperCase()}/>
+          <TopPicksRail channels={channels} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} countryName={selectedCountry.name}/>
+          <LivePlayer channel={activeChannel} country={selectedCountry}/>
+          <ChannelGuide channels={channels} selectedCountry={selectedCountry} onCountryChange={setSelectedCountry} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery}/>
+          <ProgramSchedule channels={channels} onSelectChannel={handleSelectChannel}/>
+          <AiStreamChat onSelectChannel={handleSelectChannel} activeCountryName={selectedCountry.name}/>
+        </> : activeTab === 'youtube' ? <YouTubeDiscovery mode="page" regionCode={selectedCountry.code.toUpperCase()}/> : <HealthVault/>}
       </main>
       <Footer activeTab={activeTab}/>
     </div>
