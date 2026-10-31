@@ -62,7 +62,6 @@ const countryByChannel = new Map();
 for (const channel of channels) countryByChannel.set(channel.id, countryCode(channel, countries));
 
 const statements = [];
-const importedChannels = new Set();
 let skipped = 0;
 for (const stream of streams) {
   const channel = channelById.get(stream.channel);
@@ -72,11 +71,9 @@ for (const stream of streams) {
     continue;
   }
   const cc = countryByChannel.get(channel.id) || "";
-  const channelId = cc ? `${channel.id}@${cc}` : null;
-  if (channelId && !importedChannels.has(channelId)) {
-    statements.push(`INSERT INTO channels (id,name,country_code,enabled) VALUES (${sql(channelId)},${sql(channel.name)},${sql(cc)},1) ON CONFLICT(id) DO UPDATE SET name=excluded.name, updated_at=datetime('now');`);
-    importedChannels.add(channelId);
-  }
+  // IPTV-org IDs are catalogue metadata IDs, not Yocare territory-qualified playback IDs.
+  // Keep the association unqualified until a separate territory mapping exists.
+  const channelId = null;
   const referrer = stream.referrer || stream.http_referrer || stream.referer || null;
   const userAgent = stream.user_agent || stream.userAgent || null;
   const key = createHash("sha256").update(`${channel.id}\n${candidate.url}`).digest("hex");
@@ -90,9 +87,9 @@ for (let i = 0; i < statements.length; i += 250) {
 }
 await writeFile(outputPath, chunks.join("\n"), "utf8");
 console.log(JSON.stringify({
-  channels: importedChannels.size,
+  channel_metadata_records: channelById.size,
   streams_seen: streams.length,
-  discovery_records_upserted: statements.length - importedChannels.size,
+  discovery_records_upserted: statements.length,
   skipped: skipped,
   sql_file: outputPath,
   playback_sources_created: 0
