@@ -70,7 +70,7 @@ Use a non-secret internal reference. Do not put contracts, broadcaster passwords
 
 ## IPTV-org discovery catalogue sync
 
-The scheduled `.github/workflows/sync-iptv-discovery.yml` workflow imports IPTV-org channel metadata and stream records into the separate `discovery_streams` D1 table. It preserves the submitted URL, host, source type, `referrer`, and `user_agent` for diagnostics and manual review. It also upserts matching catalogue channel rows when a two-letter country code can be resolved.
+The scheduled `.github/workflows/sync-iptv-discovery.yml` workflow imports IPTV-org channel metadata and stream records into the separate `discovery_streams` D1 table. It preserves the submitted URL, host, source type, `referrer`, and `user_agent` for diagnostics and manual review. It stores the IPTV-org channel ID and channel metadata alongside each discovery record. It deliberately does not create territory-qualified Yocare playback channel IDs: IPTV-org's channel country is not the same thing as proof that a channel belongs in a particular Yocare territory playlist.
 
 **Discovery records are not playback sources.** The importer never inserts into the `sources` table, never enables a feed for playback, and never forwards community-supplied request headers. The player and proxy continue to read only the authorized `sources` registry. A reviewer must separately establish permission and register a broadcaster/distributor-provided feed through the existing admin route before it can become playable.
 
