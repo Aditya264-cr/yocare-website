@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Play, ChevronDown, Grid2X2 } from 'lucide-react';
 import { Channel, Country, CategoryType } from '../types';
-import { CATEGORY_LABELS, COUNTRIES, initialsFor } from '../services/iptv';
+import { CATEGORY_LABELS, initialsFor } from '../services/iptv';
 
 interface ChannelGuideProps {
   channels: Channel[];
