@@ -1,13 +1,13 @@
 # Yocare Live source registry
 
-The registry is the playback source of truth for Yocare Live. Public IPTV-org playlists provide channel names, logos, and categories only; the browser does not play their unverified URLs. Playback candidates must be added by an administrator with a documented distribution-rights reference and permitted territories.
+The registry is the playback source of truth for Yocare Live. Public IPTV-org country playlists provide channel names, logos, categories, and channel IDs only. The browser ignores every URL in those playlists and never falls back to IPTV-org stream playlists. A viewer selection is resolved against the registry before a player is initialized. Playback candidates must be added by an administrator with a documented distribution-rights reference and permitted territories.
 
 ## Delivery path
 
 1. A broadcaster or distributor supplies a feed Yocare is allowed to distribute.
 2. Use its HTTPS HLS/DASH feed directly when it supports browser playback, or ingest an authorized contribution feed through a streaming provider.
-3. Register the resulting playback manifest and each authorized redundant feed. The API returns only sources licensed for the viewer's Cloudflare edge country.
-4. A five-minute monitor checks HTTPS, redirects, browser CORS, and HLS manifest/first-segment reachability. The player tries authorized alternatives in priority/health order and reports playback failures.
+3. Register the channel using the catalogue ID plus its two-letter country suffix (for example, `cnn.us@in` only if that exact ID is the catalogue's `tvg-id` and the channel is listed in India), then register the resulting playback manifest and each authorized redundant feed. The API returns only sources licensed for the viewer's Cloudflare edge country.
+4. A five-minute monitor checks HTTPS, redirects, browser CORS, and HLS manifest/first-segment reachability. The player tries authorized alternatives in priority/health order and reports playback failures. HLS manifests and their same-origin segments are routed through the registry proxy, which re-checks source authorization and viewer territory on every request. DASH/direct feeds must provide browser CORS themselves.
 5. Browser playback remains the final check for decoding, audio, and regional/provider behavior. Health status is evidence, not an uptime promise.
 
 No production source records are seeded. A channel without an authorized feed in the viewer's territory will show an unavailable message and can be watched through the broadcaster's official service.
@@ -57,7 +57,7 @@ Example source registration:
 }
 ~~~
 
-Use a non-secret internal reference. Do not put contracts, broadcaster passwords, API keys, cookies, or short-lived signed URLs in the public registry; source URLs are returned to viewers' browsers.
+Use a non-secret internal reference. Do not put contracts, broadcaster passwords, API keys, cookies, or short-lived signed URLs in the registry; registered feed URLs are exposed to the authorized viewer through the registry API/proxy. Channel IDs must match the catalogue identity with `@<country-code>` appended, because the browser uses that deterministic ID for registry lookup.
 
 ## Reliability and security limits
 

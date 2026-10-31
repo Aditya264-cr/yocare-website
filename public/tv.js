@@ -115,63 +115,56 @@
     } catch (_) { return 2; }
   };
 
-  function parsePlaylist(text) {
+  // IPTV-org contributes guide metadata only. Its submitted URLs are deliberately ignored.
+  function parsePlaylist(text, countryCode) {
     const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
     const parsed = [];
     let pending = null;
+    const commit = () => {
+      if (!pending || !pending.name) return;
+      pending.key = normalise(pending.name);
+      pending.idKey = pending.tvgId || pending.key;
+      pending.registryId = pending.idKey + "@" + String(countryCode || "").toLowerCase();
+      pending.id = pending.registryId;
+      pending.urls = [];
+      pending.url = "";
+      pending.category = categoryFor(pending.name, pending.group);
+      parsed.push(pending);
+      pending = null;
+    };
     for (const rawLine of lines) {
       const line = rawLine.trim();
       if (!line) continue;
       if (line.startsWith("#EXTINF:")) {
+        commit();
         const comma = line.indexOf(",");
         const meta = comma >= 0 ? line.slice(0, comma) : line;
         const name = comma >= 0 ? line.slice(comma + 1).trim() : "Live channel";
-        const getAttr = (key) => {
-          const match = meta.match(new RegExp("(?:^|\\s)" + key + '="([^"]*)"', "i"));
+        const getAttr = key => {
+          const match = meta.match(new RegExp("(?:^|\\\\s)" + key + '="([^"]*)"', "i"));
           return match ? match[1] : "";
         };
         pending = {
           name: name || "Live channel",
           group: getAttr("group-title"),
           logo: getAttr("tvg-logo"),
-          id: getAttr("tvg-id"),
-          url: ""
+          tvgId: getAttr("tvg-id"),
+          sourceTvgId: getAttr("tvg-id")
         };
-      } else if (line.startsWith("#") || !pending) {
-        continue;
-      } else if (/^https:\/\//i.test(line)) {
-        try {
-          const url = new URL(line);
-          if (url.protocol === "https:" && !url.username && !url.password && !isUnstableSource(url.href)) {
-            pending.url = url.href;
-            pending.key = normalise(pending.name);
-            pending.category = categoryFor(pending.name, pending.group);
-            pending.idKey = pending.id || pending.key;
-            parsed.push(pending);
-          }
-        } catch (_) {}
-        pending = null;
       }
     }
-
-    // Keep alternate public endpoints for the same channel so playback can fail over.
+    commit();
     const grouped = new Map();
     for (const item of parsed) {
-      if (!item.key || !item.url) continue;
-      const groupKey = item.id ? "id:" + item.id.toLowerCase() : "name:" + item.key;
-      if (!grouped.has(groupKey)) grouped.set(groupKey, {...item, catalogSourceCount: 0});
-      const channel = grouped.get(groupKey);
-      channel.catalogSourceCount += 1;
-      if (!channel.logo && item.logo) channel.logo = item.logo;
-      if (!channel.group && item.group) channel.group = item.group;
+      const groupKey = item.tvgId ? "id:" + item.tvgId.toLowerCase() : "name:" + item.key;
+      if (!grouped.has(groupKey)) grouped.set(groupKey, item);
+      else {
+        const current = grouped.get(groupKey);
+        if (!current.logo && item.logo) current.logo = item.logo;
+        if (!current.group && item.group) current.group = item.group;
+      }
     }
-    return [...grouped.values()].map((channel, index) => ({
-      ...channel,
-      id: channel.idKey + "-" + index,
-      category: categoryFor(channel.name, channel.group),
-      urls: [],
-      url: ""
-    })).sort((a, b) => a.name.localeCompare(b.name));
+    return [...grouped.values()].sort((a, b) => a.name.localeCompare(b.name));
   }
 
   function setLoading(isLoading, message = "Loading the channel guide…") {
@@ -219,7 +212,7 @@
 
 
   function canonicalRegistryId(channel) {
-    const candidate = String(channel && (channel.idKey || channel.id || channel.key) || "").trim();
+    const candidate = String(channel && (channel.registryId || channel.idKey || channel.id || channel.key) || "").trim();
     return /^[a-zA-Z0-9][a-zA-Z0-9._:@-]{0,119}$/.test(candidate) ? candidate : "";
   }
 
@@ -255,7 +248,13 @@
           let parsed;
           try { parsed = new URL(source.url); } catch (_) { continue; }
           if (parsed.protocol !== "https:" || parsed.username || parsed.password) continue;
-          const playbackUrl = parsed.href;
+          let playbackUrl = parsed.href;
+          if (String(source.type || "").toLowerCase() === "hls") {
+            const proxyUrl = new URL(REGISTRY_BASE + "/api/proxy");
+            proxyUrl.searchParams.set("source_id", source.id);
+            proxyUrl.searchParams.set("url", parsed.href);
+            playbackUrl = proxyUrl.href;
+          }
           if (!channel.urls.includes(playbackUrl)) {
             channel.urls.push(playbackUrl);
             added = true;
@@ -649,7 +648,7 @@
       // Public playlists supply catalog metadata. Their stream URLs are never played directly.
       const publicText = await fetchPlaylistText(code, loadController.signal, "public");
       if (currentRequest !== requestNumber) return;
-      channels = parsePlaylist(publicText);
+      channels = parsePlaylist(publicText, code);
       if (!channels.length) throw new Error("The public playlist did not contain readable channel entries.");
       renderFeaturedChannels();
       renderCategories();
@@ -948,13 +947,30 @@
     fallbackIndex = 0;
     waitingForAlternateSource = null;
     lastSourceFailure = null;
+    channel.urls = [];
+    channel.registrySourceIds = Object.create(null);
     els.title.textContent = channel.name;
     els.subtitle.textContent = channel.group || (countryName() + " · Live television");
     els.region.textContent = countryName().toUpperCase() + " · LIVE TV";
-    setMessage("");
+    setMessage("Checking Yocare's authorized feeds for your region…");
+    setPlaybackState("Checking authorized sources…");
     showPlayerPlaceholder(false);
     updateSelectedCard();
-    startSource(channel, 0);
+    const selection = channel;
+    refreshRegistrySources(selection).then(available => {
+      if (activeChannel !== selection) return;
+      if (available && selection.urls.length) {
+        startSource(selection, 0);
+      } else {
+        destroyPlayer();
+        setPlaybackState("Stream unavailable");
+        const detail = selection.registryUnavailableReason === "viewer_region_unavailable"
+          ? "Yocare could not verify your region to apply feed rights."
+          : "No authorized feed is registered for your region.";
+        setMessage(detail + " Public IPTV-org listings are channel metadata, not playback authorization. Choose another channel or use the broadcaster's official service.");
+        showPlayerPlaceholder(true);
+      }
+    });
     $("player").scrollIntoView({behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block:"start"});
   }
 
@@ -1203,51 +1219,13 @@
     window.clearTimeout(playbackTimer);
     if (currentIndex + 1 < channel.urls.length) {
       startSource(channel, currentIndex + 1);
-    } else if (alternatePlaylistPending) {
-      const waitingAttemptId = destroyPlayer();
-      waitingForAlternateSource = {channel, index:currentIndex, attemptId:waitingAttemptId};
-      setPlaybackState("Checking alternate links…");
-      setMessage("The current stream did not start. Checking for another available channel link.");
-      showPlayerPlaceholder(false);
-    } else if (REGISTRY_BASE && !registryRefreshAttempted.has(channel)) {
-      const hadCurrentSource = currentIndex < channel.urls.length;
-      const failedAttemptId = sourceAttemptId;
-      setPlaybackState("Finding approved alternatives…");
-      setMessage("Checking Yocare’s approved source registry for another available feed.");
-      refreshRegistrySources(channel).then(added => {
-        if (activeChannel !== channel || sourceAttemptId !== failedAttemptId) return;
-        const nextIndex = hadCurrentSource ? currentIndex + 1 : currentIndex;
-        if (added && nextIndex < channel.urls.length) {
-          startSource(channel, nextIndex);
-          return;
-        }
-        destroyPlayer();
-        setPlaybackState("Stream unavailable");
-        const cause = lastSourceFailure
-          ? sourceFailureMessage(lastSourceFailure)
-          : "no authorized feed was registered";
-        const detail = channel.registryUnavailableReason === "no-authorized-feed-in-region"
-          ? "No authorized feed is registered for your region."
-          : channel.registryUnavailableReason === "viewer_region_unavailable"
-            ? "Yocare could not verify your region to apply feed rights."
-            : "No alternate authorized feed was available.";
-        setMessage("Yocare could not start this channel because " + cause + ". " + detail + " Retry later, choose another channel, or use the broadcaster’s official service.");
-        showPlayerPlaceholder(true);
-      });
-    } else {
-      destroyPlayer();
-      setPlaybackState("Stream unavailable");
-      const cause = lastSourceFailure
-        ? sourceFailureMessage(lastSourceFailure)
-        : "no authorized feed was registered";
-      const detail = channel.registryUnavailableReason === "no-authorized-feed-in-region"
-        ? "No authorized feed is registered for your region."
-        : channel.registryUnavailableReason === "viewer_region_unavailable"
-          ? "Yocare could not verify your region to apply feed rights."
-          : "No alternate authorized feed was available.";
-      setMessage("Yocare could not start this channel because " + cause + ". " + detail + " Retry later, choose another channel, or use the broadcaster’s official service.");
-      showPlayerPlaceholder(true);
+      return;
     }
+    destroyPlayer();
+    setPlaybackState("Stream unavailable");
+    const cause = lastSourceFailure ? sourceFailureMessage(lastSourceFailure) : "the registered feeds could not be played";
+    setMessage("Yocare could not start this channel because " + cause + ". All authorized feeds registered for your region have been tried. Retry later or choose another channel.");
+    showPlayerPlaceholder(true);
   }
 
   function renderCategories() {
@@ -1340,7 +1318,9 @@
       lastSourceFailure = null;
       registryRefreshAttempted.delete(activeChannel);
       registryRefreshes.delete(activeChannel);
-      startSource(activeChannel, 0);
+      activeChannel.urls = [];
+      activeChannel.registrySourceIds = Object.create(null);
+      playChannel(activeChannel);
     } else {
       loadCountry(els.country.value);
     }
