@@ -111,7 +111,7 @@
         const meta = comma >= 0 ? line.slice(0, comma) : line;
         const name = comma >= 0 ? line.slice(comma + 1).trim() : "Live channel";
         const getAttr = key => {
-          const match = meta.match(new RegExp("(?:^|\\\\s)" + key + '="([^"]*)"', "i"));
+          const match = meta.match(new RegExp("(?:^|\\s)" + key + '="([^"]*)"', "i"));
           return match ? match[1] : "";
         };
         pending = {
