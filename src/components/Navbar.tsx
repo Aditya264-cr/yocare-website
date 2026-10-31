@@ -7,10 +7,11 @@ interface NavbarProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   selectedCountry: Country;
+  countries: Country[];
   onSearchClick: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selectedCountry, onSearchClick }) => (
+export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selectedCountry, countries, onSearchClick }) => (
   <header className="g-home-nav" id="top">
     <a className="g-brand" href="#discover" onClick={(event) => { event.preventDefault(); setActiveTab('tv'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Yocare Live home">
       <span className="g-brand-mark">Y</span><span>yocare<span className="g-brand-light"> live</span></span>
@@ -27,7 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
       <label className="g-region-control" title="Choose your channel region">
         <span>{selectedCountry.flag}</span>
         <select aria-label="Content region" value={selectedCountry.code} onChange={(event) => window.dispatchEvent(new CustomEvent('yocare-region-change', { detail: event.target.value }))}>
-          <option value="in">India</option><option value="us">United States</option><option value="gb">United Kingdom</option><option value="ca">Canada</option><option value="au">Australia</option><option value="jp">Japan</option><option value="kr">South Korea</option><option value="de">Germany</option><option value="fr">France</option><option value="it">Italy</option><option value="br">Brazil</option><option value="za">South Africa</option><option value="sg">Singapore</option><option value="es">Spain</option><option value="nl">Netherlands</option><option value="mx">Mexico</option><option value="ph">Philippines</option><option value="pk">Pakistan</option><option value="bd">Bangladesh</option><option value="np">Nepal</option>
+          {countries.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
         </select>
       </label>
       {activeTab === 'health' && <button type="button" className="g-icon-button" onClick={() => setActiveTab('tv')} aria-label="Return to live TV"><Settings2 size={18}/></button>}
