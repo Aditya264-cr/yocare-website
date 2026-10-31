@@ -1,27 +1,47 @@
 import { Channel, Country, CategoryType, StreamInfo } from '../types';
 
 export const COUNTRIES: Country[] = [
-  { code: 'in', name: 'India', flag: '🇮🇳' },
-  { code: 'us', name: 'United States', flag: '🇺🇸' },
-  { code: 'gb', name: 'United Kingdom', flag: '🇬🇧' },
-  { code: 'ca', name: 'Canada', flag: '🇨🇦' },
-  { code: 'au', name: 'Australia', flag: '🇦🇺' },
-  { code: 'jp', name: 'Japan', flag: '🇯🇵' },
-  { code: 'kr', name: 'South Korea', flag: '🇰🇷' },
-  { code: 'de', name: 'Germany', flag: '🇩🇪' },
-  { code: 'fr', name: 'France', flag: '🇫🇷' },
-  { code: 'it', name: 'Italy', flag: '🇮🇹' },
-  { code: 'br', name: 'Brazil', flag: '🇧🇷' },
-  { code: 'za', name: 'South Africa', flag: '🇿🇦' },
-  { code: 'sg', name: 'Singapore', flag: '🇸🇬' },
-  { code: 'es', name: 'Spain', flag: '🇪🇸' },
-  { code: 'nl', name: 'Netherlands', flag: '🇳🇱' },
-  { code: 'mx', name: 'Mexico', flag: '🇲🇽' },
-  { code: 'ph', name: 'Philippines', flag: '🇵🇭' },
-  { code: 'pk', name: 'Pakistan', flag: '🇵🇰' },
-  { code: 'bd', name: 'Bangladesh', flag: '🇧🇩' },
+  { code: 'in', name: 'India', flag: '🇮🇳' }, { code: 'us', name: 'United States', flag: '🇺🇸' },
+  { code: 'gb', name: 'United Kingdom', flag: '🇬🇧' }, { code: 'cn', name: 'China', flag: '🇨🇳' },
+  { code: 'ca', name: 'Canada', flag: '🇨🇦' }, { code: 'au', name: 'Australia', flag: '🇦🇺' },
+  { code: 'jp', name: 'Japan', flag: '🇯🇵' }, { code: 'kr', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'de', name: 'Germany', flag: '🇩🇪' }, { code: 'fr', name: 'France', flag: '🇫🇷' },
+  { code: 'it', name: 'Italy', flag: '🇮🇹' }, { code: 'br', name: 'Brazil', flag: '🇧🇷' },
+  { code: 'za', name: 'South Africa', flag: '🇿🇦' }, { code: 'sg', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'es', name: 'Spain', flag: '🇪🇸' }, { code: 'nl', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'mx', name: 'Mexico', flag: '🇲🇽' }, { code: 'ph', name: 'Philippines', flag: '🇵🇭' },
+  { code: 'pk', name: 'Pakistan', flag: '🇵🇰' }, { code: 'bd', name: 'Bangladesh', flag: '🇧🇩' },
   { code: 'np', name: 'Nepal', flag: '🇳🇵' }
 ];
+
+type CountryRecord = { code?: string; name?: string; flag?: string };
+
+function flagFromCode(code: string): string {
+  const upper = code.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(upper)) return '🌐';
+  return String.fromCodePoint(...[...upper].map((letter) => 127397 + letter.charCodeAt(0)));
+}
+
+// IPTV-org's country API is the source of truth; the local list keeps the selector usable if it is unavailable.
+export async function loadCountries(): Promise<Country[]> {
+  try {
+    const response = await fetch('https://iptv-org.github.io/api/countries.json', { signal: AbortSignal.timeout(12000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const records = await response.json() as CountryRecord[];
+    const countries = records
+      .filter((item) => item.code && item.name)
+      .map((item) => ({
+        code: item.code!.toLowerCase(),
+        name: item.name!,
+        flag: item.flag || flagFromCode(item.code!)
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return countries.length ? countries : COUNTRIES;
+  } catch (error) {
+    console.warn('Unable to load IPTV-org country catalogue; using fallback list:', error);
+    return COUNTRIES;
+  }
+}
 
 export const CATEGORY_LABELS: Record<CategoryType, string> = {
   all: 'All channels', news: 'News', sports: 'Sports', entertainment: 'Entertainment',
@@ -176,6 +196,7 @@ export function parsePlaylist(
   }
   commit();
 
+  // Keep one display card per channel identity, but retain every distinct feed as a fallback.
   const grouped = new Map<string, Channel>();
   for (const item of parsed) {
     const groupKey = item.tvgId ? `id:${item.tvgId.toLowerCase()}` : `name:${item.key}`;
