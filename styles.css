@@ -298,3 +298,31 @@
  .g-tv-app .channels-section.page-section,.g-tv-app .player-section{padding:38px 18px}
 }
 @media(prefers-reduced-motion:reduce){.g-channel-tile,.g-primary-button{transition:none}}
+
+
+/* Channel artwork should sit on the cinematic dark surface; don't force white logo tiles. */
+.g-tv-app .channel-logo,
+.g-tv-app .channel-logo img,
+.g-tv-app .ytv-guide-logo,
+.g-tv-app .ytv-guide-logo img,
+.g-tv-app .g-logo-stage,
+.g-tv-app .g-logo-stage img {
+  background-color: transparent !important;
+}
+.g-tv-app .ytv-guide-logo {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 10px;
+}
+.g-tv-app .ytv-guide-logo img,
+.g-tv-app .g-logo-stage img {
+  object-fit: contain;
+  max-width: 90%;
+  max-height: 72px;
+}
+.g-tv-app .ytv-diagnostics-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin: 14px 0; }
+.g-tv-app .ytv-diagnostics-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:38px; padding:0 15px; border:1px solid #ffffff35; border-radius:999px; background:#f1f3f6; color:#111216; font-size:12px; font-weight:700; cursor:pointer; }
+.g-tv-app .ytv-diagnostics-button:disabled { opacity:.5; cursor:not-allowed; }
+.g-tv-app .ytv-diagnostics-note,.g-tv-app .ytv-diagnostic-result { color:#a5a7ae; font-size:11px; }
+.g-tv-app .ytv-diagnostics-summary { display:flex; align-items:flex-start; gap:8px; margin:0 0 14px; padding:11px 13px; border:1px solid #ffffff20; border-radius:10px; background:#14151a; color:#d8d9df; font-size:12px; }
