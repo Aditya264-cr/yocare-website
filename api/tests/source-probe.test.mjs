@@ -102,3 +102,37 @@ test("probe classifies a source with TTFB above 2500ms as slow", async () => {
   assert.ok(result.ttfb_ms > 2500);
   assert.equal(result.latency_tier, "slow");
 });
+
+
+test("probe preserves upstream HTTP status and identifies a blocked manifest", async () => {
+  const result = await inspectSource(
+    { id: "channel-http-403", source_type: "hls", url: "https://cdn.example.org/live.m3u8" },
+    {
+      fetchImpl: async () => new Response("<html>Access denied</html>", {
+        status: 403,
+        headers: { "content-type": "text/html; charset=UTF-8" }
+      }),
+      origin
+    }
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, 403);
+  assert.equal(result.note, "manifest-http-403");
+  assert.equal(result.probe_depth, "manifest");
+});
+
+test("probe distinguishes a rejected upstream fetch from an HTTP response", async () => {
+  const result = await inspectSource(
+    { id: "channel-fetch-rejected", source_type: "hls", url: "https://cdn.example.org/live.m3u8" },
+    {
+      fetchImpl: async () => { throw new TypeError("fetch failed"); },
+      origin
+    }
+  );
+
+  assert.equal(result.ok, false);
+  assert.equal(result.status, null);
+  assert.equal(result.note, "upstream-fetch-rejected-typeerror");
+  assert.equal(result.probe_depth, "manifest");
+});
