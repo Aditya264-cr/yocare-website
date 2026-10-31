@@ -36,7 +36,7 @@ export const CATEGORY_LABELS: Record<CategoryType, string> = {
 
 // IPTV-org is a public discovery playlist. Stream URLs are attempted directly in
 // the browser; catalogue membership is not a playback or redistribution guarantee.
-type IptvStreamRecord = { channel?: string; url?: string; referrer?: string; http_referrer?: string; user_agent?: string; status?: string };
+type IptvStreamRecord = { channel?: string; url?: string; referrer?: string; http_referrer?: string; user_agent?: string; status?: string };\ntype IptvChannelRecord = { id?: string; name?: string; logo?: string };\nlet channelMetadataPromise: Promise<Map<string, IptvChannelRecord>> | null = null;\nasync function loadChannelMetadata(): Promise<Map<string, IptvChannelRecord>> {\n  if (!channelMetadataPromise) channelMetadataPromise = fetch('https://iptv-org.github.io/api/channels.json').then(async (response) => {\n    if (!response.ok) throw new Error(\`HTTP \${response.status}\`);\n    const records = await response.json() as IptvChannelRecord[];\n    return new Map(records.filter((item) => item.id).map((item) => [item.id!.toLowerCase(), item]));\n  }).catch((error) => { console.warn('IPTV channel metadata unavailable:', error); return new Map<string, IptvChannelRecord>(); });\n  return channelMetadataPromise;\n}
 
 let iptvStreamsMap: Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>> | null = null;
 
@@ -111,7 +111,7 @@ export const initialsFor = (name: string): string => {
   return (words[0] || 'TV').slice(0, 2).toUpperCase();
 };
 
-export function parsePlaylist(text: string, countryCode: string, streamsIndex?: Map<string, any[]>): Channel[] {
+export function parsePlaylist(text: string, countryCode: string, streamsIndex?: Map<string, any[]>, channelMetadata?: Map<string, IptvChannelRecord>): Channel[] {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   const parsed: Channel[] = [];
   let pending: { name: string; group?: string; logo?: string; tvgId?: string; rawUrl?: string } | null = null;
@@ -121,7 +121,7 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
     const key = normalise(pending.name);
     const idKey = pending.tvgId || key;
     const registryId = `${idKey}@${countryCode.toLowerCase()}`;
-    const category = categoryFor(pending.name, pending.group);
+    const category = categoryFor(displayName, pending.group);
 
     const streams: StreamInfo[] = [];
 
@@ -225,7 +225,7 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
 
 export async function fetchCountryPlaylist(countryCode: string): Promise<Channel[]> {
   try {
-    const streamsIndex = await loadIptvStreamsIndex();
+    const [streamsIndex, channelMetadata] = await Promise.all([loadIptvStreamsIndex(), loadChannelMetadata()]);
     // Use the country-specific playlist so region selection never mixes countries.
     const url = `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
     const controller = new AbortController();
@@ -239,7 +239,7 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
     }
 
     const text = await res.text();
-    const channels = parsePlaylist(text, countryCode, streamsIndex);
+    const channels = parsePlaylist(text, countryCode, streamsIndex, channelMetadata);
     if (channels.length > 0) return channels;
   } catch (err) {
     console.warn('Failed fetching country playlist; returning an empty channel catalogue for region:', countryCode, err);
