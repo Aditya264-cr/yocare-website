@@ -868,7 +868,8 @@
   }
 
   function setCategory(category) {
-    activeFilter = category;\n    if (els.categories) els.categories.querySelectorAll(".category-chip").forEach(button => {
+    activeFilter = category;
+    if (els.categories) els.categories.querySelectorAll(".category-chip").forEach(button => {
       const selected = button.dataset.category === category;
       button.classList.toggle("selected", selected);
       button.setAttribute("aria-pressed", String(selected));
