@@ -600,7 +600,8 @@
     return (async () => {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
-      try {\n        const response = await fetch(REGISTRY_BASE + "/api/channels/" + encodeURIComponent(channelId) + "/sources", {
+      try {
+        const response = await fetch(REGISTRY_BASE + "/api/channels/" + encodeURIComponent(channelId) + "/sources", {
           method: "GET", headers: { "accept": "application/json" }, signal: controller.signal, cache: "no-store"
         });
         if (!response.ok) return false;
@@ -633,7 +634,6 @@
         window.clearTimeout(timeout);
       }
     })();
-    return registryRefreshInFlight;
   }
 
   function reportRegistryFailure(channel, url, reason) {
