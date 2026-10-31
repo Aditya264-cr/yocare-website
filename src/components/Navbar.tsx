@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
     </nav>
     <div className="ytv-nav-actions">
       {activeTab === 'tv' ? <button className="ytv-icon-btn" onClick={onSearchClick} aria-label="Search channels"><Search size={18}/></button> : null}
-      <label className="ytv-region"><span>REGION</span><select value={selectedCountry.code} onChange={(e) => { const target = e.currentTarget; window.dispatchEvent(new CustomEvent('yocare-region-change',{detail:target.value})); }} aria-label="Select region">{/* region selection is controlled by the guide below */}<option value={selectedCountry.code}>{selectedCountry.flag} {selectedCountry.name}</option></select></label>
+      <span className="ytv-region-pill">{selectedCountry.flag} {selectedCountry.name}</span>
       <span className="ytv-brand-end">YOCARE TV</span>
     </div>
   </header>
