@@ -234,14 +234,30 @@
         const payload = await response.json().catch(() => null);
         if (!response.ok) {
           channel.registryUnavailableReason = payload?.error || "registry-unavailable";
+          channel.registryAvailability = payload?.error === "channel_not_found" ? "unavailable" : "unknown-error";
+          renderFeaturedChannels();
+          applyFilters();
+          updateSelectedCard();
           return false;
         }
-        if (!payload || !Array.isArray(payload.sources)) return false;
-        channel.registryUnavailableReason = payload.unavailable_reason || null;
+        if (!payload || !Array.isArray(payload.sources)) {
+          channel.registryAvailability = "unknown-error";
+          channel.registryUnavailableReason = "invalid-registry-response";
+          return false;
+        }
         channel.registryRegion = payload.region || "";
         channel.registrySourceIds = channel.registrySourceIds || Object.create(null);
+        const reachableSources = payload.sources.filter(source =>
+          source && source.health === "recently-reachable"
+        );
+        channel.registryAvailability = reachableSources.length ? "available" : "unavailable";
+        channel.registryUnavailableReason = reachableSources.length
+          ? null
+          : payload.sources.length
+            ? "no-recently-reachable-feed"
+            : payload.unavailable_reason || "no-authorized-feed-in-region";
         let added = false;
-        for (const source of payload.sources) {
+        for (const source of reachableSources) {
           if (!source || typeof source.id !== "string" || typeof source.url !== "string") continue;
           let parsed;
           try { parsed = new URL(source.url); } catch (_) { continue; }
@@ -260,14 +276,20 @@
           channel.registrySourceIds[playbackUrl] = source.id;
         }
         if (added) {
-          console.info("Yocare Live registry added approved fallback sources", {channel:channel.name, count:channel.urls.length});
-          renderFeaturedChannels();
-          applyFilters();
-          updateSelectedCard();
+          console.info("Yocare Live registry added recently reachable authorized feeds", {channel:channel.name, count:channel.urls.length});
         }
+        // Refresh every card, including channels whose registered feeds are untested or unhealthy.
+        renderFeaturedChannels();
+        applyFilters();
+        updateSelectedCard();
         return added;
       } catch (error) {
+        channel.registryAvailability = "unknown-error";
+        channel.registryUnavailableReason = "registry-unavailable";
         if (error && error.name !== "AbortError") console.warn("Yocare Live source registry unavailable:", error);
+        renderFeaturedChannels();
+        applyFilters();
+        updateSelectedCard();
         return false;
       } finally {
         window.clearTimeout(timeout);
@@ -704,7 +726,13 @@
     button.className = "channel-card";
     button.style.animationDelay = Math.min(index % PAGE_SIZE, 12) * 16 + "ms";
     button.dataset.channelId = channel.id;
-    button.setAttribute("aria-label", "Play " + channel.name);
+    const availability = channel.registryAvailability || "unknown";
+    button.dataset.availability = availability;
+    button.setAttribute("aria-label", availability === "available"
+      ? "Play " + channel.name
+      : availability === "unavailable"
+        ? "Check unavailable feed status for " + channel.name
+        : "Check feed availability for " + channel.name);
     button.setAttribute("aria-current", activeChannel && activeChannel.key === channel.key ? "true" : "false");
 
     const logo = document.createElement("span");
@@ -737,16 +765,20 @@
     tag.textContent = categoryLabel(channel.category);
     meta.append(tag);
     const sourceCount = document.createElement("span");
-    sourceCount.textContent = channel.urls.length > 0
-      ? (channel.urls.length === 1 ? "1 verified feed" : channel.urls.length + " verified feeds")
-      : "Verified feed required";
+    sourceCount.textContent = availability === "available"
+      ? (channel.urls.length === 1 ? "1 recently reachable feed" : channel.urls.length + " recently reachable feeds")
+      : availability === "unavailable"
+        ? "Unavailable in your region"
+        : availability === "unknown-error"
+          ? "Availability unknown"
+          : "Check feed availability";
     meta.append(sourceCount);
     info.append(name, meta);
 
     const play = document.createElement("span");
     play.className = "channel-play";
     play.setAttribute("aria-hidden", "true");
-    play.textContent = activeChannel && activeChannel.key === channel.key ? "●" : "▶";
+    play.textContent = activeChannel && activeChannel.key === channel.key ? "●" : availability === "available" ? "▶" : "⌕";
     button.append(logo, info, play);
     button.addEventListener("click", () => playChannel(channel));
     return button;
@@ -931,7 +963,7 @@
       const selected = !!activeChannel && card.dataset.channelId === activeChannel.id;
       card.setAttribute("aria-current", selected ? "true" : "false");
       const play = card.querySelector(".channel-play");
-      if (play) play.textContent = selected ? "●" : "▶";
+      if (play) play.textContent = selected ? "●" : card.dataset.availability === "available" ? "▶" : "⌕";
     }));
   }
 
@@ -965,7 +997,11 @@
         setPlaybackState("Stream unavailable");
         const detail = selection.registryUnavailableReason === "viewer_region_unavailable"
           ? "Yocare could not verify your region to apply feed rights."
-          : "No authorized feed is registered for your region.";
+          : selection.registryUnavailableReason === "no-recently-reachable-feed"
+            ? "This channel has registered feeds, but none has passed a recent availability check. The registry checks feeds every five minutes; try again after a successful check."
+            : selection.registryAvailability === "unknown-error"
+              ? "Yocare could not confirm feed availability right now. Please retry shortly."
+              : "No authorized feed is registered for your region.";
         setMessage(detail + " Public IPTV-org listings are channel metadata, not playback authorization. Choose another channel or use the broadcaster's official service.");
         showPlayerPlaceholder(true);
       }
