@@ -117,7 +117,7 @@
 
   // IPTV-org contributes guide metadata only. Its submitted URLs are deliberately ignored.
   function parsePlaylist(text, countryCode) {
-    const lines = text.replace(/^\\uFEFF/, "").split(/\\r?\\n/);
+    const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
     const parsed = [];
     let pending = null;
     const commit = () => {
