@@ -34,69 +34,52 @@ export const CATEGORY_LABELS: Record<CategoryType, string> = {
   general: 'General'
 };
 
-// High-uptime live streams guaranteed to stream in browser
-const FALLBACK_STREAMS: Record<string, string[]> = {
-  news: [
-    'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    'https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f4fdb96e6d113709b173a/index.m3u8',
-    'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8'
-  ],
-  sports: [
-    'https://playertest.longtailvideo.com/adaptive/oceans/oceans.m3u8',
-    'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
-  ],
-  entertainment: [
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
-  ],
-  music: [
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    'https://playertest.longtailvideo.com/adaptive/oceans/oceans.m3u8'
-  ],
-  general: [
-    'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-    'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8'
-  ]
-};
+// IPTV-org is a public discovery playlist. Stream URLs are attempted directly in
+// the browser; catalogue membership is not a playback or redistribution guarantee.
+type IptvStreamRecord = { channel?: string; url?: string; referrer?: string; http_referrer?: string; user_agent?: string; status?: string };
 
 let iptvStreamsMap: Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>> | null = null;
 
 export async function loadIptvStreamsIndex(): Promise<Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>>> {
   if (iptvStreamsMap) return iptvStreamsMap;
-
+  const map = new Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>>();
   try {
-    const res = await fetch('https://iptv-org.github.io/api/streams.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    const map = new Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>>();
-
-    for (const item of data) {
-      if (!item.channel || !item.url) continue;
-      const channelId = String(item.channel).trim().toLowerCase();
-      if (!map.has(channelId)) {
-        map.set(channelId, []);
-      }
-      map.get(channelId)!.push({
+    const response = await fetch('https://iptv-org.github.io/api/streams.json', { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const records = await response.json() as IptvStreamRecord[];
+    for (const item of records) {
+      if (!item.channel || !item.url || !isHttpStreamUrl(item.url)) continue;
+      const id = item.channel.trim().toLowerCase();
+      const entries = map.get(id) || [];
+      entries.push({
         url: item.url,
         http_referrer: item.http_referrer || item.referrer || '',
         user_agent: item.user_agent || '',
         status: item.status || 'untested'
       });
+      map.set(id, entries);
     }
+  } catch (error) {
+    console.warn('IPTV-org streams index unavailable:', error);
+  }
+  iptvStreamsMap = map;
+  return map;
+}
 
-    iptvStreamsMap = map;
-    return map;
-  } catch (err) {
-    console.warn('Failed to load iptv-org streams.json:', err);
-    iptvStreamsMap = new Map();
-    return iptvStreamsMap;
+function isHttpStreamUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === 'https:' || url.protocol === 'http:') &&
+      !url.username && !url.password;
+  } catch {
+    return false;
   }
 }
 
-export function buildProxiedUrl(rawUrl: string, referrer = '', userAgent = ''): string {
-  if (!rawUrl) return '';
-  return `/api/proxy?url=${encodeURIComponent(rawUrl)}&referrer=${encodeURIComponent(referrer)}&user_agent=${encodeURIComponent(userAgent)}`;
+// Kept for compatibility with StreamInfo; deliberately returns the original URL.
+// No open proxy is used and submitted request headers are never forwarded.
+export function buildProxiedUrl(rawUrl: string): string {
+  return isHttpStreamUrl(rawUrl) ? rawUrl : '';
 }
 
 const normalise = (value: string): string =>
@@ -165,17 +148,8 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
       });
     }
 
-    // Step 3: Always append fallback high-uptime live streams to ensure 100% playback reliability
-    const categoryStreams = FALLBACK_STREAMS[category] || FALLBACK_STREAMS.general;
-    categoryStreams.forEach(u => {
-      if (!streams.some(s => s.url === u)) {
-        streams.push({
-          url: u,
-          proxiedUrl: buildProxiedUrl(u),
-          status: 'online'
-        });
-      }
-    });
+    // Never attach unrelated demo videos or category-based fallback streams.
+    // A channel with no real catalogue stream remains discoverable but unavailable.
 
     const proxiedUrls = streams.map(s => s.proxiedUrl);
 
@@ -191,7 +165,7 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
       urls: proxiedUrls,
       url: proxiedUrls[0] || '',
       key,
-      isAvailable: true
+      isAvailable: streams.length > 0
     });
     pending = null;
   };
@@ -248,7 +222,8 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
 export async function fetchCountryPlaylist(countryCode: string): Promise<Channel[]> {
   try {
     const streamsIndex = await loadIptvStreamsIndex();
-    const url = `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
+    // Use the same canonical master playlist URL users can load in VLC.
+    const url = 'https://iptv-org.github.io/iptv/index.m3u';
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -266,7 +241,7 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
     console.warn('Failed fetching IPTV playlist, generating fallback channels for region:', countryCode, err);
   }
 
-  return getCuratedFallbackChannels(countryCode);
+  return [];
 }
 
 function getCuratedFallbackChannels(countryCode: string): Channel[] {
