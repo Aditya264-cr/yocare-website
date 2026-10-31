@@ -1,0 +1,37 @@
+name: Sync IPTV discovery catalogue
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  sync-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Generate discovery-only D1 import
+        run: node scripts/sync-iptv-discovery.mjs --sql /tmp/iptv-discovery.sql
+
+      - name: Apply discovery catalogue migration
+        run: npx --yes wrangler@4 d1 migrations apply yocare-live-registry --remote --config api/wrangler.jsonc
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Import discovery records into D1
+        run: npx --yes wrangler@4 d1 execute yocare-live-registry --remote --config api/wrangler.jsonc --file /tmp/iptv-discovery.sql
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
