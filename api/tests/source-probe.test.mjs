@@ -57,43 +57,17 @@ test("HLS probe checks a master playlist, media playlist, and first segment", as
   ]);
 });
 
-test("HLS probe does not require upstream CORS because playback uses the registry proxy", async () => {
-  const fetchImpl = async url => {
-    if (url.endsWith("/live.m3u8")) {
-      return new Response("#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=900000\nvariant.m3u8\n", {
-        headers: { "content-type": "application/vnd.apple.mpegurl" }
-      });
-    }
-    if (url.endsWith("/variant.m3u8")) {
-      return new Response("#EXTM3U\n#EXTINF:6,\nsegment.ts\n", {
-        headers: { "content-type": "application/vnd.apple.mpegurl" }
-      });
-    }
-    return new Response(new Uint8Array([0x47, 0x40, 0x00]), {
-      headers: { "content-type": "video/mp2t" }
-    });
-  };
+test("HLS probe reports missing browser CORS permission", async () => {
   const result = await inspectSource(
     { id: "channel-no-cors", source_type: "hls", url: "https://cdn.example.org/live.m3u8" },
-    { fetchImpl, origin }
-  );
-
-  assert.equal(result.ok, true);
-  assert.equal(result.note, "manifest-and-first-segment-reachable");
-  assert.equal(result.probe_depth, "segment");
-});
-
-test("direct media still requires browser CORS because it is not proxied", async () => {
-  const result = await inspectSource(
-    { id: "channel-direct-no-cors", source_type: "direct", url: "https://cdn.example.org/live.mp4" },
-    { fetchImpl: async () => new Response(new Uint8Array([0x00]), {
-      headers: { "content-type": "video/mp4" }
+    { fetchImpl: async () => new Response("#EXTM3U\n#EXTINF:6,\npart.ts\n", {
+      headers: { "content-type": "application/vnd.apple.mpegurl" }
     }), origin }
   );
 
   assert.equal(result.ok, false);
   assert.equal(result.note, "cors-blocked");
-  assert.equal(result.probe_depth, "media");
+  assert.equal(result.probe_depth, "manifest");
 });
 
 test("HLS probe rejects unsafe redirect destinations", async () => {

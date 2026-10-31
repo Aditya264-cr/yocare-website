@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #080c0b;
+  --surface: #101715;
+  --surface-2: #18211e;
+  --ink: #f3f5ef;
+  --muted: #a0aea5;
+  --soft: #6f7e76;
+  --line: #ffffff18;
+  --accent: #c8f28a;
+  --accent-2: #7cddbd;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "DM Sans", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}

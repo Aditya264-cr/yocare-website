@@ -7,14 +7,14 @@ The registry is the playback source of truth for Yocare Live. Public IPTV-org co
 1. A broadcaster or distributor supplies a feed Yocare is allowed to distribute.
 2. Use its HTTPS HLS/DASH feed directly when it supports browser playback, or ingest an authorized contribution feed through a streaming provider.
 3. Register the channel using the catalogue ID plus its two-letter country suffix (for example, `cnn.us@in` only if that exact ID is the catalogue's `tvg-id` and the channel is listed in India), then register the resulting playback manifest and each authorized redundant feed. The API returns only sources licensed for the viewer's Cloudflare edge country.
-4. A five-minute monitor checks HTTPS, redirects, and HLS manifest/first-segment reachability. HLS is checked server-side without requiring upstream browser CORS because manifests and same-host segments are routed through the registry proxy, which supplies CORS headers and re-checks source authorization and viewer territory on every request. DASH/direct feeds are not proxied and must provide browser CORS themselves. The player tries recently reachable authorized alternatives in priority/health order and reports playback failures.
+4. A five-minute monitor checks HTTPS, redirects, browser CORS, and HLS manifest/first-segment reachability. The player tries authorized alternatives in priority/health order and reports playback failures. HLS manifests and their same-origin segments are routed through the registry proxy, which re-checks source authorization and viewer territory on every request. DASH/direct feeds must provide browser CORS themselves.
 5. Browser playback remains the final check for decoding, audio, and regional/provider behavior. Health status is evidence, not an uptime promise.
 
 No production source records are seeded. A channel without an authorized feed in the viewer's territory will show an unavailable message and can be watched through the broadcaster's official service.
 
 ## Feed and ingestion options
 
-- **Authorized HLS/DASH:** register the broadcaster's stable HTTPS playback manifest. It must be reachable by the registry Worker over HTTPS and must not depend on cookies or custom request headers. HLS is delivered through the rights-checking proxy; DASH must provide browser CORS itself.
+- **Authorized HLS/DASH:** register the broadcaster's stable HTTPS playback manifest. It must allow browser playback from Yocare and must not depend on cookies or custom request headers.
 - **RTMPS/SRT contribution:** Cloudflare Stream Live accepts authorized broadcaster contributions over RTMPS or SRT, encodes the video, and provides HLS/DASH playback. Create a Live Input in Cloudflare, give the ingest URL/key only to the broadcaster, and register the resulting HLS manifest in Yocare. Stream Live is a paid delivery service; channels can be free to viewers while still having operating costs. See [Cloudflare Stream Live](https://developers.cloudflare.com/stream/stream-live/) and [watch a live input](https://developers.cloudflare.com/stream/stream-live/watch-live-stream/).
 - **HLS pull/transcoding:** when a distributor grants a pull feed that needs normalization, a managed encoder/packager such as AWS Elemental MediaLive can ingest supported live inputs and produce viewer-ready outputs. This requires an account, output origin/CDN, and distribution rights.
 - **Official app or embed:** when a broadcaster only authorizes viewing on its own service, link viewers there. An official YouTube stream can be embedded only when the owner enables embedding and YouTube's player/API terms are followed; it is not a transferable HLS feed. See the [YouTube IFrame Player API](https://developers.google.com/youtube/iframe_api_reference).
@@ -66,14 +66,3 @@ Use a non-secret internal reference. Do not put contracts, broadcaster passwords
 - Health is polled every five minutes in bounded batches. Viewers can still encounter ISP outages, device codec differences, blackouts, or provider restrictions.
 - The player never falls back to raw IPTV-org URLs. Existing/unverified entries are hidden from registry results because the migration leaves their rights reference empty.
 - Apply api/migrations/0002_authorized_delivery.sql before deploying this API version. Do not commit the admin token.
-
-
-## IPTV-org discovery catalogue sync
-
-The scheduled `.github/workflows/sync-iptv-discovery.yml` workflow imports IPTV-org channel metadata and stream records into the separate `discovery_streams` D1 table. It preserves the submitted URL, host, source type, `referrer`, and `user_agent` for diagnostics and manual review. It stores the IPTV-org channel ID and channel metadata alongside each discovery record. It deliberately does not create territory-qualified Yocare playback channel IDs: IPTV-org's channel country is not the same thing as proof that a channel belongs in a particular Yocare territory playlist.
-
-**Discovery records are not playback sources.** The importer never inserts into the `sources` table, never enables a feed for playback, and never forwards community-supplied request headers. The player and proxy continue to read only the authorized `sources` registry. A reviewer must separately establish permission and register a broadcaster/distributor-provided feed through the existing admin route before it can become playable.
-
-Run it manually from GitHub Actions using **Sync IPTV discovery catalogue**, or let the daily schedule run. The workflow requires the existing `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets. It applies D1 migrations before importing the latest catalogue. The sync is idempotent and records the latest observation time.
-
-The public `GET /api/diagnostics` endpoint reports aggregate counts for catalogue channels, enabled sources, authorized sources, recently reachable authorized sources, and discovery records. It does not expose source URLs or submitted headers. Use it to distinguish an empty playback registry from a player-side failure before debugging HLS.js.

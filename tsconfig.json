@@ -1,20 +1,20 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
     "strict": true,
-    "target": "es2022",
-    "module": "nodeNext",
-    "moduleResolution": "nodeNext",
-    "typeRoots": [
-      "./scripts/types",
-      "./node_modules/@types"
-    ],
-    "esModuleInterop": true
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true
   },
-  "ts-node": {
-    "esm": true,
-    "transpileOnly": true
-  },
-  "files": [
-    "node_modules/jest-expect-message/types/index.d.ts"
-  ]
+  "include": ["src"]
 }
