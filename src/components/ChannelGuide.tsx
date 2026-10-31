@@ -151,7 +151,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
   const handleRunDiagnostics = async () => {
     if (isTesting || visibleChannels.length === 0) return;
     setIsTesting(true);
-    setTestSummary(`Probing HEAD signals through proxy for ${Math.min(24, visibleChannels.length)} channels...`);
+    setTestSummary(`Checking up to ${Math.min(24, visibleChannels.length)} candidate URLs. This does not start or interrupt playback.`);
 
     const results = await testChannelSubset(visibleChannels, 24);
     setDiagnosticsMap(results);
@@ -163,7 +163,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
       else offlineCount++;
     });
 
-    setTestSummary(`Diagnostics Complete: ${onlineCount} Live Stream Signals Verified (${offlineCount} Unavailable)`);
+    setTestSummary(`URL checks complete: ${onlineCount} Live Stream Signals Verified (${offlineCount} Unavailable)`);
     setIsTesting(false);
   };
 
@@ -174,7 +174,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
           <p className="eyebrow"><span className="eyebrow-line"></span> THE WORLD, IN CHANNELS</p>
           <h2 className="text-3xl font-bold text-white">Find your <em>next channel.</em></h2>
           <p className="section-subtitle text-xs text-[#a0aea5] mt-1">
-            Explore live streams in {selectedCountry.name} filtered by country, genre, or keyword.
+            Explore channels in {selectedCountry.name}, filtered by country, genre, or keyword. Stream checks are optional and do not interrupt the player.
           </p>
         </div>
 
@@ -200,7 +200,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
         </div>
       </div>
 
-      {testSummary && (
+      <p className="mt-2 text-[10px] text-[#85978b]">Diagnostics checks up to 24 visible candidate URLs using read-only requests. Reachable means only that the URL responded; browser playback is not verified. CORS blocks are inconclusive.</p>\n\n      {testSummary && (
         <div className="mb-4 p-3 rounded-xl bg-[#101715] border border-[#d5f477]/30 text-xs text-[#c8f28a] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-[#d5f477]" />
@@ -419,11 +419,11 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
                     diag.isAvailable ? (
                       <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Live {diag.latencyMs}ms
+                        Reachable · {diag.latencyMs}ms
                       </span>
                     ) : (
                       <span className="text-[10px] text-red-400 font-semibold px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30">
-                        ✕ Unavailable
+                        {diag.status}
                       </span>
                     )
                   ) : channel.isAvailable === false ? (
