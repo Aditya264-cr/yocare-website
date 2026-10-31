@@ -15,24 +15,24 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy static assets
+    name: Build and deploy website assets
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build production website
+        run: bun run build
 
       - name: Deploy with retries
-        run: npm run deploy:retry
+        run: bun run deploy:retry
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
