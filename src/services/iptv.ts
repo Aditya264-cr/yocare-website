@@ -24,20 +24,13 @@ export const COUNTRIES: Country[] = [
 ];
 
 export const CATEGORY_LABELS: Record<CategoryType, string> = {
-  all: 'All channels',
-  news: 'News',
-  sports: 'Sports',
-  entertainment: 'Entertainment',
-  music: 'Music',
-  kids: 'Kids & family',
-  religion: 'Spiritual',
-  general: 'General'
+  all: 'All channels', news: 'News', sports: 'Sports', entertainment: 'Entertainment',
+  music: 'Music', kids: 'Kids & family', religion: 'Spiritual', general: 'General'
 };
 
-// IPTV-org is a public discovery playlist. Stream URLs are attempted directly in
-// the browser; catalogue membership is not a playback or redistribution guarantee.
 type IptvStreamRecord = { channel?: string; url?: string; referrer?: string; http_referrer?: string; user_agent?: string; status?: string };
 type IptvChannelRecord = { id?: string; name?: string; logo?: string };
+
 let channelMetadataPromise: Promise<Map<string, IptvChannelRecord>> | null = null;
 
 async function loadChannelMetadata(): Promise<Map<string, IptvChannelRecord>> {
@@ -69,12 +62,7 @@ export async function loadIptvStreamsIndex(): Promise<Map<string, Array<{ url: s
       if (!item.channel || !item.url || !isHttpStreamUrl(item.url)) continue;
       const id = item.channel.trim().toLowerCase();
       const entries = map.get(id) || [];
-      entries.push({
-        url: item.url,
-        http_referrer: item.http_referrer || item.referrer || '',
-        user_agent: item.user_agent || '',
-        status: item.status || 'untested'
-      });
+      entries.push({ url: item.url, http_referrer: item.http_referrer || item.referrer || '', user_agent: item.user_agent || '', status: item.status || 'untested' });
       map.set(id, entries);
     }
   } catch (error) {
@@ -87,27 +75,24 @@ export async function loadIptvStreamsIndex(): Promise<Map<string, Array<{ url: s
 function isHttpStreamUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return (url.protocol === 'https:' || url.protocol === 'http:') &&
-      !url.username && !url.password;
+    return (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password;
   } catch {
     return false;
   }
 }
 
-// Kept for compatibility with StreamInfo; deliberately returns the original URL.
-// No open proxy is used and submitted request headers are never forwarded.
+// Compatibility helper only: preserve the original feed URL and never create an open proxy.
 export function buildProxiedUrl(rawUrl: string, _referrer?: string, _userAgent?: string): string {
   return isHttpStreamUrl(rawUrl) ? rawUrl : '';
 }
 
-const normalise = (value: string): string =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+const normalise = (value: string): string => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, '')
+  .replace(/[^a-z0-9]+/g, ' ')
+  .trim();
 
 export const categoryFor = (name: string, group?: string): string => {
   const source = ((group || '') + ' ' + name).toLowerCase();
@@ -123,81 +108,50 @@ export const categoryFor = (name: string, group?: string): string => {
 export const initialsFor = (name: string): string => {
   const cleaned = name.replace(/\([^)]*\)/g, '').replace(/\b(HD|FHD|UHD|4K|TV)\b/gi, '').trim();
   const words = cleaned.split(/\s+/).filter(Boolean);
-  if (words.length > 1) {
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
+  if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
   return (words[0] || 'TV').slice(0, 2).toUpperCase();
 };
 
-export function parsePlaylist(text: string, countryCode: string, streamsIndex?: Map<string, any[]>, channelMetadata?: Map<string, IptvChannelRecord>): Channel[] {
-export type ChannelMetadata = { id: string; name: string; country: string; logo?: string; categories?: string[]; closed?: string | null; replaced_by?: string | null };
-
-export function parsePlaylist(text: string, countryCode: string, streamsIndex?: Map<string, any[]>, metadata?: Map<string, ChannelMetadata>): Channel[] {
+export function parsePlaylist(
+  text: string,
+  countryCode: string,
+  streamsIndex?: Map<string, Array<{ url: string; http_referrer?: string; user_agent?: string; status?: string }>>,
+  channelMetadata?: Map<string, IptvChannelRecord>
+): Channel[] {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/);
   const parsed: Channel[] = [];
   let pending: { name: string; group?: string; logo?: string; tvgId?: string; rawUrl?: string } | null = null;
 
   const commit = () => {
-    if (!pending || !pending.name) return;
+    if (!pending?.name) return;
     const metadata = pending.tvgId ? channelMetadata?.get(pending.tvgId.toLowerCase()) : undefined;
     const displayName = metadata?.name || pending.name;
     const displayLogo = pending.logo || metadata?.logo || '';
     const key = normalise(displayName);
-    const idKey = pending.tvgId || key;
-    const registryId = `${idKey}@${countryCode.toLowerCase()}`;
+    const registryId = `${pending.tvgId || key}@${countryCode.toLowerCase()}`;
     const category = categoryFor(displayName, pending.group);
-    const channelMeta = pending.tvgId ? metadata?.get(pending.tvgId.toLowerCase()) : undefined;
-    if (metadata && (!channelMeta || channelMeta.country.toLowerCase() !== countryCode.toLowerCase() || channelMeta.closed || channelMeta.replaced_by)) { pending = null; return; }
-    const displayName = channelMeta?.name || pending.name;
-    const displayLogo = channelMeta?.logo || pending.logo;
-    const key = normalise(displayName);
-    const idKey = pending.tvgId || key;
-    const registryId = `${idKey}@${countryCode.toLowerCase()}`;
-    const category = channelMeta?.categories?.[0] || categoryFor(displayName, pending.group);
-
     const streams: StreamInfo[] = [];
 
-    // Step 1: Join resolved stream URLs from streams.json index by tvgId
     if (pending.tvgId && streamsIndex) {
-      const matchedStreams = streamsIndex.get(pending.tvgId.toLowerCase()) || [];
-      for (const st of matchedStreams) {
+      for (const stream of streamsIndex.get(pending.tvgId.toLowerCase()) || []) {
         streams.push({
-          url: st.url,
-          proxiedUrl: buildProxiedUrl(st.url, st.http_referrer, st.user_agent),
-          http_referrer: st.http_referrer,
-          user_agent: st.user_agent,
-          status: (st.status as any) || 'online'
+          url: stream.url,
+          proxiedUrl: buildProxiedUrl(stream.url, stream.http_referrer, stream.user_agent),
+          http_referrer: stream.http_referrer,
+          user_agent: stream.user_agent,
+          status: stream.status === 'online' || stream.status === 'offline' ? stream.status : 'untested'
         });
       }
     }
 
-    // Step 2: Include playlist stream url if provided
-    if (pending.rawUrl && !streams.some(s => s.url === pending!.rawUrl)) {
-      streams.push({
-        url: pending.rawUrl,
-        proxiedUrl: buildProxiedUrl(pending.rawUrl),
-        status: 'untested'
-      });
+    if (pending.rawUrl && !streams.some((stream) => stream.url === pending!.rawUrl)) {
+      streams.push({ url: pending.rawUrl, proxiedUrl: buildProxiedUrl(pending.rawUrl), status: 'untested' });
     }
 
-    // Never attach unrelated demo videos or category-based fallback streams.
-    // A channel with no real catalogue stream remains discoverable but unavailable.
-
-    const proxiedUrls = streams.map(s => s.proxiedUrl);
-
+    const urls = streams.map((stream) => stream.proxiedUrl).filter(Boolean);
     parsed.push({
-      id: registryId,
-      registryId,
-      name: pending.name,
-      group: pending.group,
-      logo: pending.logo,
-      tvgId: pending.tvgId,
-      category,
-      streams,
-      urls: proxiedUrls,
-      url: proxiedUrls[0] || '',
-      key,
-      isAvailable: streams.length > 0
+      id: registryId, registryId, name: displayName, group: pending.group, logo: displayLogo,
+      tvgId: pending.tvgId, category, streams, urls, url: urls[0] || '', key, isAvailable: urls.length > 0
     });
     pending = null;
   };
@@ -205,24 +159,16 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
   for (const rawLine of lines) {
     const line = rawLine.trim();
     if (!line) continue;
-
     if (line.startsWith('#EXTINF:')) {
       commit();
       const comma = line.indexOf(',');
       const meta = comma >= 0 ? line.slice(0, comma) : line;
       const name = comma >= 0 ? line.slice(comma + 1).trim() : 'Live channel';
-
-      const getAttr = (key: string) => {
-        const match = meta.match(new RegExp('(?:^|\\s)' + key + '="([^"]*)"', 'i'));
+      const getAttr = (attribute: string) => {
+        const match = meta.match(new RegExp('(?:^|\\s)' + attribute + '="([^"]*)"', 'i'));
         return match ? match[1] : '';
       };
-
-      pending = {
-        name: name || 'Live channel',
-        group: getAttr('group-title'),
-        logo: getAttr('tvg-logo'),
-        tvgId: getAttr('tvg-id')
-      };
+      pending = { name: name || 'Live channel', group: getAttr('group-title'), logo: getAttr('tvg-logo'), tvgId: getAttr('tvg-id') };
     } else if (pending && !line.startsWith('#')) {
       pending.rawUrl = line;
       commit();
@@ -230,82 +176,44 @@ export function parsePlaylist(text: string, countryCode: string, streamsIndex?: 
   }
   commit();
 
-  // Deduplicate channels
   const grouped = new Map<string, Channel>();
   for (const item of parsed) {
     const groupKey = item.tvgId ? `id:${item.tvgId.toLowerCase()}` : `name:${item.key}`;
-    if (!grouped.has(groupKey)) {
+    const current = grouped.get(groupKey);
+    if (!current) {
       grouped.set(groupKey, item);
-    } else {
-      const current = grouped.get(groupKey)!;
-      if (!current.logo && item.logo) current.logo = item.logo;
-      if (!current.group && item.group) current.group = item.group;
-      if (item.streams) {
-        const uniqueStreams = new Map<string, StreamInfo>();
-        for (const stream of [...(current.streams || []), ...item.streams]) {
-          if (!uniqueStreams.has(stream.url)) uniqueStreams.set(stream.url, stream);
-        }
-        current.streams = [...uniqueStreams.values()];
-        current.urls = current.streams.map(s => s.proxiedUrl);
-        current.url = current.urls[0] || '';
-      }
+      continue;
     }
+    if (!current.logo && item.logo) current.logo = item.logo;
+    if (!current.group && item.group) current.group = item.group;
+    const uniqueStreams = new Map<string, StreamInfo>();
+    for (const stream of [...(current.streams || []), ...(item.streams || [])]) {
+      if (!uniqueStreams.has(stream.url)) uniqueStreams.set(stream.url, stream);
+    }
+    current.streams = [...uniqueStreams.values()];
+    current.urls = current.streams.map((stream) => stream.proxiedUrl).filter(Boolean);
+    current.url = current.urls[0] || '';
+    current.isAvailable = current.urls.length > 0;
   }
-
   return [...grouped.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function fetchCountryPlaylist(countryCode: string): Promise<Channel[]> {
   try {
     const [streamsIndex, channelMetadata] = await Promise.all([loadIptvStreamsIndex(), loadChannelMetadata()]);
-    // Use the country-specific playlist so region selection never mixes countries.
     const url = `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
-    const streamsIndex = await loadIptvStreamsIndex();
-    let metadata: Map<string, ChannelMetadata> | undefined;
-    try {
-      const [metadataResponse, logosResponse] = await Promise.all([
-        fetch('https://iptv-org.github.io/api/channels.json', { signal: AbortSignal.timeout(15000) }),
-        fetch('https://iptv-org.github.io/api/logos.json', { signal: AbortSignal.timeout(15000) })
-      ]);
-      if (metadataResponse.ok) {
-        const records = await metadataResponse.json() as ChannelMetadata[];
-        const logos = logosResponse.ok ? await logosResponse.json() as Array<{ channel: string; url: string; in_use?: boolean }> : [];
-        const logoByChannel = new Map<string, string>();
-        for (const logo of logos) {
-          const key = logo.channel.toLowerCase();
-          if (logo.url && (logo.in_use || !logoByChannel.has(key))) logoByChannel.set(key, logo.url);
-        }
-        metadata = new Map(records.map((record) => [record.id.toLowerCase(), { ...record, logo: logoByChannel.get(record.id.toLowerCase()) }]));
-      }
-    } catch (metadataError) {
-      console.warn('Official channel metadata unavailable; falling back to country-scoped playlist:', metadataError);
-    }
-    // Use the master playlist only when official country metadata is available.
-    // Otherwise use the upstream country-scoped playlist; never show a mixed list.
-    const url = metadata
-      ? 'https://iptv-org.github.io/iptv/index.m3u'
-      : `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const playlist = await response.text();
+      return parsePlaylist(playlist, countryCode, streamsIndex, channelMetadata);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const text = await res.text();
-    const channels = parsePlaylist(text, countryCode, streamsIndex, channelMetadata);
-    const channels = parsePlaylist(text, countryCode, streamsIndex, metadata);
-    if (channels.length > 0) return channels;
-    // If the metadata catalogue is temporarily unavailable, use the upstream
-    // country-scoped playlist rather than showing a mixed-country master list.
-    const regionalResponse = await fetch(`https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`, { signal: AbortSignal.timeout(15000) });
-    if (regionalResponse.ok) return parsePlaylist(await regionalResponse.text(), countryCode, streamsIndex);
-  } catch (err) {
-    console.warn('Failed fetching country playlist; returning an empty channel catalogue for region:', countryCode, err);
+  } catch (error) {
+    console.warn('Failed fetching country playlist; returning an empty channel catalogue for region:', countryCode, error);
+    return [];
   }
-
-  return [];
 }
