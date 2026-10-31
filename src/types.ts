@@ -1,6 +1,6 @@
 export interface StreamInfo {
   url: string;
-  proxiedUrl: string;
+  proxiedUrl: string; // Original catalogue URL; not an arbitrary proxy URL
   http_referrer?: string;
   user_agent?: string;
   status?: 'online' | 'offline' | 'untested';
