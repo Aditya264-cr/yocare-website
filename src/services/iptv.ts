@@ -251,9 +251,11 @@ export async function fetchCountryPlaylist(countryCode: string): Promise<Channel
     } catch (metadataError) {
       console.warn('Official channel metadata unavailable; falling back to country-scoped playlist:', metadataError);
     }
-    // Keep the master playlist source, but only expose channels whose official
-    // metadata country exactly matches the selected region.
-    const url = 'https://iptv-org.github.io/iptv/index.m3u';
+    // Use the master playlist only when official country metadata is available.
+    // Otherwise use the upstream country-scoped playlist; never show a mixed list.
+    const url = metadata
+      ? 'https://iptv-org.github.io/iptv/index.m3u'
+      : `https://iptv-org.github.io/iptv/countries/${countryCode.toLowerCase()}.m3u`;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
 
