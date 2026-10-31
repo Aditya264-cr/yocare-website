@@ -11,6 +11,8 @@ test("discovery import preserves submitted metadata but never creates playback s
   assert.match(importer, /stream\.user_agent\s*\|\|\s*stream\.userAgent/);
   assert.match(importer, /INSERT INTO discovery_streams/);
   assert.doesNotMatch(importer, /INSERT INTO sources/);
+  assert.doesNotMatch(importer, /INSERT INTO channels/);
+  assert.match(importer, /const channelId = null/);
   assert.match(importer, /playback_sources_created:\s*0/);
 });
 
