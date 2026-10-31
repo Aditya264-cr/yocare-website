@@ -27,15 +27,18 @@ export const App: React.FC = () => {
       if (isMounted) {
         setChannels(data);
         setIsLoading(false);
-        if (data.length > 0 && !activeChannel) {
-          setActiveChannel(data[0]);
-        }
+        setActiveChannel((current) => data.find((channel) => channel.id === current?.id) || data.find((channel) => channel.url) || null);
       }
     });
 
     return () => {
       isMounted = false;
     };
+  }, [selectedCountry]);
+
+  useEffect(() => {
+    setActiveChannel(null);
+    setSearchQuery('');
   }, [selectedCountry]);
 
   const handleSelectChannel = (channel: Channel) => {
