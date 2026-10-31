@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronRight, Play } from 'lucide-react';
 import { Channel } from '../types';
 import { initialsFor } from '../services/iptv';
 
@@ -10,80 +11,26 @@ interface TopPicksRailProps {
   countryName: string;
 }
 
-export const TopPicksRail: React.FC<TopPicksRailProps> = ({
-  channels,
-  activeChannel,
-  onSelectChannel,
-  isLoading,
-  countryName
-}) => {
-  const topPicks = channels.slice(0, 10);
+const ChannelShelf: React.FC<{title:string;id:string;channels:Channel[];activeChannel:Channel|null;onSelectChannel:(channel:Channel)=>void;loading:boolean;empty:string}> = ({title,id,channels,activeChannel,onSelectChannel,loading,empty}) => (
+  <section className="g-shelf" id={id}>
+    <div className="g-shelf-heading"><h2>{title}</h2><a href="#channels">See all <ChevronRight size={16}/></a></div>
+    {loading ? <div className="g-shelf-loading">Loading channels…</div> : channels.length ? <div className="g-channel-rail">
+      {channels.slice(0,12).map(channel => <button type="button" key={channel.id} className={`g-channel-tile ${activeChannel?.id===channel.id?'is-active':''}`} onClick={()=>onSelectChannel(channel)} aria-label={`Play ${channel.name}`}>
+        <span className="g-logo-stage">{channel.logo ? <img src={channel.logo} alt="" loading="lazy" onError={(e)=>{(e.currentTarget as HTMLImageElement).style.display='none';}}/> : <b>{initialsFor(channel.name)}</b>}</span>
+        <span className="g-tile-name">{channel.name}</span><span className="g-tile-meta">{channel.category}</span><span className="g-tile-play"><Play size={13} fill="currentColor"/></span>
+      </button>)}
+    </div> : <p className="g-shelf-empty">{empty}</p>}
+  </section>
+);
 
-  return (
-    <section className="featured-section page-section" id="for-you" aria-labelledby="featured-title">
-      <div className="featured-heading flex items-center justify-between mb-2">
-        <div>
-          <p className="eyebrow"><span className="eyebrow-line"></span> AVAILABLE IN YOUR REGION</p>
-          <h2 id="featured-title" className="text-2xl font-bold text-white">
-            Live channels in <em>{countryName}.</em>
-          </h2>
-        </div>
-        <a className="featured-link text-xs text-[#d5f477] font-semibold" href="#channels">
-          View full guide ↗
-        </a>
-      </div>
-      <p className="featured-subtitle text-xs text-[#a0aea5] mb-4">
-        Choose a channel logo to start watching immediately in your player.
-      </p>
-
-      {isLoading ? (
-        <div className="rail-loading py-8 text-center text-xs text-[#a0aea5] flex items-center justify-center gap-2">
-          <span className="spinner"></span>
-          <span>Finding channels in {countryName}…</span>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-          {topPicks.map((channel) => {
-            const isPlaying = activeChannel?.id === channel.id;
-            return (
-              <button
-                key={channel.id}
-                type="button"
-                className={`channel-card p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer text-left ${
-                  isPlaying
-                    ? 'border-[#d5f477] bg-gradient-to-r from-[#252c19] to-[#13150f]'
-                    : 'border-white/10 bg-[#101715] hover:border-[#d5f477]/50 hover:bg-[#18211e]'
-                }`}
-                onClick={() => onSelectChannel(channel)}
-              >
-                <div className="channel-logo w-10 h-10 rounded-lg flex items-center justify-center flex-none relative overflow-hidden bg-gradient-to-br from-[#2a3021] to-[#11130f]">
-                  {channel.logo && (
-                    <img
-                      src={channel.logo}
-                      alt={channel.name}
-                      className="w-full h-full object-contain p-1"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                  )}
-                  <span className="logo-fallback font-bold text-xs text-[#d5f477]">
-                    {initialsFor(channel.name)}
-                  </span>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="channel-name text-xs font-semibold text-white truncate block">
-                    {channel.name}
-                  </span>
-                  <span className="text-[10px] text-[#a0aea5] uppercase block truncate">
-                    {channel.category}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
+export const TopPicksRail: React.FC<TopPicksRailProps> = ({channels,activeChannel,onSelectChannel,isLoading,countryName}) => {
+  const entertainment=channels.filter(c=>c.category==='entertainment');
+  const shows=channels.filter(c=>c.category!=='entertainment');
+  const apps=channels.filter(c=>['news','sports','music','kids'].includes(c.category));
+  return <div className="g-shelves">
+    <ChannelShelf id="for-you" title="Top picks for you" channels={channels} activeChannel={activeChannel} onSelectChannel={onSelectChannel} loading={isLoading} empty={`No channels are listed for ${countryName} yet.`}/>
+    <ChannelShelf id="movies" title="Movies & entertainment" channels={entertainment} activeChannel={activeChannel} onSelectChannel={onSelectChannel} loading={isLoading} empty="No entertainment channels are listed in this region."/>
+    <ChannelShelf id="shows" title="Shows, news & more" channels={shows} activeChannel={activeChannel} onSelectChannel={onSelectChannel} loading={isLoading} empty="No additional channels are listed in this region."/>
+    <ChannelShelf id="apps" title="Your channels" channels={apps} activeChannel={activeChannel} onSelectChannel={onSelectChannel} loading={isLoading} empty="No category channels are available in this region."/>
+  </div>;
 };
