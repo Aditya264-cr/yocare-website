@@ -12,10 +12,15 @@ import {
   Sparkles,
   Radio,
   SlidersHorizontal,
-  Filter
+  Filter,
+  Activity,
+  CheckCircle2,
+  AlertOctagon,
+  Loader2
 } from 'lucide-react';
 import { Channel, Country, CategoryType } from '../types';
 import { COUNTRIES, CATEGORY_LABELS, initialsFor } from '../services/iptv';
+import { testChannelSubset } from '../services/diagnostics';
 
 interface ChannelGuideProps {
   channels: Channel[];
@@ -102,6 +107,9 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all');
   const [visibleCount, setVisibleCount] = useState<number>(48);
+  const [diagnosticsMap, setDiagnosticsMap] = useState<Map<string, { isAvailable: boolean; latencyMs: number; status: string }>>(new Map());
+  const [isTesting, setIsTesting] = useState<boolean>(false);
+  const [testSummary, setTestSummary] = useState<string | null>(null);
 
   const categoriesList: CategoryType[] = [
     'all',
@@ -140,9 +148,28 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
     return counts;
   }, [channels]);
 
+  const handleRunDiagnostics = async () => {
+    if (isTesting || visibleChannels.length === 0) return;
+    setIsTesting(true);
+    setTestSummary(`Probing HEAD signals through proxy for ${Math.min(24, visibleChannels.length)} channels...`);
+
+    const results = await testChannelSubset(visibleChannels, 24);
+    setDiagnosticsMap(results);
+
+    let onlineCount = 0;
+    let offlineCount = 0;
+    results.forEach((res) => {
+      if (res.isAvailable) onlineCount++;
+      else offlineCount++;
+    });
+
+    setTestSummary(`Diagnostics Complete: ${onlineCount} Live Stream Signals Verified (${offlineCount} Unavailable)`);
+    setIsTesting(false);
+  };
+
   return (
     <section className="channels-section page-section" id="channels">
-      <div className="section-intro channels-intro flex items-end justify-between mb-6">
+      <div className="section-intro channels-intro flex items-end justify-between mb-6 flex-wrap gap-4">
         <div>
           <p className="eyebrow"><span className="eyebrow-line"></span> THE WORLD, IN CHANNELS</p>
           <h2 className="text-3xl font-bold text-white">Find your <em>next channel.</em></h2>
@@ -150,11 +177,44 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
             Explore live streams in {selectedCountry.name} filtered by country, genre, or keyword.
           </p>
         </div>
-        <div className="channel-count flex flex-col items-end">
-          <strong className="text-2xl font-bold text-[#d5f477]">{filteredChannels.length}</strong>
-          <span className="text-[10px] text-[#85978b] tracking-wider uppercase">CHANNELS LISTED</span>
+
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            disabled={isTesting}
+            onClick={handleRunDiagnostics}
+            className="px-4 py-2.5 rounded-xl bg-[#18211e] border border-[#d5f477]/30 text-[#d5f477] text-xs font-semibold hover:bg-[#252c19] transition-all cursor-pointer flex items-center gap-2"
+          >
+            {isTesting ? (
+              <Loader2 className="w-4 h-4 animate-spin text-[#d5f477]" />
+            ) : (
+              <Activity className="w-4 h-4 text-[#d5f477]" />
+            )}
+            <span>{isTesting ? 'Testing Streams...' : 'Run Stream Diagnostics'}</span>
+          </button>
+
+          <div className="channel-count flex flex-col items-end">
+            <strong className="text-2xl font-bold text-[#d5f477]">{filteredChannels.length}</strong>
+            <span className="text-[10px] text-[#85978b] tracking-wider uppercase">CHANNELS LISTED</span>
+          </div>
         </div>
       </div>
+
+      {testSummary && (
+        <div className="mb-4 p-3 rounded-xl bg-[#101715] border border-[#d5f477]/30 text-xs text-[#c8f28a] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#d5f477]" />
+            <span>{testSummary}</span>
+          </div>
+          <button
+            type="button"
+            className="text-[#85978b] hover:text-white bg-transparent border-0 cursor-pointer text-xs"
+            onClick={() => setTestSummary(null)}
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       <div className="toolbar p-4 rounded-xl bg-[#101715] border border-white/10 mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div className="country-control">
@@ -314,6 +374,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
           {visibleChannels.map((channel) => {
             const isPlaying = activeChannel?.id === channel.id;
             const tagStyle = CATEGORY_STYLES[channel.category as CategoryType] || CATEGORY_STYLES.general;
+            const diag = diagnosticsMap.get(channel.id);
 
             return (
               <button
@@ -354,9 +415,20 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
                 </div>
 
                 <div className="channel-play flex-none">
-                  {channel.isAvailable === false ? (
-                    <span className="text-[10px] text-red-400 font-semibold px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20">
-                      Offline
+                  {diag ? (
+                    diag.isAvailable ? (
+                      <span className="text-[10px] text-emerald-400 font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Live {diag.latencyMs}ms
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-red-400 font-semibold px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30">
+                        ✕ Unavailable
+                      </span>
+                    )
+                  ) : channel.isAvailable === false ? (
+                    <span className="text-[10px] text-red-400 font-semibold px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30">
+                      Unavailable
                     </span>
                   ) : (
                     <div className="text-[#d5f477]">
