@@ -39,7 +39,6 @@
   let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
-  const registryRefreshAttempted = new WeakSet();
 
   const countryName = () => els.country.options[els.country.selectedIndex]?.textContent.trim() || "Selected country";
   const normalise = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\b(uhd|fhd|hd|sd|4k|1080p|720p|576p|480p|360p)\b/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -593,10 +592,9 @@
   }
 
   async function refreshRegistrySources(channel) {
-    if (!REGISTRY_BASE || !channel || registryRefreshAttempted.has(channel)) return false;
+    if (!REGISTRY_BASE || !channel) return false;
     const channelId = canonicalRegistryId(channel);
     if (!channelId) return false;
-    registryRefreshAttempted.add(channel);
     return (async () => {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);

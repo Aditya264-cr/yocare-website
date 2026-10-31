@@ -43,7 +43,6 @@
   let waitingForAlternateSource = null;
   let networkRecoveryAttempts = 0;
   let mediaRecoveryAttempts = 0;
-  const registryRefreshAttempted = new WeakSet();
   const registryRefreshes = new WeakMap();
   let programGuide = {channels:{}};
   let programEntries = [];
@@ -217,12 +216,11 @@
   }
 
   function refreshRegistrySources(channel) {
-    if (!REGISTRY_BASE || !channel || registryRefreshAttempted.has(channel)) return Promise.resolve(false);
+    if (!REGISTRY_BASE || !channel) return Promise.resolve(false);
     const existing = registryRefreshes.get(channel);
     if (existing) return existing;
     const channelId = canonicalRegistryId(channel);
     if (!channelId) return Promise.resolve(false);
-    registryRefreshAttempted.add(channel);
     const pending = (async () => {
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), REGISTRY_FETCH_TIMEOUT_MS);
@@ -273,6 +271,7 @@
         return false;
       } finally {
         window.clearTimeout(timeout);
+        registryRefreshes.delete(channel);
       }
     })();
     registryRefreshes.set(channel, pending);
