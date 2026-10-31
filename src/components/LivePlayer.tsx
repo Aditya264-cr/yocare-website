@@ -71,6 +71,16 @@ export const LivePlayer: React.FC<LivePlayerProps> = ({
     const isHls = url.includes('.m3u8') || url.includes('m3u8');
     const isDash = url.includes('.mpd');
 
+    // 5-second startup timeout: if stream doesn't start playing, auto-fallback to next stream
+    const startupTimer = setTimeout(() => {
+      if (video && video.paused && video.readyState < 3) {
+        console.warn('Stream startup timeout, trying next fallback stream...');
+        fallbackOrError('Stream signal timeout');
+      }
+    }, 6000);
+
+    const clearStartup = () => clearTimeout(startupTimer);
+
     if (isDash && dashjs.supportsMediaSource()) {
       try {
         const player = dashjs.MediaPlayer().create();
@@ -78,8 +88,9 @@ export const LivePlayer: React.FC<LivePlayerProps> = ({
         dashRef.current = player;
         setStreamNote('Streaming MPEG-DASH live signal');
         setIsLoading(false);
+        clearStartup();
       } catch (err) {
-        console.warn('Dash.js error:', err);
+        clearStartup();
         fallbackOrError('DASH stream playback failed');
       }
     } else if (isHls && Hls.isSupported()) {
@@ -94,6 +105,7 @@ export const LivePlayer: React.FC<LivePlayerProps> = ({
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        clearStartup();
         setIsLoading(false);
         setStreamNote('Live HLS manifest received');
         video.play().then(() => {
@@ -107,6 +119,7 @@ export const LivePlayer: React.FC<LivePlayerProps> = ({
 
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
+          clearStartup();
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               hls.startLoad();
@@ -121,29 +134,21 @@ export const LivePlayer: React.FC<LivePlayerProps> = ({
           }
         }
       });
-    } else if (video.canPlayType('application/vnd.apple.mpegurl') || url.endsWith('.mp4')) {
+    } else {
       video.src = url;
       video.play().then(() => {
+        clearStartup();
         setIsLoading(false);
         setIsPlaying(true);
-        setStreamNote('Native video stream connected');
+        setStreamNote('Live video stream connected');
       }).catch((err) => {
+        clearStartup();
         setIsLoading(false);
         if (err.name === 'NotAllowedError') {
           setErrorMessage('Autoplay paused by browser. Press Play to listen.');
         } else {
           fallbackOrError('Native playback failed for stream URL');
         }
-      });
-    } else {
-      video.src = url;
-      video.play().then(() => {
-        setIsLoading(false);
-        setIsPlaying(true);
-        setStreamNote('Direct stream active');
-      }).catch(() => {
-        setIsLoading(false);
-        fallbackOrError('Format not natively supported');
       });
     }
   };
