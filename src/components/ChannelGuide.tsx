@@ -261,7 +261,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
         <div className="search-control md:col-span-2 relative">
           <Search className="w-4 h-4 text-[#85978b] absolute left-3 top-3.5 pointer-events-none" />
           <input
-            id="search-input"
+            id="channel-search"
             type="search"
             className="w-full h-11 pl-9 pr-9 rounded-lg bg-[#090e0c] border border-white/15 text-white text-xs focus:border-[#d5f477] outline-none placeholder-[#6f7e76]"
             placeholder="Search channels, topics, places..."
@@ -296,7 +296,7 @@ export const ChannelGuide: React.FC<ChannelGuideProps> = ({
           )}
         </div>
 
-        <div className="category-chips flex items-center gap-2 flex-wrap">
+        <div id="apps" className="category-chips flex items-center gap-2 flex-wrap">
           {categoriesList.map((cat) => {
             const count = categoryCounts[cat] || 0;
             const isSelected = selectedCategory === cat;
