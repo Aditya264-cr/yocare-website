@@ -6,6 +6,7 @@ import './index.css';
 import '../tv.css';
 import '../styles.css';
 import '../health.css';
+import './yocare-tv.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

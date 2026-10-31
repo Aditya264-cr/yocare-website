@@ -39,6 +39,10 @@ export const App: React.FC = () => {
       .then((data) => {
         if (!isMounted) return;
         setChannels(data);
+        setIsLoading(false);
+        setActiveChannel((current) => data.find((channel) => channel.id === current?.id) || data.find((channel) => channel.url) || null);
+      }
+    });
         setActiveChannel(data[0] || null);
       })
       .catch((error) => {
@@ -54,6 +58,11 @@ export const App: React.FC = () => {
 
     return () => { isMounted = false; };
   }, [selectedCountry.code]);
+
+  useEffect(() => {
+    setActiveChannel(null);
+    setSearchQuery('');
+  }, [selectedCountry]);
 
   const handleSelectChannel = (channel: Channel) => {
     setActiveChannel(channel);
