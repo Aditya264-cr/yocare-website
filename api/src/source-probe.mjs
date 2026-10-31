@@ -87,10 +87,7 @@ async function readMedia(url, options) {
     await response.body?.cancel();
     return { ok: false, status: response.status, note: "media-http-" + response.status };
   }
-  if (!corsAllowed(response, options.origin)) {
-    await response.body?.cancel();
-    return { ok: false, status: response.status, note: "cors-blocked" };
-  }
+  // HLS is delivered through the registry proxy, which supplies browser CORS headers.
   const type = (response.headers.get("content-type") || "").toLowerCase();
   if (type.includes("text/html")) {
     await response.body?.cancel();
@@ -153,11 +150,6 @@ export async function inspectSource(source, options = {}) {
       await response.body?.cancel();
       return result(false, response.status, "manifest-http-" + response.status, "manifest");
     }
-    if (!corsAllowed(response, origin)) {
-      await response.body?.cancel();
-      return result(false, response.status, "cors-blocked", "manifest");
-    }
-
     const contentType = (response.headers.get("content-type") || "").toLowerCase();
     const body = await readPrefix(response);
     const looksHls = body.trimStart().startsWith("#EXTM3U");
@@ -180,10 +172,10 @@ export async function inspectSource(source, options = {}) {
         phase = "variant";
         const variant = await safeFetch(mediaUrl, requestOptions);
         lastTtfbMs = variant.ttfb_ms;
-        if (!variant.response.ok || !corsAllowed(variant.response, origin)) {
+        if (!variant.response.ok) {
           const status = variant.response.status;
           await variant.response.body?.cancel();
-          return result(false, status, variant.response.ok ? "cors-blocked" : "hls-variant-http-" + status, "variant");
+          return result(false, status, "hls-variant-http-" + status, "variant");
         }
         const variantBody = await readPrefix(variant.response);
         if (!variantBody.trimStart().startsWith("#EXTM3U") || !/#EXT(?:INF|-X-PART):/.test(variantBody)) {
@@ -207,10 +199,12 @@ export async function inspectSource(source, options = {}) {
 
     if (sourceType === "dash" || looksDash || /\.mpd(?:$|[?#])/i.test(new URL(source.url).pathname)) {
       if (!looksDash) return result(false, response.status, "invalid-dash-manifest", "manifest");
+      if (!corsAllowed(response, origin)) return result(false, response.status, "cors-blocked", "manifest");
       return result(true, response.status, "dash-manifest-reachable-segments-not-probed", "manifest");
     }
 
     if (sourceType === "direct") {
+      if (!corsAllowed(response, origin)) return result(false, response.status, "cors-blocked", "media");
       const mediaType = /video|audio|octet-stream/.test(contentType);
       return result(mediaType, response.status, mediaType ? "direct-media-reachable-not-decoded" : "unexpected-media-content-type", "media");
     }
