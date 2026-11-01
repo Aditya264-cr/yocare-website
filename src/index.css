@@ -165,3 +165,12 @@ body {
 .yt-featured-count{position:absolute;right:22px;bottom:20px;color:#ffffffb0;font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.12em}
 @keyframes yt-feature-fade{from{opacity:.45;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.yt-featured-backdrop{animation:none}}
+
+/* Ambient same-video backdrop around the focused YouTube player */
+.yt-player-stage{position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;aspect-ratio:16/9;width:100%;border-radius:12px;background:#050608}
+.yt-player-ambient{position:absolute;z-index:-2;inset:-10%;width:120%;height:120%;border:0;filter:blur(24px) saturate(.82);opacity:.52;transform:scale(1.06);pointer-events:none}
+.yt-player-stage-shade{position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse at center,#05060808 15%,#05060865 100%),linear-gradient(90deg,#05060845,#05060808 25%,#05060808 75%,#05060845);pointer-events:none}
+.yt-player-frame{position:relative;z-index:1;overflow:hidden;aspect-ratio:16/9;width:min(78%,980px);max-width:none;margin:0;border:1px solid #ffffff24;border-radius:9px;background:#000;box-shadow:0 16px 55px #0009}
+.yt-player-frame iframe{display:block;width:100%;height:100%;border:0}
+@media(max-width:760px){.yt-player-frame{width:94%}.yt-player-stage{border-radius:9px}}
+@media(prefers-reduced-motion:reduce){.yt-player-ambient{filter:blur(16px);transform:none}}
