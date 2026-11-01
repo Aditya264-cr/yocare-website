@@ -30,6 +30,8 @@ jobs:
 
       - name: Build production website
         run: bun run build
+        env:
+          VITE_YOUTUBE_API_KEY: ${{ secrets.VITE_YOUTUBE_API_KEY }}
 
       - name: Deploy with retries
         run: bun run deploy:retry
