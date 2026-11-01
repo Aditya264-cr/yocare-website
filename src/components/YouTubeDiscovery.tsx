@@ -52,6 +52,8 @@ export const YouTubeDiscovery: React.FC<Props> = ({ mode, onOpen, regionCode = '
   const [videos, setVideos] = useState<YouTubeVideo[]>([]);
   const [selected, setSelected] = useState<YouTubeVideo | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [carouselPaused, setCarouselPaused] = useState(false);
   const [category, setCategory] = useState('all');
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -86,7 +88,16 @@ export const YouTubeDiscovery: React.FC<Props> = ({ mode, onOpen, regionCode = '
   const visibleVideos = useMemo(() => category === 'all' || videos.some((video) => !video.categoryId)
     ? videos
     : videos.filter((video) => video.categoryId === category), [videos, category]);
-  const featuredVideo = visibleVideos[0] || videos[0] || null;
+  const featuredSlides = feed === 'trending' && !query.trim() ? visibleVideos.slice(0, 6) : [];
+  const featuredVideo = featuredSlides[featuredIndex] || visibleVideos[0] || videos[0] || null;
+  useEffect(() => { setFeaturedIndex(0); }, [feed, category, query, videos]);
+  useEffect(() => {
+    if (carouselPaused || selected || featuredSlides.length < 2) return;
+    const timer = window.setInterval(() => setFeaturedIndex((index) => (index + 1) % featuredSlides.length), 6500);
+    return () => window.clearInterval(timer);
+  }, [carouselPaused, selected, featuredSlides.length, videos, category, feed, query]);
+  const showPreviousSlide = () => setFeaturedIndex((index) => (index - 1 + featuredSlides.length) % featuredSlides.length);
+  const showNextSlide = () => setFeaturedIndex((index) => (index + 1) % featuredSlides.length);
   const startPreview = (id: string) => setPreviewId(id);
   const stopPreview = () => setPreviewId(null);
 
@@ -160,8 +171,11 @@ export const YouTubeDiscovery: React.FC<Props> = ({ mode, onOpen, regionCode = '
         </div>
         <div className="yt-category-list">{categories.map((item) => <button type="button" key={item.id} className={category === item.id ? 'active' : ''} onClick={() => changeCategory(item.id)}>{item.label}</button>)}</div>
         {selected && <div className="yt-player-panel"><div className="yt-player-frame"><iframe src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(selected.id)}?autoplay=1&rel=0`} title={selected.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen/></div><div className="yt-player-details"><div><h2>{selected.title}</h2><p>{selected.channelTitle}</p></div><a href={`https://www.youtube.com/watch?v=${encodeURIComponent(selected.id)}`} target="_blank" rel="noreferrer">Open on YouTube <ExternalLink size={14}/></a></div></div>}
-        {!selected && !loading && !error && featuredVideo && <section className="yt-featured" style={{ backgroundImage: `linear-gradient(90deg,#08090bf2 0%,#08090bba 48%,#08090b18 100%),url("${featuredVideo.thumbnail}")` }}>
-          <div className="yt-featured-copy"><span className="yt-featured-kicker">TOP PICK FOR {regionCode}</span><h2>{featuredVideo.title}</h2><p>{featuredVideo.channelTitle}</p><button type="button" onClick={() => setSelected(featuredVideo)}>Watch now <ArrowRight size={16}/></button></div>
+        {!selected && !loading && !error && featuredVideo && <section className="yt-featured" aria-roledescription="carousel" aria-label="Trending YouTube highlights" onMouseEnter={() => setCarouselPaused(true)} onMouseLeave={() => setCarouselPaused(false)} onFocus={() => setCarouselPaused(true)} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setCarouselPaused(false); }}>
+          <div key={featuredVideo.id} className="yt-featured-backdrop" style={{ backgroundImage: `linear-gradient(90deg,#08090bf2 0%,#08090bba 48%,#08090b18 100%),url("${featuredVideo.thumbnail}")` }} />
+          <div className="yt-featured-copy"><span className="yt-featured-kicker">TRENDING NOW · {regionCode}</span><h2>{featuredVideo.title}</h2><p>{featuredVideo.channelTitle}</p><button type="button" onClick={() => setSelected(featuredVideo)}>Watch now <ArrowRight size={16}/></button>
+            {featuredSlides.length > 1 && <div className="yt-carousel-controls" aria-label="Featured video slides"><button type="button" onClick={showPreviousSlide} aria-label="Previous trending video">‹</button>{featuredSlides.map((slide, index) => <button key={slide.id} type="button" className={index === featuredIndex ? "active" : ""} onClick={() => setFeaturedIndex(index)} aria-label={`Show slide ${index + 1}: ${slide.title}`} />)}<button type="button" onClick={showNextSlide} aria-label="Next trending video">›</button></div>}
+          </div><span className="yt-featured-count">{String(featuredIndex + 1).padStart(2,"0")} / {String(featuredSlides.length || 1).padStart(2,"0")}</span>
         </section>}
         {loading ? <p className="yt-state">Finding videos for you…</p> : error ? <div className="yt-setup"><Tv size={30}/><h2>YouTube discovery needs a connection</h2><p>{error}</p><p>Check the restricted YouTube Data API v3 key in the production build environment.</p></div> : visibleVideos.length ? <section className="yt-tv-shelf"><div className="yt-shelf-heading"><h2>{feed === 'live' ? 'Live on YouTube' : query.trim() ? 'Search results' : 'Top picks for you'}</h2><span>{visibleVideos.length} videos</span></div><div className="yt-video-rail yt-main-rail">{visibleVideos.map((video) => <VideoCard key={video.id} video={video} onSelect={setSelected} previewing={previewId === video.id} onPreviewStart={startPreview} onPreviewEnd={stopPreview}/>)}</div></section> : <p className="yt-state">No videos in this category right now. Try another category.</p>}
         <p className="yt-policy-note"><Clock3 size={13}/> Video availability, playback and advertising are controlled by YouTube. Yocare does not remove or bypass YouTube ads.</p>
