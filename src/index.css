@@ -154,3 +154,14 @@ body {
 .yt-video-meta{font-size:11px}
 @media(max-width:760px){.yt-tv-heading{align-items:flex-start;flex-direction:column;padding-top:30px}.yt-tv-heading>p{max-width:540px}.yt-featured{min-height:250px;margin-top:12px;border-radius:12px}.yt-video-rail.yt-main-rail{grid-auto-columns:260px}}
 @media(hover:none){.yt-hover-preview{display:none}}
+
+/* Auto-advancing trending feature carousel */
+.yt-featured{position:relative;isolation:isolate}
+.yt-featured-backdrop{position:absolute;z-index:-1;inset:0;background-position:center;background-size:cover;animation:yt-feature-fade .55s ease both}
+.yt-carousel-controls{display:flex;align-items:center;gap:8px;margin-top:22px}
+.yt-carousel-controls button{display:grid;place-items:center;width:27px;height:27px;padding:0;border:1px solid #ffffff55;border-radius:50%;background:#10111688;color:#fff;font-size:17px;line-height:1;cursor:pointer}
+.yt-carousel-controls button:not(:first-child):not(:last-child){width:6px;height:6px;border:0;background:#ffffff80}
+.yt-carousel-controls button:not(:first-child):not(:last-child).active{width:24px;height:5px;border-radius:5px;background:#d3f1a5}
+.yt-featured-count{position:absolute;right:22px;bottom:20px;color:#ffffffb0;font-size:11px;font-variant-numeric:tabular-nums;letter-spacing:.12em}
+@keyframes yt-feature-fade{from{opacity:.45;transform:scale(1.015)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.yt-featured-backdrop{animation:none}}
