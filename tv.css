@@ -351,3 +351,12 @@ html{scroll-padding-top:100px;scroll-behavior:smooth}body{background:#050505;col
 
 /* Official dark-tile Yocare Live footer logo asset */
 .footer .brand-symbol{object-fit:contain;}
+
+
+/* Yocare Live footer: supplied gradient Y on a white rounded tile */
+.footer .brand-symbol{
+ display:block;width:26px;height:26px;flex:none;object-fit:cover;overflow:hidden;
+ border:1px solid #ffffff;border-radius:9px;background:#fff;
+ box-shadow:0 4px 13px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.16);
+}
+.footer .brand-symbol i{display:none}
