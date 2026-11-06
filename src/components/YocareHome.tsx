@@ -123,13 +123,13 @@ export const YocareHome: React.FC = () => {
         </section>
 
         <section className="yc-about-section" id="about">
-          <div className="yc-about-symbol">y<span>.</span></div>
+          <div className="yc-about-symbol"><YocareMark className="yc-about-symbol-mark" /></div>
           <div className="yc-about-copy"><div className="yc-eyebrow">A NOTE ABOUT YOCARE</div><h2>Technology should feel<br /><em>clear, useful and human.</em></h2><p>Yocare is an independent digital ecosystem in the making. We bring focused products together under one roof, with an emphasis on thoughtful design and experiences that are easy to understand.</p><a href="mailto:hello@yocare.online">Connect with Yocare <ArrowUpRight size={16} /></a></div>
         </section>
       </main>
 
       <footer className="yc-footer">
-        <a className="yc-logo" href="/"><span className="yc-logo-mark">y</span><span>yocare</span></a>
+        <a className="yc-logo" href="/"><YocareMark /><span>yocare</span></a>
         <span className="yc-footer-tagline">A growing home for digital experiences.</span>
         <div className="yc-footer-links"><a href="/live">Yocare Live</a><a href="/tools">Yocare Tools</a><a href="mailto:hello@yocare.online">Contact</a></div>
         <span className="yc-copyright">© {new Date().getFullYear()} Yocare</span>
