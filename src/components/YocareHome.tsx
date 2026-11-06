@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 
 const YocareMark: React.FC<{ className?: string }> = ({ className = 'yc-logo-symbol' }) => (
-  <img className={className} src="/yocare-logo-exact.svg" alt="" aria-hidden="true" />
+  <img className={className} src="/yocare-logo.png" alt="" aria-hidden="true" />
 );
 
 export const YocareHome: React.FC = () => {
