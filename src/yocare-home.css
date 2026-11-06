@@ -394,3 +394,14 @@
   .yc-showcase-feature-glow{animation:none!important}
   .yc-showcase{transition:none}
 }
+
+
+/* Unified Yocare identity: custom gradient monogram and lowercase wordmark */
+.yc-logo-symbol{display:block;width:36px;height:36px;flex:none}
+.yc-showcase-mark{display:block;width:30px;height:30px;flex:none}
+.yc-logo{gap:10px}
+.yc-logo-mark{display:none}
+.yc-showcase-brand{gap:9px}
+.ytp-brand{display:inline-flex;align-items:center;gap:10px;color:inherit;font-weight:750;letter-spacing:-.045em;text-decoration:none}
+.ytp-brand-symbol{display:block;width:34px;height:34px;flex:none}
+@media(max-width:680px){.yc-logo-symbol{width:33px;height:33px}.yc-showcase-mark{width:27px;height:27px}}
