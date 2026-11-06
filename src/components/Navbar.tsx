@@ -14,7 +14,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selectedCountry, countries, onSearchClick }) => (
   <header className="g-home-nav" id="top">
     <a className="g-brand" href="#discover" onClick={(event) => { event.preventDefault(); setActiveTab('tv'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} aria-label="Yocare Live home">
-      <img className="g-brand-mark" src="/yocare-mark-live.svg" alt="" aria-hidden="true" /><span>yocare<span className="g-brand-light"> live</span></span>
+      <img className="g-brand-mark" src="/yocare-logo.png" alt="" aria-hidden="true" /><span>yocare<span className="g-brand-light"> live</span></span>
     </a>
     <nav className="g-nav-links" aria-label="Main navigation">
       <a className={activeTab === 'tv' ? 'g-nav-active' : ''} href="#discover" onClick={(event) => { event.preventDefault(); setActiveTab('tv'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>For you</a>
