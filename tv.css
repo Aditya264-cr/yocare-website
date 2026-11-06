@@ -348,3 +348,6 @@ html{scroll-padding-top:100px;scroll-behavior:smooth}body{background:#050505;col
 /* Shared Yocare monogram in the Live footer */
 .footer .brand-symbol{display:block;width:25px;height:25px;flex:none;overflow:visible}
 .footer .brand-symbol i{display:none}
+
+/* Official dark-tile Yocare Live footer logo asset */
+.footer .brand-symbol{object-fit:contain;}
