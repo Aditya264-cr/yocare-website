@@ -3,6 +3,8 @@ import {
   ArrowRight, ArrowUpRight, Blocks, ChevronDown, Menu, Play, Tv, X,
 } from 'lucide-react';
 
+const YocareMark: React.FC<{ className?: string }> = ({ className = 'yc-logo-symbol' }) => (<svg className="${className}" viewBox="0 0 48 48" role="img" aria-label="Yocare" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="yocare-mark-gradient" x1="5" y1="5" x2="43" y2="43" gradientUnits="userSpaceOnUse"><stop stopColor="#34D399"/><stop offset=".52" stopColor="#14B8A6"/><stop offset="1" stopColor="#38BDF8"/></linearGradient></defs><path fill="url(#yocare-mark-gradient)" d="M6 7h8.2c5.5 0 9.5 2.7 12.3 7.4l2.7 4.5L39 7h8L27.4 39.1c-2 3.3-5.1 5-9.1 5H9.5l11.9-19.8L6 7Z"/></svg>);
+
 export const YocareHome: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
@@ -11,7 +13,7 @@ export const YocareHome: React.FC = () => {
     <div className="yc-home">
       <header className="yc-header">
         <a className="yc-logo" href="/" aria-label="Yocare home">
-          <span className="yc-logo-mark">y</span><span>yocare</span>
+          <YocareMark /><span>yocare</span>
         </a>
         <button className="yc-mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation" aria-expanded={menuOpen}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -55,7 +57,7 @@ export const YocareHome: React.FC = () => {
             <div className="yc-showcase-orbit yc-showcase-orbit-two" />
             <div className="yc-showcase">
               <div className="yc-showcase-top">
-                <a href="/" className="yc-showcase-brand"><span className="yc-showcase-mark">y</span> yocare</a>
+                <a href="/" className="yc-showcase-brand"><YocareMark className="yc-showcase-mark" /> yocare</a>
                 <span className="yc-showcase-live-indicator"><i /> A WORLD TO EXPLORE</span>
               </div>
               <a href="/live" className="yc-showcase-feature">
