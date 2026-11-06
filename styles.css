@@ -331,3 +331,6 @@
 /* Yocare master brand mark in the Live navigation */
 .g-brand-mark{display:block;width:34px;height:34px;flex:none;overflow:visible}
 .g-brand{gap:10px}
+
+/* Official dark-tile Yocare Live logo asset */
+.g-brand-mark{object-fit:contain;}
