@@ -326,3 +326,8 @@
 .g-tv-app .ytv-diagnostics-button:disabled { opacity:.5; cursor:not-allowed; }
 .g-tv-app .ytv-diagnostics-note,.g-tv-app .ytv-diagnostic-result { color:#a5a7ae; font-size:11px; }
 .g-tv-app .ytv-diagnostics-summary { display:flex; align-items:flex-start; gap:8px; margin:0 0 14px; padding:11px 13px; border:1px solid #ffffff20; border-radius:10px; background:#14151a; color:#d8d9df; font-size:12px; }
+
+
+/* Yocare master brand mark in the Live navigation */
+.g-brand-mark{display:block;width:34px;height:34px;flex:none;overflow:visible}
+.g-brand{gap:10px}
