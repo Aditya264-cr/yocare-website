@@ -110,3 +110,38 @@
   .yc-live-art::before,.yc-live-art-glow,.yc-tools-art::before,
   .yc-tools-orb-a,.yc-tools-orb-b{animation:none!important}
 }
+
+
+/* Make the artwork itself visibly move inside both product boxes */
+.yc-live-art::before,
+.yc-tools-art::before{
+  inset:-65%;
+  background-size:220% 220%;
+  filter:blur(9px);
+  opacity:.95;
+}
+.yc-live-art::before{
+  animation:yc-live-glow-drift 8s ease-in-out infinite alternate,
+            yc-live-gradient-flow 12s ease-in-out infinite;
+}
+.yc-tools-art::before{
+  animation:yc-tools-glow-drift 9s ease-in-out infinite alternate,
+            yc-tools-gradient-flow 14s ease-in-out infinite;
+}
+.yc-live-art-glow{
+  width:390px;
+  height:390px;
+  animation:yc-live-orb-drift 6.5s ease-in-out infinite alternate;
+}
+.yc-tools-orb-a{animation:yc-tools-orb-a 7s ease-in-out infinite alternate}
+.yc-tools-orb-b{animation:yc-tools-orb-b 8.5s ease-in-out infinite alternate}
+@keyframes yc-live-gradient-flow{
+  0%{background-position:0% 40%}
+  50%{background-position:100% 60%}
+  100%{background-position:20% 100%}
+}
+@keyframes yc-tools-gradient-flow{
+  0%{background-position:100% 0%}
+  50%{background-position:0% 100%}
+  100%{background-position:80% 20%}
+}
