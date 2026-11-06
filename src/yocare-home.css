@@ -405,3 +405,10 @@
 .ytp-brand{display:inline-flex;align-items:center;gap:10px;color:inherit;font-weight:750;letter-spacing:-.045em;text-decoration:none}
 .ytp-brand-symbol{display:block;width:34px;height:34px;flex:none}
 @media(max-width:680px){.yc-logo-symbol{width:33px;height:33px}.yc-showcase-mark{width:27px;height:27px}}
+
+
+/* Replace the legacy purple letter-y badges with the master Yocare monogram */
+.yc-about-symbol{display:grid;place-items:center;background:transparent;color:inherit}
+.yc-about-symbol-mark{display:block;width:70px;height:70px;flex:none}
+.yc-footer .yc-logo-symbol{width:30px;height:30px}
+@media(max-width:680px){.yc-about-symbol-mark{width:57px;height:57px}}
