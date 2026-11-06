@@ -1,56 +1,125 @@
 import React, { useState } from 'react';
-import { ArrowRight, ArrowUpRight, ChevronDown, Menu, Play, Tv, Blocks, X } from 'lucide-react';
+import {
+  ArrowRight, ArrowUpRight, Blocks, ChevronDown, Menu, Play, Tv, X,
+} from 'lucide-react';
 
 export const YocareHome: React.FC = () => {
- const [menuOpen,setMenuOpen]=useState(false);
- const [productsOpen,setProductsOpen]=useState(false);
- return <div className="yc-home">
-  <header className="yc-header">
-   <a className="yc-logo" href="/"><span className="yc-logo-mark">y</span><span>yocare</span></a>
-   <button className="yc-mobile-menu" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Toggle navigation">{menuOpen?<X size={20}/>:<Menu size={20}/>}</button>
-   <nav className={menuOpen?"yc-nav open":"yc-nav"} aria-label="Main navigation">
-    <a href="/" className="yc-nav-active">Home</a>
-    <div className="yc-products-nav"><button type="button" onClick={()=>setProductsOpen(!productsOpen)} aria-expanded={productsOpen}>Products <ChevronDown size={14}/></button>
-     {productsOpen&&<div className="yc-products-dropdown"><a href="/live"><Tv size={17}/><span><b>Yocare Live</b><small>Entertainment discovery</small></span></a><a href="/tools"><Blocks size={17}/><span><b>Yocare Tools</b><small>Digital tools · Coming soon</small></span></a></div>}
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(false);
+
+  return (
+    <div className="yc-home">
+      <header className="yc-header">
+        <a className="yc-logo" href="/" aria-label="Yocare home">
+          <span className="yc-logo-mark">y</span><span>yocare</span>
+        </a>
+        <button className="yc-mobile-menu" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation" aria-expanded={menuOpen}>
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        <nav className={menuOpen ? 'yc-nav open' : 'yc-nav'} aria-label="Main navigation">
+          <a href="/" className="yc-nav-active" onClick={() => setMenuOpen(false)}>Home</a>
+          <div className="yc-products-nav">
+            <button type="button" onClick={() => setProductsOpen(!productsOpen)} aria-expanded={productsOpen}>
+              Products <ChevronDown size={15} />
+            </button>
+            {productsOpen && (
+              <div className="yc-products-dropdown">
+                <a href="/live"><Tv size={17} /><span><b>Yocare Live</b><small>Entertainment discovery</small></span></a>
+                <a href="/tools"><Blocks size={17} /><span><b>Yocare Tools</b><small>Digital tools · Coming soon</small></span></a>
+              </div>
+            )}
+          </div>
+          <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
+          <a href="mailto:hello@yocare.online" onClick={() => setMenuOpen(false)}>Contact</a>
+          <a className="yc-nav-cta" href="#products" onClick={() => setMenuOpen(false)}>Explore Yocare <ArrowUpRight size={16} /></a>
+        </nav>
+      </header>
+
+      <main>
+        <section className="yc-hero">
+          <div className="yc-hero-copy">
+            <div className="yc-eyebrow"><span className="yc-eyebrow-mark">✳</span> A WORLD OF DIGITAL EXPERIENCES</div>
+            <h1>Make room for<br /><em>what matters.</em></h1>
+            <p>Yocare brings thoughtful digital experiences together — from discovering what to watch to finding useful tools for everyday life.</p>
+            <div className="yc-hero-actions">
+              <a className="yc-primary-button" href="#products">Explore Yocare <ArrowRight size={17} /></a>
+              <a className="yc-secondary-button" href="#about">Get to know us</a>
+            </div>
+            <div className="yc-hero-note"><span /> One growing ecosystem. Different ways to explore.</div>
+          </div>
+
+          <div className="yc-hero-visual" aria-label="Preview of Yocare products">
+            <div className="yc-visual-orbit yc-orbit-one" />
+            <div className="yc-visual-orbit yc-orbit-two" />
+            <div className="yc-visual-spark yc-spark-one">✳</div>
+            <div className="yc-visual-spark yc-spark-two">✦</div>
+            <div className="yc-product-window">
+              <div className="yc-window-top">
+                <div className="yc-window-brand"><span className="yc-mini-mark">y</span> yocare</div>
+                <span className="yc-window-status"><i /> YOUR DIGITAL SPACE</span>
+              </div>
+              <div className="yc-window-content">
+                <div className="yc-window-greeting">A little more of what you love.</div>
+                <a href="/live" className="yc-window-card yc-window-live">
+                  <div className="yc-window-card-icon"><Play size={19} fill="currentColor" /></div>
+                  <div><span>ENTERTAINMENT</span><b>Yocare Live</b><small>Discover videos and live TV</small></div>
+                  <ArrowUpRight size={18} />
+                </a>
+                <a href="/tools" className="yc-window-card yc-window-tools">
+                  <div className="yc-window-card-icon"><Blocks size={19} /></div>
+                  <div><span>EVERYDAY UTILITIES</span><b>Yocare Tools</b><small>A useful collection is taking shape</small></div>
+                  <span className="yc-coming-pill">SOON</span>
+                </a>
+              </div>
+              <div className="yc-window-footer"><span>Thoughtfully made for everyday life</span><span>01 / 02</span></div>
+            </div>
+            <div className="yc-visual-caption">THE YOCARE ECOSYSTEM <span>DESIGNED TO GROW</span></div>
+          </div>
+        </section>
+
+        <section className="yc-trust-strip">
+          <span>ONE PLACE TO START</span><i /><p>Discover the products shaping the Yocare experience.</p>
+        </section>
+
+        <section className="yc-products-section" id="products">
+          <div className="yc-section-heading">
+            <div><div className="yc-eyebrow">EXPLORE YOCARE</div><h2>Different experiences.<br /><em>One thoughtful home.</em></h2></div>
+            <p>Start with Yocare Live. And keep an eye out for what we’re building next.</p>
+          </div>
+          <div className="yc-product-grid">
+            <a href="/live" className="yc-product-card yc-live-card">
+              <div className="yc-card-topline"><span>01 / ENTERTAINMENT</span><span className="yc-card-arrow"><ArrowUpRight size={18} /></span></div>
+              <div className="yc-card-art yc-live-art">
+                <div className="yc-live-art-glow" />
+                <div className="yc-live-art-screen"><span className="yc-screen-play"><Play size={22} fill="currentColor" /></span><span className="yc-screen-caption">FIND YOUR NEXT WATCH</span></div>
+                <div className="yc-art-chip"><Tv size={14} /> LIVE TV + VIDEO</div>
+              </div>
+              <div className="yc-card-copy"><span>WATCH. DISCOVER. ENJOY.</span><h3>Yocare Live</h3><p>Explore videos and live television through a clear, easy-to-use experience.</p><b>Explore Yocare Live <ArrowRight size={16} /></b></div>
+            </a>
+            <a href="/tools" className="yc-product-card yc-tools-card">
+              <div className="yc-card-topline"><span>02 / DIGITAL TOOLS</span><span className="yc-card-arrow"><ArrowUpRight size={18} /></span></div>
+              <div className="yc-card-art yc-tools-art">
+                <div className="yc-tools-art-orb yc-tools-orb-a" /><div className="yc-tools-art-orb yc-tools-orb-b" />
+                <div className="yc-tools-art-panel"><div className="yc-tools-panel-icon"><Blocks size={24} /></div><span>THE TOOLKIT</span><b>Useful things,<br />beautifully simple.</b><div className="yc-tools-panel-lines"><i /><i /><i /></div></div>
+                <div className="yc-art-chip"><Blocks size={14} /> IN DEVELOPMENT</div>
+              </div>
+              <div className="yc-card-copy"><span>COMING SOON</span><h3>Yocare Tools</h3><p>A future collection of practical digital tools designed to make everyday tasks simpler.</p><b>Discover what’s coming <ArrowRight size={16} /></b></div>
+            </a>
+          </div>
+        </section>
+
+        <section className="yc-about-section" id="about">
+          <div className="yc-about-symbol">y<span>.</span></div>
+          <div className="yc-about-copy"><div className="yc-eyebrow">A NOTE ABOUT YOCARE</div><h2>Technology should feel<br /><em>clear, useful and human.</em></h2><p>Yocare is an independent digital ecosystem in the making. We bring focused products together under one roof, with an emphasis on thoughtful design and experiences that are easy to understand.</p><a href="mailto:hello@yocare.online">Connect with Yocare <ArrowUpRight size={16} /></a></div>
+        </section>
+      </main>
+
+      <footer className="yc-footer">
+        <a className="yc-logo" href="/"><span className="yc-logo-mark">y</span><span>yocare</span></a>
+        <span className="yc-footer-tagline">A growing home for digital experiences.</span>
+        <div className="yc-footer-links"><a href="/live">Yocare Live</a><a href="/tools">Yocare Tools</a><a href="mailto:hello@yocare.online">Contact</a></div>
+        <span className="yc-copyright">© {new Date().getFullYear()} Yocare</span>
+      </footer>
     </div>
-    <a href="#about" onClick={()=>setMenuOpen(false)}>About</a><a href="mailto:hello@yocare.online">Contact</a>
-    <a className="yc-nav-cta" href="#products">Explore Yocare <ArrowUpRight size={15}/></a>
-   </nav>
-  </header>
-  <main>
-   <section className="yc-hero">
-    <div className="yc-hero-copy">
-     <div className="yc-kicker"><span/> A WORLD OF DIGITAL EXPERIENCES</div>
-     <h1>Good things<br/>happen <em>here.</em></h1>
-     <p>Meet Yocare — a growing home for entertainment and useful digital experiences. Discover what’s here today, and what’s coming next.</p>
-     <div className="yc-hero-actions"><a className="yc-primary-button" href="#products">Explore our products <ArrowRight size={17}/></a><a className="yc-text-button" href="#about">Get to know Yocare</a></div>
-     <div className="yc-hero-footnote"><span className="yc-footnote-dot"/> One home. Different ways to explore.</div>
-    </div>
-    <div className="yc-hero-art">
-     <div className="yc-art-backdrop"/>
-     <div className="yc-art-label"><span>THE YOCARE ECOSYSTEM</span><span>01 — 02</span></div>
-     <a href="/live" className="yc-preview-live">
-      <div className="yc-preview-top"><span className="yc-preview-brand"><i>y</i> yocare live</span><span className="yc-live-pill"><i/> DISCOVER</span></div>
-      <div className="yc-preview-screen"><div className="yc-screen-glow"/><div className="yc-screen-play"><Play size={19} fill="currentColor"/></div><span>YOUR NEXT WATCH STARTS HERE</span></div>
-      <div className="yc-preview-bottom"><div><b>Entertainment, in one place.</b><small>Explore videos and live TV</small></div><ArrowUpRight size={18}/></div>
-     </a>
-     <a href="/tools" className="yc-preview-tools"><div className="yc-tools-icon"><Blocks size={23}/></div><div><b>Yocare Tools</b><small>Something useful is on its way.</small></div><span className="yc-soon-tag">COMING SOON</span></a>
-    </div>
-   </section>
-   <section className="yc-intro-strip"><span>BUILT FOR EVERYDAY DIGITAL LIFE</span><p>Thoughtful products. Clear experiences. Room to grow.</p></section>
-   <section className="yc-products-section" id="products">
-    <div className="yc-section-heading"><div><div className="yc-kicker">WHAT YOU CAN EXPLORE</div><h2>One home.<br/><em>More to discover.</em></h2></div><p>Start with what’s available today. There’s more being shaped for tomorrow.</p></div>
-    <div className="yc-product-list">
-     <article className="yc-product-row"><div className="yc-product-index">01</div><div className="yc-product-icon"><Tv size={25}/></div><div className="yc-product-description"><span>ENTERTAINMENT</span><h3>Yocare Live</h3><p>A place to discover videos and explore live television through a clean, easy-to-use experience.</p></div><a href="/live" className="yc-product-link">Explore Live <ArrowUpRight size={18}/></a></article>
-     <article className="yc-product-row"><div className="yc-product-index">02</div><div className="yc-product-icon"><Blocks size={25}/></div><div className="yc-product-description"><span>EVERYDAY DIGITAL TOOLS</span><h3>Yocare Tools <i>Coming soon</i></h3><p>A future collection of useful digital tools, designed around flexible and accessible experiences.</p></div><a href="/tools" className="yc-product-link">Discover the idea <ArrowUpRight size={18}/></a></article>
-    </div>
-   </section>
-   <section className="yc-about-section" id="about">
-    <div className="yc-about-mark">y<span>.</span></div>
-    <div className="yc-about-copy"><div className="yc-kicker">WHY YOCARE</div><h2>Make digital life<br/><em>a little more useful.</em></h2><p>Yocare is an independent digital ecosystem in the making. We bring focused products under one roof, with a simple idea: technology should feel approachable, useful and thoughtfully made.</p><a href="mailto:hello@yocare.online" className="yc-about-link">Say hello <ArrowUpRight size={16}/></a></div>
-    <div className="yc-about-aside"><span>OUR APPROACH</span><b>Useful over noisy.</b><b>Simple over complicated.</b><b>Built to keep evolving.</b></div>
-   </section>
-  </main>
-  <footer className="yc-footer"><a className="yc-logo" href="/"><span className="yc-logo-mark">y</span><span>yocare</span></a><span className="yc-footer-tagline">A growing home for digital experiences.</span><div className="yc-footer-links"><a href="/live">Yocare Live</a><a href="/tools">Yocare Tools</a><a href="mailto:hello@yocare.online">Contact</a></div><span className="yc-copyright">© {new Date().getFullYear()} Yocare</span></footer>
- </div>;
+  );
 };
