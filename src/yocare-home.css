@@ -15,3 +15,98 @@
 @media(max-width:900px){.yc-header{padding:0 26px}.yc-hero{padding:68px 28px;gap:28px}.yc-trust-strip,.yc-products-section,.yc-about-section{margin-right:28px;margin-left:28px}.yc-products-section{padding:82px 0}.yc-about-section{padding:42px 35px}.yc-footer{padding-right:26px;padding-left:26px}}
 @media(max-width:680px){.yc-header{height:68px}.yc-mobile-menu{display:grid;place-items:center;width:39px;height:39px;border:1px solid var(--yc-line);border-radius:50%;background:#fff;color:#34363a}.yc-nav{position:absolute;top:67px;right:14px;left:14px;z-index:30;display:none;align-items:stretch;gap:8px;padding:16px;border:1px solid var(--yc-line);border-radius:16px;background:#fff;box-shadow:0 16px 40px #0001}.yc-nav.open{display:flex;flex-direction:column}.yc-nav>a,.yc-products-nav>button{padding:10px 5px;text-align:left}.yc-products-dropdown{position:static;width:100%;margin-top:4px;box-shadow:none}.yc-nav .yc-nav-cta{justify-content:center;text-align:center}.yc-hero{grid-template-columns:1fr;gap:45px;padding:62px 24px 58px}.yc-hero h1{font-size:61px}.yc-hero-copy>p{font-size:14px}.yc-hero-note{margin-top:35px}.yc-hero-visual{min-height:390px}.yc-orbit-one{width:320px;height:320px}.yc-orbit-two{width:390px;height:390px}.yc-product-window{width:100%}.yc-window-content{padding:20px 17px}.yc-window-card{padding:13px 11px}.yc-visual-caption{bottom:-9px;font-size:7px}.yc-trust-strip{margin-right:24px;margin-left:24px;align-items:flex-start;flex-wrap:wrap;padding:17px 0}.yc-trust-strip>p{width:100%;margin-left:0}.yc-products-section{margin-right:24px;margin-left:24px;padding:70px 0}.yc-section-heading{align-items:flex-start;flex-direction:column;gap:15px}.yc-section-heading h2,.yc-about-copy h2{font-size:39px}.yc-product-grid{grid-template-columns:1fr;gap:17px}.yc-card-art{height:225px}.yc-about-section{grid-template-columns:1fr;margin:0 24px 60px;padding:30px 24px;gap:20px}.yc-about-symbol{width:57px;height:57px;border-radius:17px;font-size:35px}.yc-footer{flex-wrap:wrap;gap:13px;padding:22px 24px}.yc-footer-tagline{flex:1}.yc-footer-links{order:3;width:100%;margin:4px 0 0}.yc-copyright{margin-left:auto}}
 @media(prefers-reduced-motion:reduce){.yc-home *{scroll-behavior:auto!important;transition:none!important}}
+
+
+/* Homepage refinement: high-contrast primary action and ambient animated product artwork */
+.yc-hero .yc-primary-button{
+  background:#111315;
+  color:#fff!important;
+  box-shadow:0 4px 12px #11131524;
+}
+.yc-hero .yc-primary-button:hover{
+  background:#000;
+  box-shadow:0 8px 20px #11131530;
+}
+
+/* Yocare Live: softly shifting emerald, teal and sky-blue light behind the player */
+.yc-live-art{
+  isolation:isolate;
+  background:linear-gradient(135deg,#e8f5ef,#e3f5f4 52%,#e8f1fb);
+}
+.yc-live-art::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:-55%;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 22% 36%,#6ee7b7b8 0%,transparent 35%),
+    radial-gradient(ellipse at 72% 30%,#67e8f9a8 0%,transparent 36%),
+    radial-gradient(ellipse at 60% 78%,#60a5fab0 0%,transparent 38%);
+  background-size:150% 150%;
+  animation:yc-live-glow-drift 13s ease-in-out infinite alternate;
+}
+.yc-live-art-glow{
+  z-index:1;
+  background:radial-gradient(circle,#ffffffd9 0%,#a7f3d45c 38%,transparent 70%);
+  animation:yc-live-orb-drift 9s ease-in-out infinite alternate;
+}
+.yc-live-art-screen{z-index:2}
+.yc-live-art .yc-art-chip{z-index:3}
+
+/* Yocare Tools: matching ambient glow, with independently drifting light orbs */
+.yc-tools-art{
+  isolation:isolate;
+  background:linear-gradient(135deg,#edf8f2,#e9f7f7 52%,#edf4fc);
+}
+.yc-tools-art::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:-45%;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 25% 30%,#6ee7b7a8 0%,transparent 34%),
+    radial-gradient(ellipse at 76% 35%,#67e8f9a8 0%,transparent 36%),
+    radial-gradient(ellipse at 52% 82%,#93c5fda8 0%,transparent 39%);
+  background-size:155% 155%;
+  animation:yc-tools-glow-drift 15s ease-in-out infinite alternate;
+}
+.yc-tools-art-orb{z-index:1;will-change:transform}
+.yc-tools-orb-a{
+  background:radial-gradient(circle at 35% 35%,#ffffff,#99f6e0 55%,#7dd3fc 100%);
+  animation:yc-tools-orb-a 11s ease-in-out infinite alternate;
+}
+.yc-tools-orb-b{
+  background:radial-gradient(circle at 50% 40%,#ffffff,#a7f3d0 58%,#7dd3fc 100%);
+  animation:yc-tools-orb-b 13s ease-in-out infinite alternate;
+}
+.yc-tools-art-panel{z-index:2}
+.yc-tools-art .yc-art-chip{z-index:3}
+
+@keyframes yc-live-glow-drift{
+  0%{transform:translate3d(-4%,-3%,0) rotate(-8deg) scale(.96)}
+  50%{transform:translate3d(3%,2%,0) rotate(4deg) scale(1.04)}
+  100%{transform:translate3d(-1%,5%,0) rotate(10deg) scale(1)}
+}
+@keyframes yc-live-orb-drift{
+  from{transform:translate3d(-16px,-8px,0) scale(.92);opacity:.72}
+  to{transform:translate3d(20px,14px,0) scale(1.1);opacity:1}
+}
+@keyframes yc-tools-glow-drift{
+  0%{transform:translate3d(3%,-4%,0) rotate(7deg) scale(.96)}
+  50%{transform:translate3d(-3%,3%,0) rotate(-4deg) scale(1.05)}
+  100%{transform:translate3d(2%,5%,0) rotate(9deg) scale(1)}
+}
+@keyframes yc-tools-orb-a{
+  from{transform:translate3d(12px,-8px,0) scale(.94)}
+  to{transform:translate3d(-24px,20px,0) scale(1.08)}
+}
+@keyframes yc-tools-orb-b{
+  from{transform:translate3d(-12px,10px,0) scale(1.02)}
+  to{transform:translate3d(22px,-16px,0) scale(.93)}
+}
+@media(prefers-reduced-motion:reduce){
+  .yc-live-art::before,.yc-live-art-glow,.yc-tools-art::before,
+  .yc-tools-orb-a,.yc-tools-orb-b{animation:none!important}
+}
