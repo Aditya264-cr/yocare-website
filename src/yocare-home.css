@@ -415,3 +415,22 @@
 
 /* Official extracted Yocare symbol asset */
 .yc-logo-symbol,.yc-showcase-mark,.yc-about-symbol-mark,.ytp-brand-symbol{display:block;object-fit:contain;}
+
+
+/* Official supplied Y mark — rounded square tile with a soft floating shadow */
+.yc-logo-symbol,.yc-showcase-mark,.yc-about-symbol-mark,.ytp-brand-symbol{
+  display:block;flex:none;object-fit:cover;overflow:hidden;
+  border:1px solid #ffffff;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 5px 16px rgba(20,35,42,.13),0 1px 3px rgba(20,35,42,.07);
+}
+.yc-logo-symbol{width:36px;height:36px}
+.yc-showcase-mark{width:30px;height:30px;border-radius:9px}
+.yc-about-symbol-mark{width:70px;height:70px;border-radius:22px;box-shadow:0 10px 24px rgba(20,35,42,.13),0 2px 5px rgba(20,35,42,.06)}
+.ytp-brand-symbol{width:34px;height:34px;border-radius:11px}
+@media(max-width:680px){
+ .yc-logo-symbol{width:36px;height:36px}
+ .yc-showcase-mark{width:30px;height:30px}
+ .yc-about-symbol-mark{width:57px;height:57px;border-radius:18px}
+}
