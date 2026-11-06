@@ -3,7 +3,12 @@ import {
   ArrowRight, ArrowUpRight, Blocks, ChevronDown, Menu, Play, Tv, X,
 } from 'lucide-react';
 
-const YocareMark: React.FC<{ className?: string }> = ({ className = 'yc-logo-symbol' }) => (<svg className="${className}" viewBox="0 0 48 48" role="img" aria-label="Yocare" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="yocare-mark-gradient" x1="5" y1="5" x2="43" y2="43" gradientUnits="userSpaceOnUse"><stop stopColor="#34D399"/><stop offset=".52" stopColor="#14B8A6"/><stop offset="1" stopColor="#38BDF8"/></linearGradient></defs><path fill="url(#yocare-mark-gradient)" d="M6 7h8.2c5.5 0 9.5 2.7 12.3 7.4l2.7 4.5L39 7h8L27.4 39.1c-2 3.3-5.1 5-9.1 5H9.5l11.9-19.8L6 7Z"/></svg>);
+const YocareMark: React.FC<{ className?: string }> = ({ className = 'yc-logo-symbol' }) => (
+  <svg className={className} viewBox="0 0 48 48" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="yocare-mark-gradient-home" x1="5" y1="5" x2="43" y2="43" gradientUnits="userSpaceOnUse"><stop stopColor="#34D399"/><stop offset=".52" stopColor="#14B8A6"/><stop offset="1" stopColor="#38BDF8"/></linearGradient></defs>
+    <path fill="url(#yocare-mark-gradient-home)" d="M6 7h8.2c5.5 0 9.5 2.7 12.3 7.4l2.7 4.5L39 7h8L27.4 39.1c-2 3.3-5.1 5-9.1 5H9.5l11.9-19.8L6 7Z"/>
+  </svg>
+);
 
 export const YocareHome: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
