@@ -48,32 +48,39 @@ export const YocareHome: React.FC = () => {
             <div className="yc-hero-note"><span /> One growing ecosystem. Different ways to explore.</div>
           </div>
 
-          <div className="yc-hero-visual" aria-label="Preview of Yocare products">
-            <div className="yc-visual-orbit yc-orbit-one" />
-            <div className="yc-visual-orbit yc-orbit-two" />
-            <div className="yc-visual-spark yc-spark-one">✳</div>
-            <div className="yc-visual-spark yc-spark-two">✦</div>
-            <div className="yc-product-window">
-              <div className="yc-window-top">
-                <div className="yc-window-brand"><span className="yc-mini-mark">y</span> yocare</div>
-                <span className="yc-window-status"><i /> YOUR DIGITAL SPACE</span>
+          <div className="yc-hero-visual" aria-label="Yocare product showcase">
+            <div className="yc-showcase-aura yc-showcase-aura-one" />
+            <div className="yc-showcase-aura yc-showcase-aura-two" />
+            <div className="yc-showcase-orbit yc-showcase-orbit-one" />
+            <div className="yc-showcase-orbit yc-showcase-orbit-two" />
+            <div className="yc-showcase">
+              <div className="yc-showcase-top">
+                <a href="/" className="yc-showcase-brand"><span className="yc-showcase-mark">y</span> yocare</a>
+                <span className="yc-showcase-live-indicator"><i /> A WORLD TO EXPLORE</span>
               </div>
-              <div className="yc-window-content">
-                <div className="yc-window-greeting">A little more of what you love.</div>
-                <a href="/live" className="yc-window-card yc-window-live">
-                  <div className="yc-window-card-icon"><Play size={19} fill="currentColor" /></div>
-                  <div><span>ENTERTAINMENT</span><b>Yocare Live</b><small>Discover videos and live TV</small></div>
-                  <ArrowUpRight size={18} />
+              <a href="/live" className="yc-showcase-feature">
+                <div className="yc-showcase-feature-glow" />
+                <div className="yc-showcase-feature-content">
+                  <span className="yc-showcase-kicker"><Tv size={13} /> YOCARE LIVE</span>
+                  <strong>Find your<br />next favourite.</strong>
+                  <span className="yc-showcase-play"><Play size={18} fill="currentColor" /></span>
+                  <span className="yc-showcase-feature-foot">LIVE TV <i /> VIDEO DISCOVERY</span>
+                </div>
+              </a>
+              <div className="yc-showcase-bottom">
+                <a href="/live" className="yc-showcase-product yc-showcase-live-link">
+                  <span className="yc-showcase-product-icon"><Play size={15} fill="currentColor" /></span>
+                  <span><b>Yocare Live</b><small>Watch & discover</small></span>
+                  <ArrowUpRight size={16} />
                 </a>
-                <a href="/tools" className="yc-window-card yc-window-tools">
-                  <div className="yc-window-card-icon"><Blocks size={19} /></div>
-                  <div><span>EVERYDAY UTILITIES</span><b>Yocare Tools</b><small>A useful collection is taking shape</small></div>
-                  <span className="yc-coming-pill">SOON</span>
+                <a href="/tools" className="yc-showcase-product yc-showcase-tools-link">
+                  <span className="yc-showcase-product-icon"><Blocks size={16} /></span>
+                  <span><b>Yocare Tools</b><small>Coming soon</small></span>
+                  <ArrowUpRight size={16} />
                 </a>
               </div>
-              <div className="yc-window-footer"><span>Thoughtfully made for everyday life</span><span>01 / 02</span></div>
             </div>
-            <div className="yc-visual-caption">THE YOCARE ECOSYSTEM <span>DESIGNED TO GROW</span></div>
+            <div className="yc-showcase-caption">ONE ECOSYSTEM <span>ROOM TO EXPLORE</span></div>
           </div>
         </section>
 
