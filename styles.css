@@ -334,3 +334,11 @@
 
 /* Official dark-tile Yocare Live logo asset */
 .g-brand-mark{object-fit:contain;}
+
+
+/* Yocare Live navigation: supplied gradient Y on a white rounded tile */
+.g-brand-mark{
+ display:block;width:36px;height:36px;flex:none;object-fit:cover;overflow:hidden;
+ border:1px solid #ffffff;border-radius:12px;background:#fff;
+ box-shadow:0 5px 16px rgba(0,0,0,.28),0 1px 3px rgba(0,0,0,.16);
+}
