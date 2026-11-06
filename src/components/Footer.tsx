@@ -9,7 +9,7 @@ export const Footer: React.FC<FooterProps> = ({ activeTab }) => {
     <footer className="footer border-t border-white/10 py-8 px-6 bg-[#080c0b] text-xs text-[#8f9e94]">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <a href="#top" className="brand flex items-center gap-2 text-white font-extrabold text-lg">
-          <img className="brand-symbol" src="/yocare-mark-live.svg" alt="" aria-hidden="true" />
+          <img className="brand-symbol" src="/yocare-logo.png" alt="" aria-hidden="true" />
           <span>yocare<span className="brand-light">.{activeTab === 'tv' ? 'live' : activeTab === 'youtube' ? 'youtube' : 'health'}</span></span>
         </a>
 
