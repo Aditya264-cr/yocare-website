@@ -412,3 +412,6 @@
 .yc-about-symbol-mark{display:block;width:70px;height:70px;flex:none}
 .yc-footer .yc-logo-symbol{width:30px;height:30px}
 @media(max-width:680px){.yc-about-symbol-mark{width:57px;height:57px}}
+
+/* Official extracted Yocare symbol asset */
+.yc-logo-symbol,.yc-showcase-mark,.yc-about-symbol-mark,.ytp-brand-symbol{display:block;object-fit:contain;}
