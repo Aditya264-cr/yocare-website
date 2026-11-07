@@ -272,9 +272,13 @@ Before opening a pull request:
 5. Run `bun run build` and describe any checks you could not run.
 6. Update relevant documentation when behaviour or setup changes.
 
-## License
+## License and intellectual property
 
-No explicit open-source license has been established for this repository. Unless a license is added, all rights are reserved by the repository owner. Third-party libraries, APIs, logos, channel metadata and media remain subject to their respective owners' terms and licenses.
+**Important: the current root `LICENSE` file contains the Unlicense.** The Unlicense is a public-domain dedication that permits broad copying, modification, redistribution and commercial use of the material it covers. That is not a proprietary or restrictive licence, and it conflicts with an intention to keep the covered code exclusive to Yocare.
+
+Do not assume that removing or replacing this file now would revoke permissions already granted to recipients of earlier public copies. Before treating this repository as proprietary, obtain qualified legal advice about the existing licence, the repository's commit history, and the provenance/licensing of imported or third-party files. A future licence change can govern new distribution, but cannot simply erase prior grants.
+
+Third-party libraries, APIs, logos, channel metadata and media remain subject to their respective owners' terms and licences. The Yocare name and supplied brand artwork should be reviewed separately for appropriate trademark and brand protection.
 
 ---
 
