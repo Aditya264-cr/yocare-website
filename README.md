@@ -1,6 +1,7 @@
 <div align="center">
 
-<img src="public/yocare-logo.png" alt="Yocare logo" width="88" height="88" />
+<img src="public/<img width="1536" height="380" alt="yocare logo" src="https://github.com/user-attachments/assets/a4ef1756-f4ef-4bdd-99b0-0091a5a555da" />
+" alt="Yocare logo" width="88" height="88" />
 
 # Yocare
 
