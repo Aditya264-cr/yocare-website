@@ -1,24 +1,23 @@
-This is free and unencumbered software released into the public domain.
+YOCARE PROPRIETARY NOTICE
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
+Copyright © 2026 Yocare. All rights reserved.
 
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
+Unless a separate written agreement signed by the applicable copyright owner says otherwise, no permission or licence is granted to use, copy, modify, adapt, publish, distribute, sublicense, sell, or create derivative works from Yocare-owned source code, designs, documentation, or other original materials in this repository.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
+This notice is intended to apply prospectively to Yocare-owned original materials first published with this notice. It does not revoke, narrow, or otherwise change permissions already granted for earlier versions or copies distributed under the Unlicense or any other applicable licence. In particular, the repository's prior root LICENSE file contained the Unlicense; recipients of versions distributed under that licence may continue to rely on the permissions it granted, subject to applicable law.
 
-For more information, please refer to <http://unlicense.org/>
+THIRD-PARTY MATERIALS
+
+This notice does not apply to third-party materials. The `iptv-source/` directory contains separately licensed upstream material and includes its own Unlicense. Third-party dependencies, trademarks, logos, channel metadata, media, and other external assets remain subject to their respective licences, terms, and rights. Where a third-party licence or notice grants permissions, that licence controls for the material it covers.
+
+CONTRIBUTIONS
+
+Submitting a contribution does not automatically transfer copyright to Yocare. Contributors should only submit material they have the right to contribute. Any assignment or licence needed for a contribution must be agreed separately in writing.
+
+NO WARRANTY
+
+To the maximum extent permitted by applicable law, Yocare-owned materials are provided without warranties or conditions of any kind.
+
+QUESTIONS
+
+For permissions beyond those expressly granted by an applicable third-party licence, contact the repository maintainer through the contact details published on the official Yocare website.
