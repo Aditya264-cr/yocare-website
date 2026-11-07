@@ -274,12 +274,13 @@ Before opening a pull request:
 
 ## License and intellectual property
 
-**Important: the current root `LICENSE` file contains the Unlicense.** The Unlicense is a public-domain dedication that permits broad copying, modification, redistribution and commercial use of the material it covers. That is not a proprietary or restrictive licence, and it conflicts with an intention to keep the covered code exclusive to Yocare.
+Yocare-owned original materials first published with the current root `LICENSE` are marked proprietary: all rights are reserved unless the applicable copyright owner grants written permission.
 
-Do not assume that removing or replacing this file now would revoke permissions already granted to recipients of earlier public copies. Before treating this repository as proprietary, obtain qualified legal advice about the existing licence, the repository's commit history, and the provenance/licensing of imported or third-party files. A future licence change can govern new distribution, but cannot simply erase prior grants.
+**Important historical licensing note:** earlier public versions of this repository carried the Unlicense at the root. Replacing that file does not revoke permissions already granted to people who received earlier versions under the Unlicense. This change is prospective and does not make previously released copies proprietary retroactively. Obtain qualified legal advice before relying on exclusive rights in material published under the earlier notice.
 
-Third-party libraries, APIs, logos, channel metadata and media remain subject to their respective owners' terms and licences. The Yocare name and supplied brand artwork should be reviewed separately for appropriate trademark and brand protection.
+The `iptv-source/` directory is third-party upstream material and retains its own Unlicense. Dependencies, external assets, trademarks, channel metadata, and media remain subject to their respective owners' licences and rights. See [NOTICE.md](NOTICE.md) for the third-party material boundary.
 
+Contributions do not automatically transfer copyright to Yocare. Contributor ownership and permissions should be agreed in writing before accepting substantial external contributions.
 ---
 
 <div align="center">
