@@ -1,24 +1,29 @@
-# Frequently Asked Questions
+# Yocare — Frequently Asked Questions
 
-### My favorite channel is not on the playlist.
+## What is Yocare?
 
-Start by asking our community for help via [Discussions](https://github.com/orgs/iptv-org/discussions). It is quite possible that someone already has a link to the channel you need and they just haven't added it to our playlist yet.
+Yocare is an independent digital ecosystem bringing focused digital experiences together under one brand.
 
-But keep in mind that not all TV channels are available for viewing online, and in this case there is little we can do about it.
+## What is Yocare Live?
 
-### Are you planning to include a Video On Demand (VOD) to the playlist?
+Yocare Live is the entertainment experience for channel discovery, eligible live-stream playback, and video discovery. Actual availability depends on the broadcaster, source permissions, territory, provider, device, and network.
 
-No.
+## Does every listed channel have a playable stream?
 
-### Why is the channel on the iptv-org.github.io but not in the playlist?
+No. A channel catalogue entry is metadata, not proof that a stream is available or that Yocare has permission to redistribute it. Production playback should use only sources with documented authorisation and territory permissions.
 
-The site is an extensive database of all existing TV channels in the world, and does not represent a list of streams in our possession. Only those of them for which we have working stream links are included in the playlists.
-You may still check [iptv-org.github.io](https://iptv-org.github.io) with the "streams:>0" parameter in the search bar to check all available streams.
+## What is Yocare Tools?
 
-### Can I add a radio broadcast?
+Yocare Tools is a planned collection of practical digital utilities. Check [yocare.online/tools](https://yocare.online/tools) for its current availability; features should not be assumed to be released until announced.
 
-Yes, if it is a [visual radio](https://en.wikipedia.org/wiki/Visual_radio) in which a video and audio are shown at the same time.
+## Why is the GitHub repository public if Yocare is proprietary?
 
-### Why don't you accept links to Xtream Codes servers?
+The repository is public for transparency and selected collaboration. Public visibility does not grant a general licence to reuse Yocare-owned code or brand materials. See the root [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md). Some historical versions and third-party components have separate licence terms.
 
-Xtream Codes streams tend to be very unstable, and often links to them fail very quickly, so it's easier for us to initially exclude them from the playlist than to search for expired ones every day.
+## How do I report a security issue?
+
+Please follow [SECURITY.md](SECURITY.md) and do not post vulnerability details or credentials in a public issue.
+
+## Can I use Yocare's logo or brand?
+
+Do not assume that repository visibility grants permission to use Yocare's name, logo, or other brand assets. Request permission from the maintainer.
