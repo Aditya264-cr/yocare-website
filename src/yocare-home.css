@@ -558,3 +558,16 @@
 @media(prefers-reduced-motion:reduce){
  .ytp-status-pulse,.ytp-ambient,.ytp-preview-orbit,.ytp-preview-window{animation:none!important}
 }
+
+/* Keep the Yocare Home canvas clean: no page-edge vignette or side shadows. */
+.yc-home{
+  background:#fff !important;
+  box-shadow:none !important;
+  filter:none;
+  isolation:isolate;
+}
+.yc-home::before,
+.yc-home::after{
+  content:none !important;
+  display:none !important;
+}
