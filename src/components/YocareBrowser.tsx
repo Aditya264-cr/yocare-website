@@ -5,8 +5,8 @@ const HOME='https://duckduckgo.com/';
 const SOURCE_HOME=(import.meta.env.VITE_YOCARE_BROWSER_HOME_URL as string|undefined)||'https://net77.cc/home';
 function resolveAddress(value:string):string{
  const input=value.trim();if(!input)return HOME;
- if(/^https?:\/\//i.test(input)){const u=new URL(input);if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error('Only HTTP and HTTPS pages can be opened.');return u.href;}
- if(/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(input))return 'https://'+input;
+ if(input.startsWith('https://')||input.startsWith('http://')){const u=new URL(input);if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error('Only HTTP and HTTPS pages can be opened.');return u.href;}
+ if(input.includes('.')&&!input.includes(' '))return 'https://'+input;
  return 'https://duckduckgo.com/?q='+encodeURIComponent(input);
 }
 export const YocareBrowser:React.FC=()=>{
@@ -21,7 +21,8 @@ export const YocareBrowser:React.FC=()=>{
  const go=(e:React.FormEvent)=>{e.preventDefault();navigate(address)};
  const back=()=>setIndex(i=>Math.max(0,i-1)),forward=()=>setIndex(i=>Math.min(history.length-1,i+1));
  const reload=()=>{setFailed(false);if(frame.current)frame.current.src=current};
- const openSource=()=>navigate(SOURCE_HOME);\n const copyTitle=async()=>{try{await navigator.clipboard.writeText(requestedTitle)}catch{setAddress(requestedTitle)}};
+ const openSource=()=>navigate(SOURCE_HOME);
+ const copyTitle=async()=>{try{await navigator.clipboard.writeText(requestedTitle)}catch{setAddress(requestedTitle)}};
  return <div className="yb-app">
   <header className="yb-top"><a href="/movies" className="yb-brand"><span className="yb-mark">Y</span><span>yocare <i>browser</i></span></a><span className="yb-caption">A web experience inside Yocare</span><a href="/movies" className="yb-exit">Movies & Series</a></header>
   <main className="yb-main">
