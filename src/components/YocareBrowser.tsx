@@ -1,5 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState}from'react';
-import{ArrowLeft,ArrowRight,ExternalLink,Globe,Home,Lock,Plus,RefreshCw,Search,ShieldAlert}from'lucide-react';
+import{ArrowLeft,ArrowRight,ExternalLink,Globe,Home,Lock,RefreshCw,Search,ShieldAlert,MonitorPlay}from'lucide-react';
 
 const HOME='https://duckduckgo.com/';
 function resolveAddress(value:string):string{
@@ -21,9 +21,9 @@ export const YocareBrowser:React.FC=()=>{
  const forward=()=>setIndex(i=>Math.min(history.length-1,i+1));
  const reload=()=>{setFailed(false);frame.current?.setAttribute('src',current)};
  return <div className="yb-app">
-  <header className="yb-top"><a href="/movies" className="yb-brand"><span className="yb-mark">Y</span><span>yocare <i>browser</i></span></a><span className="yb-caption">A web experience inside Yocare</span><a href="/movies" className="yb-exit">Movies & Series</a></header>
+  <header className="yb-top"><a href="/movies" className="yb-brand"><span className="yb-mark">Y</span><span>yocare <i>browser</i></span></a><span className="yb-caption">A web experience inside Yocare</span><a href="/movies/screen" className="yb-exit"><MonitorPlay size={15}/> Screen view</a><a href="/movies" className="yb-exit">Movies & Series</a></header>
   <main className="yb-main">
-   <section className="yb-welcome"><span className="yb-kicker"><Globe size={14}/> YOCARE WEB</span><h1>The web, <em>within reach.</em></h1><p>Search the web or enter a website address. Pages that allow embedding can appear here; other sites can be opened in a separate browser tab.</p></section>
+   <section className="yb-welcome"><span className="yb-kicker"><Globe size={14}/> YOCARE WEB</span><h1>The web, <em>within reach.</em></h1><p>Search the web or enter a website address. Pages that allow embedding can appear here; other sites can be opened in a separate browser tab. To display a tab inside Yocare, use Screen view.</p></section>
    <form className="yb-toolbar" onSubmit={go}>
     <button type="button" aria-label="Back" onClick={back} disabled={index===0}><ArrowLeft/></button><button type="button" aria-label="Forward" onClick={forward} disabled={index>=history.length-1}><ArrowRight/></button><button type="button" aria-label="Home" onClick={()=>navigate(HOME)}><Home/></button>
     <label className="yb-address"><Lock size={14}/><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Search or enter website address"/></label>
@@ -34,7 +34,7 @@ export const YocareBrowser:React.FC=()=>{
     <iframe ref={frame} key={current} src={current} title="Yocare Browser webpage" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="fullscreen; autoplay; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" onError={()=>setFailed(true)}/>
     {failed?<div className="yb-blocked"><ShieldAlert size={25}/><h2>This page can't be displayed here</h2><p>The website may block embedded browsers or require its own secure login, cookies or playback environment. Yocare cannot override those restrictions.</p><a href={current} target="_blank" rel="noopener noreferrer">Continue in browser tab <ExternalLink size={15}/></a></div>:null}
    </section>
-   <p className="yb-footnote">Some websites prevent embedding or restrict video playback in third-party frames. For those sites, use “Open in new tab”. Yocare does not intercept protected streams or bypass website restrictions.</p>
+   <p className="yb-footnote">Some websites prevent embedding or restrict video playback in third-party frames. For those sites, open them in a new tab and use Screen view to share that tab. Protected playback restrictions still apply.</p>
   </main>
  </div>
 };
