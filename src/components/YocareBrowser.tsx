@@ -21,12 +21,12 @@ export const YocareBrowser:React.FC=()=>{
  const go=(e:React.FormEvent)=>{e.preventDefault();navigate(address)};
  const back=()=>setIndex(i=>Math.max(0,i-1)),forward=()=>setIndex(i=>Math.min(history.length-1,i+1));
  const reload=()=>{setFailed(false);if(frame.current)frame.current.src=current};
- const openSource=()=>navigate(SOURCE_HOME);
+ const openSource=()=>navigate(SOURCE_HOME);\n const copyTitle=async()=>{try{await navigator.clipboard.writeText(requestedTitle)}catch{setAddress(requestedTitle)}};
  return <div className="yb-app">
   <header className="yb-top"><a href="/movies" className="yb-brand"><span className="yb-mark">Y</span><span>yocare <i>browser</i></span></a><span className="yb-caption">A web experience inside Yocare</span><a href="/movies" className="yb-exit">Movies & Series</a></header>
   <main className="yb-main">
    <section className="yb-welcome"><span className="yb-kicker"><Globe size={14}/> YOCARE WEB</span><h1>The web, <em>within reach.</em></h1><p>Continue from a movie or series selection, or enter a website address. Sites control whether their pages can be embedded.</p></section>
-   {requestedTitle?<section className="yb-handoff"><div><span className="yb-kicker"><Film size={13}/> SELECTED IN YOCARE</span><h2>{requestedTitle}</h2><p>The source page is open below. Use its own catalogue search to locate this title.</p></div><button type="button" onClick={()=>setAddress(requestedTitle)}><Search size={15}/> Put title in address field</button><button type="button" onClick={openSource}>Open source home <ExternalLink size={14}/></button></section>:null}
+   {requestedTitle?<section className="yb-handoff"><div><span className="yb-kicker"><Film size={13}/> SELECTED IN YOCARE</span><h2>{requestedTitle}</h2><p>The source page is open below. Use its own catalogue search to locate this title.</p></div><button type="button" onClick={copyTitle}><Search size={15}/> Copy title for source search</button><button type="button" onClick={openSource}>Open source home <ExternalLink size={14}/></button></section>:null}
    <form className="yb-toolbar" onSubmit={go}>
     <button type="button" aria-label="Back" onClick={back} disabled={index===0}><ArrowLeft/></button><button type="button" aria-label="Forward" onClick={forward} disabled={index>=history.length-1}><ArrowRight/></button><button type="button" aria-label="Home" onClick={()=>navigate(HOME)}><Home/></button>
     <label className="yb-address"><Lock size={14}/><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Search or enter website address"/></label>
