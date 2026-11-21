@@ -5,8 +5,8 @@ const HOME='https://duckduckgo.com/';
 const SOURCE_HOME=(import.meta.env.VITE_YOCARE_BROWSER_HOME_URL as string|undefined)||'https://net77.cc/home';
 function resolveAddress(value:string):string{
  const input=value.trim();if(!input)return HOME;
- if(/^https?:\\/\\//i.test(input)){const u=new URL(input);if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error('Only HTTP and HTTPS pages can be opened.');return u.href;}
- if(/^[\\w.-]+\\.[a-z]{2,}(\\/.*)?$/i.test(input))return 'https://'+input;
+ if(/^https?:\/\//i.test(input)){const u=new URL(input);if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error('Only HTTP and HTTPS pages can be opened.');return u.href;}
+ if(/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(input))return 'https://'+input;
  return 'https://duckduckgo.com/?q='+encodeURIComponent(input);
 }
 export const YocareBrowser:React.FC=()=>{
