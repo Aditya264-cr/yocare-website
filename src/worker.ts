@@ -41,11 +41,18 @@ async function cfRequest(env: Env, path: string, init: RequestInit = {}): Promis
     },
     signal: AbortSignal.timeout(15000),
   });
-  const body = await response.json() as { success?: boolean; result?: any; errors?: Array<{ message?: string }> };
-  if (!response.ok || body.success === false || body.result == null) {
-    throw new Error(body.errors?.[0]?.message || `Cloudflare Browser Run request failed (${response.status})`);
+  const body = await response.json() as { success?: boolean; result?: any; errors?: Array<{ message?: string }> } | any;
+  if (!response.ok || body?.success === false) {
+    throw new Error(body?.errors?.[0]?.message || `Cloudflare Browser Run request failed (${response.status})`);
   }
-  return body.result;
+  // Browser Run's /devtools endpoints return raw CDP objects, not the
+  // standard Cloudflare API { success, result } envelope.
+  if (body && typeof body === "object" && body.success === true && "result" in body) {
+    if (body.result == null) throw new Error("Cloudflare Browser Run returned an empty result.");
+    return body.result;
+  }
+  if (body == null) throw new Error("Cloudflare Browser Run returned an empty response.");
+  return body;
 }
 
 async function createBrowserSession(request: Request, env: Env): Promise<Response> {
@@ -89,19 +96,14 @@ async function createBrowserSession(request: Request, env: Env): Promise<Respons
     sessionId = String(session.sessionId || "");
     if (!sessionId) throw new Error("Cloudflare did not return a browser session ID.");
 
-    const targetPath = `/browser-run/devtools/browser/${encodeURIComponent(sessionId)}/json/new?${encodeURIComponent(target.toString())}`;
+    const targetPath = `/browser-run/devtools/browser/${encodeURIComponent(sessionId)}/json/new?url=${encodeURIComponent(target.toString())}`;
     const pageTarget = await cfRequest(env, targetPath, { method: "PUT" });
     const targetId = typeof pageTarget.id === "string" ? pageTarget.id : "";
-    if (!targetId) throw new Error("Cloudflare did not return the opened page target.");
-
-    const liveView = await cfRequest(env, `/browser-run/devtools/browser/${encodeURIComponent(sessionId)}/live_view`, {
-      method: "POST",
-      body: JSON.stringify({ mode: "tab", targetId, expiresInMs: 300000 }),
-    });
-    if (typeof liveView.devtoolsFrontendUrl !== "string" || !liveView.devtoolsFrontendUrl.startsWith("https://live.browser.run/")) {
-      throw new Error("Cloudflare did not return a valid Live View URL.");
+    const liveViewUrl = typeof pageTarget.devtoolsFrontendUrl === "string" ? pageTarget.devtoolsFrontendUrl : "";
+    if (!targetId || !liveViewUrl.startsWith("https://live.browser.run/")) {
+      throw new Error("Cloudflare did not return a valid page target and Live View URL.");
     }
-    return json({ sessionId, liveViewUrl: liveView.devtoolsFrontendUrl, expiresInMs: 300000 });
+    return json({ sessionId, liveViewUrl, expiresInMs: 300000 });
   } catch (error) {
     if (sessionId) {
       try {
