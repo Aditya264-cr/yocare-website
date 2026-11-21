@@ -41,9 +41,24 @@ async function cfRequest(env: Env, path: string, init: RequestInit = {}): Promis
     },
     signal: AbortSignal.timeout(15000),
   });
-  const body = await response.json() as { success?: boolean; result?: any; errors?: Array<{ message?: string }> } | any;
+  const raw = await response.text();
+  let body: any;
+  try {
+    body = raw ? JSON.parse(raw) : null;
+  } catch {
+    const detail = raw.trim().slice(0, 180);
+    if (response.status === 429 || /rate limit exceeded/i.test(detail)) {
+      const retryAfter = response.headers.get("retry-after");
+      throw new Error(`Cloudflare Browser Run rate limit exceeded${retryAfter ? `. Retry after ${retryAfter} seconds` : `. Wait briefly before starting another session`}.`);
+    }
+    throw new Error(`Cloudflare Browser Run returned a non-JSON response (${response.status})${detail ? `: ${detail}` : "."}`);
+  }
   if (!response.ok || body?.success === false) {
-    throw new Error(body?.errors?.[0]?.message || `Cloudflare Browser Run request failed (${response.status})`);
+    const retryAfter = response.headers.get("retry-after");
+    const message = body?.errors?.[0]?.message || (response.status === 429
+      ? `Rate limit exceeded${retryAfter ? `. Retry after ${retryAfter} seconds` : ""}`
+      : `Cloudflare Browser Run request failed (${response.status})`);
+    throw new Error(message);
   }
   // Browser Run's /devtools endpoints return raw CDP objects, not the
   // standard Cloudflare API { success, result } envelope.
