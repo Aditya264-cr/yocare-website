@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Clock3, ExternalLink, Flame, Radio, Search, Tv } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Clock3, ExternalLink, Flame, Radio, Search, Tv } from 'lucide-react';
 import { fetchLiveVideos, fetchTrendingVideos, searchYouTubeVideos, YouTubeVideo } from '../services/youtube';
 
 type Mode = 'rail' | 'page';
@@ -59,6 +59,26 @@ export const YouTubeDiscovery: React.FC<Props> = ({ mode, onOpen, regionCode = '
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const requestId = useRef(0);
+  const videoRailRef = useRef<HTMLDivElement>(null);
+  const [videoRailState, setVideoRailState] = useState({ hasOverflow: false, canGoBack: false, canGoForward: false });
+  const updateVideoRailState = () => {
+    const rail = videoRailRef.current;
+    if (!rail) return;
+    setVideoRailState({ hasOverflow: rail.scrollWidth > rail.clientWidth + 4, canGoBack: rail.scrollLeft > 4, canGoForward: rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 4 });
+  };
+  const scrollVideoRail = (direction: -1 | 1) => {
+    const rail = videoRailRef.current;
+    if (rail) rail.scrollBy({ left: direction * Math.max(rail.clientWidth * 0.78, 260), behavior: 'smooth' });
+  };
+  useEffect(() => {
+    const rail = videoRailRef.current;
+    if (!rail || mode !== 'rail') return;
+    updateVideoRailState();
+    rail.addEventListener('scroll', updateVideoRailState, { passive: true });
+    const observer = new ResizeObserver(updateVideoRailState);
+    observer.observe(rail);
+    return () => { rail.removeEventListener('scroll', updateVideoRailState); observer.disconnect(); };
+  }, [videos.length, loading, mode]);
 
   const load = async (kind: Feed, selectedCategory = category) => {
     const request = ++requestId.current;
@@ -152,7 +172,11 @@ export const YouTubeDiscovery: React.FC<Props> = ({ mode, onOpen, regionCode = '
         <button type="button" className="yt-view-all" onClick={onOpen}>Explore YouTube <ArrowRight size={15}/></button>
       </div>
       {loading ? <p className="yt-state">Loading trending videos…</p> : error ? <p className="yt-state">{error}</p> : (
-        <div className="yt-video-rail">{videos.slice(0, 8).map((video) => <VideoCard key={video.id} video={video} onSelect={() => onOpen?.()} previewing={previewId === video.id} onPreviewStart={startPreview} onPreviewEnd={stopPreview}/>)}</div>
+        <div className="yt-rail-wrap">
+          {videoRailState.hasOverflow && <button type="button" className="yt-rail-arrow yt-rail-arrow-left" onClick={() => scrollVideoRail(-1)} disabled={!videoRailState.canGoBack} aria-label="Scroll trending videos left"><ArrowLeft size={20}/></button>}
+          <div className="yt-video-rail" ref={videoRailRef}>{videos.slice(0, 8).map((video) => <VideoCard key={video.id} video={video} onSelect={() => onOpen?.()} previewing={previewId === video.id} onPreviewStart={startPreview} onPreviewEnd={stopPreview}/>)}</div>
+          {videoRailState.hasOverflow && <button type="button" className="yt-rail-arrow yt-rail-arrow-right" onClick={() => scrollVideoRail(1)} disabled={!videoRailState.canGoForward} aria-label="Scroll trending videos right"><ArrowRight size={20}/></button>}
+        </div>
       )}
     </section>
   );
