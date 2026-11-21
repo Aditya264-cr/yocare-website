@@ -3,6 +3,7 @@ import { YocareHome } from './components/YocareHome';
 import { YocareTools } from './components/YocareTools';
 import { LiveApp } from './LiveApp';
 import { MoviesApp } from './components/MoviesApp';
+import { YocareBrowser } from './components/YocareBrowser';
 export const App: React.FC = () => {
   const [pathname, setPathname] = useState(window.location.pathname);
   useEffect(() => {
@@ -11,6 +12,7 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('popstate', syncPath);
   }, []);
   if (pathname === '/live' || pathname.startsWith('/live/')) return <LiveApp />;
+  if (pathname === '/movies/browser') return <YocareBrowser />;
   if (pathname === '/movies' || pathname.startsWith('/movies/')) return <MoviesApp />;
   if (pathname === '/tools' || pathname.startsWith('/tools/')) return <YocareTools />;
   return <YocareHome />;
