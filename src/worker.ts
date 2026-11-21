@@ -52,10 +52,14 @@ async function createBrowserSession(request: Request, env: Env): Promise<Respons
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return json({ error: "origin_not_allowed" }, 403);
-  if (!(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID) || !env.CF_BROWSER_RUN_TOKEN) {
+  const missingConfiguration: string[] = [];
+  if (!(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID)) missingConfiguration.push("CLOUDFLARE_ACCOUNT_ID (or CF_ACCOUNT_ID) Worker variable");
+  if (!env.CF_BROWSER_RUN_TOKEN) missingConfiguration.push("CF_BROWSER_RUN_TOKEN Worker secret");
+  if (missingConfiguration.length) {
     return json({
       error: "browser_not_configured",
-      message: "Cloudflare Browser Run is not configured yet. Add the account ID and Browser Run API token as Worker secrets/variables.",
+      missing: missingConfiguration,
+      message: "Browser Run settings are missing from this Worker environment. Add the listed bindings to the yocare-website Worker production environment, then deploy again.",
     }, 503);
   }
 
