@@ -4,6 +4,7 @@ import { YocareTools } from './components/YocareTools';
 import { LiveApp } from './LiveApp';
 import { MoviesApp } from './components/MoviesApp';
 import { YocareBrowser } from './components/YocareBrowser';
+import { YocareSearchAgent } from './components/YocareSearchAgent';
 export const App: React.FC = () => {
   const [pathname, setPathname] = useState(window.location.pathname);
   useEffect(() => {
@@ -13,6 +14,7 @@ export const App: React.FC = () => {
   }, []);
   if (pathname === '/live' || pathname.startsWith('/live/')) return <LiveApp />;
   if (pathname === '/movies/browser') return <YocareBrowser />;
+  if (pathname === '/movies/agent') return <YocareSearchAgent />;
   if (pathname === '/movies' || pathname.startsWith('/movies/')) return <MoviesApp />;
   if (pathname === '/tools' || pathname.startsWith('/tools/')) return <YocareTools />;
   return <YocareHome />;
