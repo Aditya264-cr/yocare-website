@@ -13,11 +13,11 @@ export const YocareBrowser:React.FC=()=>{
  const params=new URLSearchParams(window.location.search);
  const requestedTitle=params.get('title')||'';
  const initialSource=params.get('source')||SOURCE_HOME;
- const [address,setAddress]=useState(initialSource),[draft,setDraft]=useState(initialSource),[title,setTitle]=useState(requestedTitle),[history,setHistory]=useState<string[]>([initialSource]),[index,setIndex]=useState(0),[failed,setFailed]=useState(false);
+ const [address,setAddress]=useState(initialSource),[history,setHistory]=useState<string[]>([initialSource]),[index,setIndex]=useState(0),[failed,setFailed]=useState(false);
  const frame=useRef<HTMLIFrameElement>(null);const current=history[index]||HOME;
  const host=useMemo(()=>{try{return new URL(current).hostname}catch{return 'Web'}},[current]);
- useEffect(()=>{setAddress(current);setDraft(current);setFailed(false)},[current]);
- const navigate=(raw:string)=>{try{const next=resolveAddress(raw);setHistory(old=>[...old.slice(0,index+1),next]);setIndex(index+1);setDraft(next)}catch{setFailed(true)}};
+ useEffect(()=>{setAddress(current);setFailed(false)},[current]);
+ const navigate=(raw:string)=>{try{const next=resolveAddress(raw);setHistory(old=>[...old.slice(0,index+1),next]);setIndex(index+1)}catch{setFailed(true)}};
  const go=(e:React.FormEvent)=>{e.preventDefault();navigate(address)};
  const back=()=>setIndex(i=>Math.max(0,i-1)),forward=()=>setIndex(i=>Math.min(history.length-1,i+1));
  const reload=()=>{setFailed(false);if(frame.current)frame.current.src=current};
