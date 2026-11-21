@@ -74,16 +74,25 @@ async function createBrowserSession(request: Request, env: Env): Promise<Respons
 
   let sessionId = "";
   try {
-    const session = await cfRequest(env, "/browser-rendering/devtools/browser?keep_alive=600000", { method: "POST" });
+    const hosts = [...browserHosts(env)];
+    if (hosts.length === 0 || hosts.length > 50) {
+      throw new Error("Configure between 1 and 50 permitted browser hostnames in BROWSER_ALLOWED_HOSTS.");
+    }
+    const session = await cfRequest(env, "/browser-run/devtools/browser?keep_alive=300000", {
+      method: "POST",
+      body: JSON.stringify({ guardrails: { allowedDomains: hosts } }),
+    });
     sessionId = String(session.sessionId || "");
     if (!sessionId) throw new Error("Cloudflare did not return a browser session ID.");
 
-    const targetPath = `/browser-rendering/devtools/browser/${encodeURIComponent(sessionId)}/json/new?${encodeURIComponent(target.toString())}`;
-    await cfRequest(env, targetPath, { method: "PUT" });
+    const targetPath = `/browser-run/devtools/browser/${encodeURIComponent(sessionId)}/json/new?${encodeURIComponent(target.toString())}`;
+    const pageTarget = await cfRequest(env, targetPath, { method: "PUT" });
+    const targetId = typeof pageTarget.id === "string" ? pageTarget.id : "";
+    if (!targetId) throw new Error("Cloudflare did not return the opened page target.");
 
-    const liveView = await cfRequest(env, `/browser-rendering/devtools/browser/${encodeURIComponent(sessionId)}/live_view`, {
+    const liveView = await cfRequest(env, `/browser-run/devtools/browser/${encodeURIComponent(sessionId)}/live_view`, {
       method: "POST",
-      body: JSON.stringify({ mode: "tab", expiresInMs: 300000 }),
+      body: JSON.stringify({ mode: "tab", targetId, expiresInMs: 300000 }),
     });
     if (typeof liveView.devtoolsFrontendUrl !== "string" || !liveView.devtoolsFrontendUrl.startsWith("https://live.browser.run/")) {
       throw new Error("Cloudflare did not return a valid Live View URL.");
@@ -92,7 +101,7 @@ async function createBrowserSession(request: Request, env: Env): Promise<Respons
   } catch (error) {
     if (sessionId) {
       try {
-        await cfRequest(env, `/browser-rendering/devtools/browser/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
+        await cfRequest(env, `/browser-run/devtools/browser/${encodeURIComponent(sessionId)}`, { method: "DELETE" });
       } catch {
         // Best-effort cleanup if session creation fails partway through.
       }
