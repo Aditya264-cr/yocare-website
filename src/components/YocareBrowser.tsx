@@ -2,18 +2,23 @@ import React,{useMemo,useState}from'react';
 import{ExternalLink,Globe,Film,Search,ShieldCheck,RefreshCw,ArrowLeft}from'lucide-react';
 
 const SOURCE_HOME=(import.meta.env.VITE_YOCARE_BROWSER_HOME_URL as string|undefined)||'https://net77.cc/home';
-type Session={sessionId:string;liveViewUrl:string;expiresInMs:number};
+type Session={sessionId:string;liveViewUrl:string;expiresInMs:number;expiresAt?:number};
+const SESSION_KEY='yocare.browser.session.v1';
+const readStoredSession=():Session|null=>{try{const value=sessionStorage.getItem(SESSION_KEY);if(!value)return null;const saved=JSON.parse(value) as Session;if(!saved.liveViewUrl?.startsWith('https://live.browser.run/')||!saved.expiresAt||saved.expiresAt<=Date.now()){sessionStorage.removeItem(SESSION_KEY);return null;}return saved;}catch{return null;}};
 export const YocareBrowser:React.FC=()=>{
  const params=new URLSearchParams(window.location.search);
  const requestedTitle=params.get('title')||'';
  const [address,setAddress]=useState(params.get('source')||SOURCE_HOME);
- const [session,setSession]=useState<Session|null>(null);
+ const [session,setSession]=useState<Session|null>(()=>readStoredSession());
  const [busy,setBusy]=useState(false);
  const [error,setError]=useState('');
  const [embedFailed,setEmbedFailed]=useState(false);
  const host=useMemo(()=>{try{return new URL(address).hostname}catch{return 'Web'}},[address]);
- const startSession=async(e?:React.FormEvent)=>{
-  e?.preventDefault();setBusy(true);setError('');setSession(null);setEmbedFailed(false);
+ const startSession=async(e?:React.FormEvent,forceNew=false)=>{
+  e?.preventDefault();setError('');setEmbedFailed(false);
+  if(!forceNew){const saved=readStoredSession();if(saved){setSession(saved);return;}}
+  if(forceNew)sessionStorage.removeItem(SESSION_KEY);
+  setBusy(true);
   try{
    const target=new URL(address);
    if(!['https:','http:'].includes(target.protocol))throw new Error('Only HTTP and HTTPS websites are supported.');
@@ -21,7 +26,9 @@ export const YocareBrowser:React.FC=()=>{
    const data=await response.json() as Session&{message?:string};
    if(!response.ok)throw new Error(data.message||'Yocare could not start the remote browser.');
    if(!data.liveViewUrl?.startsWith('https://live.browser.run/'))throw new Error('The remote browser returned an invalid viewing address.');
-   setSession(data);
+   const stored={...data,expiresAt:Date.now()+Math.min(data.expiresInMs||300000,1200000)-15000};
+   sessionStorage.setItem(SESSION_KEY,JSON.stringify(stored));
+   setSession(stored);
   }catch(err){setError(err instanceof Error?err.message:'Could not start browser session.');}
   finally{setBusy(false);}
  };
@@ -39,7 +46,7 @@ export const YocareBrowser:React.FC=()=>{
    {!session?<section className="yb-empty"><Globe size={30}/><h2>{busy?'Starting your browser session':'Ready to open a remote browser'}</h2><p>{busy?'Cloudflare is creating a temporary Chromium session and loading '+host+'.':'Press Start browser to launch a separate remote browser. It can display sites that refuse ordinary iframe embedding, subject to their own access and security rules.'}</p><small>Sessions are temporary and may incur Cloudflare Browser Run usage charges.</small></section>:<section className="yb-session">
     <div className="yb-sessionbar"><span><span className="yb-dot"/> Remote session active</span><span>{host}</span><a href={session.liveViewUrl} target="_blank" rel="noopener noreferrer">Open full view <ExternalLink size={13}/></a></div>
     {!embedFailed?<iframe title="Yocare remote browser session" src={session.liveViewUrl} allow="clipboard-read; clipboard-write; fullscreen" onError={()=>setEmbedFailed(true)}/>:null}
-    <div className="yb-sessionactions"><a href={session.liveViewUrl} target="_blank" rel="noopener noreferrer">Open remote browser <ExternalLink size={14}/></a><button type="button" onClick={()=>startSession()}> <RefreshCw size={14}/> New session</button></div>
+    <div className="yb-sessionactions"><a href={session.liveViewUrl} target="_blank" rel="noopener noreferrer">Open remote browser <ExternalLink size={14}/></a><button type="button" onClick={()=>startSession(undefined,true)}> <RefreshCw size={14}/> New session</button></div>
     <p className="yb-sessionnote"><ShieldCheck size={14}/> The remote browser handles normal website navigation and security checks. It does not bypass login, CAPTCHA, DRM, paywalls or a site's access restrictions.</p>
    </section>}
    <a className="yb-back" href="/movies"><ArrowLeft size={14}/> Back to Movies & Series</a>
