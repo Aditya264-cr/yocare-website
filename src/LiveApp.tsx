@@ -82,8 +82,8 @@ export const LiveApp: React.FC = () => {
       <main id="main-content">
         {activeTab === 'tv' ? <>
           <HeroSection country={selectedCountry} spotlightChannel={spotlightChannel} onPlayChannel={handleSelectChannel} onBrowseChannelsClick={() => document.getElementById('channels')?.scrollIntoView({ behavior: 'smooth' })}/>
-          <TopPicksRail channels={channels} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} countryName={selectedCountry.name}/>
           <YouTubeDiscovery mode="rail" onOpen={() => setActiveTab('youtube')} regionCode={selectedCountry.code.toUpperCase()}/>
+          <TopPicksRail channels={channels} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} countryName={selectedCountry.name}/>
           <LivePlayer channel={activeChannel} country={selectedCountry}/>
           <ChannelGuide channels={channels} selectedCountry={selectedCountry} countryOptions={countryOptions} onCountryChange={setSelectedCountry} activeChannel={activeChannel} onSelectChannel={handleSelectChannel} isLoading={isLoading} searchQuery={searchQuery} setSearchQuery={setSearchQuery}/>
           <ProgramSchedule channels={channels} onSelectChannel={handleSelectChannel}/>
