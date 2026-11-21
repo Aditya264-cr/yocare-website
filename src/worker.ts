@@ -4,6 +4,7 @@ interface Env {
   MOVIE_PLAYBACK_RESOLVER_TOKEN?: string;
   MOVIE_PLAYBACK_ALLOWED_HOSTS?: string;
   CF_ACCOUNT_ID?: string;
+  CLOUDFLARE_ACCOUNT_ID?: string;
   CF_BROWSER_RUN_TOKEN?: string;
   BROWSER_ALLOWED_HOSTS?: string;
 }
@@ -29,7 +30,9 @@ function browserHosts(env: Env): Set<string> {
 }
 
 async function cfRequest(env: Env, path: string, init: RequestInit = {}): Promise<any> {
-  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CF_ACCOUNT_ID}${path}`, {
+  const accountId = env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID;
+  if (!accountId) throw new Error("Cloudflare account ID is not configured.");
+  const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${accountId}${path}`, {
     ...init,
     headers: {
       "authorization": `Bearer ${env.CF_BROWSER_RUN_TOKEN}`,
@@ -49,7 +52,7 @@ async function createBrowserSession(request: Request, env: Env): Promise<Respons
   if (request.method !== "POST") return json({ error: "method_not_allowed" }, 405);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return json({ error: "origin_not_allowed" }, 403);
-  if (!env.CF_ACCOUNT_ID || !env.CF_BROWSER_RUN_TOKEN) {
+  if (!(env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID) || !env.CF_BROWSER_RUN_TOKEN) {
     return json({
       error: "browser_not_configured",
       message: "Cloudflare Browser Run is not configured yet. Add the account ID and Browser Run API token as Worker secrets/variables.",
