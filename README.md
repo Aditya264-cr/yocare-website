@@ -93,7 +93,8 @@ The website is a single-page application with path-based product entry points:
 | `/live` | Yocare Live |
 | `/movies` | Yocare Movies & Series |
 | `/movies/agent` | Yocare Search Agent — search titles and compare regional provider availability |
-| `/movies/browser` | Yocare Browser — browse websites that permit embedding, with external-tab fallback |\n| `/movies/play` | Yocare Playback Orchestrator — resolve permitted playback sessions and present provider fallback options |
+| `/movies/browser` | Yocare Browser — browse websites that permit embedding, with external-tab fallback |
+| `/movies/play` | Yocare Playback Orchestrator — resolve permitted playback sessions and present provider fallback options |
 | `/tools` | Yocare Tools — coming soon |
 
 The root Cloudflare Worker serves the built frontend from `dist/` and uses single-page-application fallback handling.
