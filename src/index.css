@@ -194,3 +194,24 @@ body {
  .g-rail-arrow-right,.yt-rail-arrow-right{right:-9px}
 }
 @media(prefers-reduced-motion:reduce){.g-channel-rail,.yt-video-rail{scroll-behavior:auto}}
+
+
+/* Force-hide native horizontal scrollbar tracks on Yocare content rails. */
+.g-channel-rail,
+.yt-video-rail,
+.g-channel-rail *,
+.yt-video-rail * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.g-channel-rail::-webkit-scrollbar,
+.g-channel-rail::-webkit-scrollbar-track,
+.g-channel-rail::-webkit-scrollbar-thumb,
+.yt-video-rail::-webkit-scrollbar,
+.yt-video-rail::-webkit-scrollbar-track,
+.yt-video-rail::-webkit-scrollbar-thumb {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
