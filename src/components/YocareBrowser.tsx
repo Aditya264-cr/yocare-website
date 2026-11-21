@@ -1,44 +1,49 @@
-import React,{useEffect,useMemo,useRef,useState}from'react';
-import{ArrowLeft,ArrowRight,ExternalLink,Globe,Home,Lock,RefreshCw,Search,ShieldAlert,Film}from'lucide-react';
+import React,{useMemo,useState}from'react';
+import{ExternalLink,Globe,Film,Search,ShieldCheck,RefreshCw,ArrowLeft}from'lucide-react';
 
-const HOME='https://duckduckgo.com/';
 const SOURCE_HOME=(import.meta.env.VITE_YOCARE_BROWSER_HOME_URL as string|undefined)||'https://net77.cc/home';
-function resolveAddress(value:string):string{
- const input=value.trim();if(!input)return HOME;
- if(input.startsWith('https://')||input.startsWith('http://')){const u=new URL(input);if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error('Only HTTP and HTTPS pages can be opened.');return u.href;}
- if(input.includes('.')&&!input.includes(' '))return 'https://'+input;
- return 'https://duckduckgo.com/?q='+encodeURIComponent(input);
-}
+type Session={sessionId:string;liveViewUrl:string;expiresInMs:number};
 export const YocareBrowser:React.FC=()=>{
  const params=new URLSearchParams(window.location.search);
  const requestedTitle=params.get('title')||'';
- const initialSource=params.get('source')||SOURCE_HOME;
- const [address,setAddress]=useState(initialSource),[history,setHistory]=useState<string[]>([initialSource]),[index,setIndex]=useState(0),[failed,setFailed]=useState(false);
- const frame=useRef<HTMLIFrameElement>(null);const current=history[index]||HOME;
- const host=useMemo(()=>{try{return new URL(current).hostname}catch{return 'Web'}},[current]);
- useEffect(()=>{setAddress(current);setFailed(false)},[current]);
- const navigate=(raw:string)=>{try{const next=resolveAddress(raw);setHistory(old=>[...old.slice(0,index+1),next]);setIndex(index+1)}catch{setFailed(true)}};
- const go=(e:React.FormEvent)=>{e.preventDefault();navigate(address)};
- const back=()=>setIndex(i=>Math.max(0,i-1)),forward=()=>setIndex(i=>Math.min(history.length-1,i+1));
- const reload=()=>{setFailed(false);if(frame.current)frame.current.src=current};
- const openSource=()=>navigate(SOURCE_HOME);
- const copyTitle=async()=>{try{await navigator.clipboard.writeText(requestedTitle)}catch{setAddress(requestedTitle)}};
+ const [address,setAddress]=useState(params.get('source')||SOURCE_HOME);
+ const [session,setSession]=useState<Session|null>(null);
+ const [busy,setBusy]=useState(false);
+ const [error,setError]=useState('');
+ const [embedFailed,setEmbedFailed]=useState(false);
+ const host=useMemo(()=>{try{return new URL(address).hostname}catch{return 'Web'}},[address]);
+ const startSession=async(e?:React.FormEvent)=>{
+  e?.preventDefault();setBusy(true);setError('');setSession(null);setEmbedFailed(false);
+  try{
+   const target=new URL(address);
+   if(!['https:','http:'].includes(target.protocol))throw new Error('Only HTTP and HTTPS websites are supported.');
+   const response=await fetch('/api/browser/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({url:target.toString()})});
+   const data=await response.json() as Session&{message?:string};
+   if(!response.ok)throw new Error(data.message||'Yocare could not start the remote browser.');
+   if(!data.liveViewUrl?.startsWith('https://live.browser.run/'))throw new Error('The remote browser returned an invalid viewing address.');
+   setSession(data);
+  }catch(err){setError(err instanceof Error?err.message:'Could not start browser session.');}
+  finally{setBusy(false);}
+ };
+ const copyTitle=async()=>{try{await navigator.clipboard.writeText(requestedTitle)}catch{setError('Clipboard access is unavailable. You can select and copy the title manually.')}};
  return <div className="yb-app">
-  <header className="yb-top"><a href="/movies" className="yb-brand"><span className="yb-mark">Y</span><span>yocare <i>browser</i></span></a><span className="yb-caption">A web experience inside Yocare</span><a href="/movies" className="yb-exit">Movies & Series</a></header>
+  <header className="yb-top"><a href="/movies" className="yb-brand"><span className="yb-mark">Y</span><span>yocare <i>browser</i></span></a><span className="yb-caption">Cloud browser session</span><a href="/movies" className="yb-exit">Movies & Series</a></header>
   <main className="yb-main">
-   <section className="yb-welcome"><span className="yb-kicker"><Globe size={14}/> YOCARE WEB</span><h1>The web, <em>within reach.</em></h1><p>Continue from a movie or series selection, or enter a website address. Sites control whether their pages can be embedded.</p></section>
-   {requestedTitle?<section className="yb-handoff"><div><span className="yb-kicker"><Film size={13}/> SELECTED IN YOCARE</span><h2>{requestedTitle}</h2><p>The source page is open below. Use its own catalogue search to locate this title.</p></div><button type="button" onClick={copyTitle}><Search size={15}/> Copy title for source search</button><button type="button" onClick={openSource}>Open source home <ExternalLink size={14}/></button></section>:null}
-   <form className="yb-toolbar" onSubmit={go}>
-    <button type="button" aria-label="Back" onClick={back} disabled={index===0}><ArrowLeft/></button><button type="button" aria-label="Forward" onClick={forward} disabled={index>=history.length-1}><ArrowRight/></button><button type="button" aria-label="Home" onClick={()=>navigate(HOME)}><Home/></button>
-    <label className="yb-address"><Lock size={14}/><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Search or enter website address"/></label>
-    <button type="submit" className="yb-go" aria-label="Go"><Search size={17}/></button><button type="button" aria-label="Reload" onClick={reload}><RefreshCw size={16}/></button>
+   <section className="yb-welcome"><span className="yb-kicker"><Globe size={14}/> YOCARE WEB</span><h1>Your browser, <em>remotely.</em></h1><p>Yocare starts a real Chromium browser session on Cloudflare Browser Run. The source website is rendered by that browser, not embedded as a third-party page in Yocare.</p></section>
+   {requestedTitle?<section className="yb-handoff"><div><span className="yb-kicker"><Film size={13}/> SELECTED IN YOCARE</span><h2>{requestedTitle}</h2><p>Copy the title into the source website's own search if needed.</p></div><button type="button" onClick={copyTitle}><Search size={15}/> Copy title</button></section>:null}
+   <form className="yb-toolbar" onSubmit={startSession}>
+    <label className="yb-address"><Globe size={14}/><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="Enter an allowed website address"/></label>
+    <button type="submit" className="yb-go" disabled={busy}>{busy?<RefreshCw className="yb-spin" size={16}/>:<Search size={17}/>} {busy?'Starting…':'Start browser'}</button>
    </form>
-   <div className="yb-page-meta"><span><span className="yb-dot"/> {host}</span><a href={current} target="_blank" rel="noopener noreferrer">Open in new tab <ExternalLink size={13}/></a></div>
-   <section className="yb-viewport"><iframe ref={frame} key={current} src={current} title="Yocare Browser webpage" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation" allow="fullscreen; autoplay; picture-in-picture" referrerPolicy="strict-origin-when-cross-origin" onError={()=>setFailed(true)}/>
-    {failed?<div className="yb-blocked"><ShieldAlert size={25}/><h2>This page can't be displayed here</h2><p>The website may block embedded browsers or require its own secure login, cookies or playback environment. Yocare cannot override those restrictions.</p><a href={current} target="_blank" rel="noopener noreferrer">Continue in browser tab <ExternalLink size={15}/></a></div>:null}
-   </section>
-   <p className="yb-footnote">Yocare currently passes the selected title to this browser but does not submit searches inside third-party pages or extract their media streams. Cross-origin browser isolation and site restrictions prevent Yocare from controlling arbitrary page internals. Playback must use a source-authorised integration.</p>
+   {error?<div className="yb-error" role="alert">{error}</div>:null}
+   {!session?<section className="yb-empty"><Globe size={30}/><h2>{busy?'Starting your browser session':'Ready to open a remote browser'}</h2><p>{busy?'Cloudflare is creating a temporary Chromium session and loading '+host+'.':'Press Start browser to launch a separate remote browser. It can display sites that refuse ordinary iframe embedding, subject to their own access and security rules.'}</p><small>Sessions are temporary and may incur Cloudflare Browser Run usage charges.</small></section>:<section className="yb-session">
+    <div className="yb-sessionbar"><span><span className="yb-dot"/> Remote session active</span><span>{host}</span><a href={session.liveViewUrl} target="_blank" rel="noopener noreferrer">Open full view <ExternalLink size={13}/></a></div>
+    {!embedFailed?<iframe title="Yocare remote browser session" src={session.liveViewUrl} allow="clipboard-read; clipboard-write; fullscreen" onError={()=>setEmbedFailed(true)}/>:null}
+    <div className="yb-sessionactions"><a href={session.liveViewUrl} target="_blank" rel="noopener noreferrer">Open remote browser <ExternalLink size={14}/></a><button type="button" onClick={()=>startSession()}> <RefreshCw size={14}/> New session</button></div>
+    <p className="yb-sessionnote"><ShieldCheck size={14}/> The remote browser handles normal website navigation and security checks. It does not bypass login, CAPTCHA, DRM, paywalls or a site's access restrictions.</p>
+   </section>}
+   <a className="yb-back" href="/movies"><ArrowLeft size={14}/> Back to Movies & Series</a>
   </main>
-  <style>{`.yb-handoff{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 17px;padding:15px 17px;border:1px solid #ffffff20;border-radius:13px;background:#11141a}.yb-handoff>div{flex:1;min-width:190px}.yb-handoff h2{margin:6px 0;font-size:20px}.yb-handoff p{margin:0;color:#9ca3ad;font-size:11px}.yb-handoff button{display:inline-flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid #ffffff24;border-radius:8px;background:#1a1f26;color:#f2f3f4;font-size:11px;cursor:pointer}`}</style>
- </div>
+  <style>{`.yb-handoff{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 17px;padding:15px 17px;border:1px solid #ffffff20;border-radius:13px;background:#11141a}.yb-handoff>div{flex:1;min-width:190px}.yb-handoff h2{margin:6px 0;font-size:20px}.yb-handoff p{margin:0;color:#9ca3ad;font-size:11px}.yb-handoff button,.yb-sessionactions button{display:inline-flex;align-items:center;gap:7px;padding:10px 12px;border:1px solid #ffffff24;border-radius:8px;background:#1a1f26;color:#f2f3f4;font-size:11px;cursor:pointer}.yb-empty{min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;border:1px solid #ffffff1c;border-radius:14px;background:#0d1015;color:#c7ccd4}.yb-empty h2{margin:15px 0 6px;color:#fff}.yb-empty p{max-width:560px;color:#9ca3ad;font-size:13px;line-height:1.6}.yb-empty small,.yb-sessionnote{color:#7e8793;font-size:11px}.yb-error{margin:12px 0;padding:12px;border:1px solid #a33a3a66;border-radius:9px;color:#ffb5b5;background:#35171766;font-size:12px}.yb-session{overflow:hidden;border:1px solid #ffffff20;border-radius:13px;background:#0b0d11}.yb-sessionbar,.yb-sessionactions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:11px 14px;color:#aeb5bf;font-size:11px}.yb-sessionbar a,.yb-sessionactions a,.yb-back{display:inline-flex;align-items:center;gap:6px;color:#e8edf5;text-decoration:none}.yb-session iframe{display:block;width:100%;height:min(72vh,760px);min-height:420px;border:0;background:#090b0f}.yb-sessionnote{display:flex;align-items:center;gap:7px;margin:0;padding:0 14px 14px}.yb-back{margin-top:16px;font-size:12px}.yb-spin{animation:ybspin 1s linear infinite}@keyframes ybspin{to{transform:rotate(360deg)}}`}</style>
+ </div>;
 };
