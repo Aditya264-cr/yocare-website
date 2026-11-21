@@ -28,6 +28,7 @@ The project currently brings together:
 
 - **Yocare Home** — the central website and entry point to the ecosystem.
 - **Yocare Live** — an entertainment experience combining live television discovery, channel browsing and video discovery.
+- **Yocare Movies & Series** — a movie and television discovery experience with title search, trending catalogues, details and regional streaming-provider availability.
 - **Yocare Tools** — a planned collection of practical digital utilities. Its public page currently introduces the product and communicates that it is coming soon.
 
 ## The Yocare ecosystem
@@ -36,6 +37,7 @@ The project currently brings together:
 | --- | --- | --- |
 | **Yocare Home** | Introduces Yocare and connects visitors to its products. | Live |
 | **Yocare Live** | Explore regional TV channel catalogues, watch eligible live streams and discover YouTube videos. | In development |
+| **Yocare Movies & Series** | Search movie and series metadata, explore popular titles and find reported provider availability by region. | Initial implementation |
 | **Yocare Tools** | A future collection of useful digital tools for everyday tasks. | Coming soon |
 
 ### Yocare Home
@@ -59,6 +61,10 @@ Yocare Live is the entertainment product. Its current experience includes:
 ### Yocare Tools
 
 Yocare Tools is planned as a collection of practical digital utilities. The current page is a coming-soon experience; individual tools have not yet been announced as available.
+
+### Yocare Movies & Series
+
+The Movies & Series experience uses TMDB for catalogue search, trending titles, posters, title details and regional watch-provider availability. It does not host or extract third-party streams. Playback is through the services that provide authorized access. The production build expects a GitHub Actions secret named `VITE_TMDB_API_KEY`; add a TMDB API key in the repository's Actions secrets before deployment. The key is embedded in the client bundle because this is a browser-side integration, so configure usage restrictions and monitor its use. TMDB attribution is displayed in the product.
 
 ## Technology
 
@@ -85,6 +91,7 @@ The website is a single-page application with path-based product entry points:
 | --- | --- |
 | `/` | Yocare Home |
 | `/live` | Yocare Live |
+| `/movies` | Yocare Movies & Series |
 | `/tools` | Yocare Tools — coming soon |
 
 The root Cloudflare Worker serves the built frontend from `dist/` and uses single-page-application fallback handling.
