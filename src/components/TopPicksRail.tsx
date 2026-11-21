@@ -58,7 +58,8 @@ const ChannelShelf: React.FC<{
       </div>
     ) : <p className="g-shelf-empty">{empty}</p>}
   </section>
-);
+  );
+};
 
 export const TopPicksRail: React.FC<TopPicksRailProps> = ({ channels, activeChannel, onSelectChannel, isLoading, countryName }) => {
   const entertainment = channels.filter((channel) => channel.category === 'entertainment');
