@@ -4,7 +4,7 @@
   "main": "src/worker.ts",
   "compatibility_date": "2026-10-29",
   "vars": {
-    "BROWSER_ALLOWED_HOSTS": "net77.cc,www.net77.cc,duckduckgo.com,www.duckduckgo.com",
+    "BROWSER_ALLOWED_HOSTS": "net77.cc,www.net77.cc,duckduckgo.com,www.duckduckgo.com,net11.cc",
     "CLOUDFLARE_ACCOUNT_ID": "81953d7432a1a938a6f4ad955b3b55a3"
   },
   "assets": {
